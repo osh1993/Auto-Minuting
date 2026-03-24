@@ -76,7 +76,7 @@ Plans:
   3. STT 엔진 실패 시 대안 엔진(폴백)으로 자동 전환되어 전사가 완료된다
 **Plans:** 2 plans
 Plans:
-- [ ] 04-01-PLAN.md — Whisper/ML Kit STT 엔진 + TranscriptionRepositoryImpl + Worker 연동
+- [x] 04-01-PLAN.md — Whisper/ML Kit STT 엔진 + TranscriptionRepositoryImpl + Worker 연동
 - [ ] 04-02-PLAN.md — 전사 목록 화면 + 전사 편집 화면 + Navigation 연동
 
 ### Phase 5: 회의록 생성
@@ -123,7 +123,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. PoC — 기술 가능성 검증 | 4/4 | Complete   | 2026-03-24 |
 | 2. 앱 기반 구조 | 0/3 | Not started | - |
 | 3. 오디오 수집 | 0/2 | Not started | - |
-| 4. 전사 엔진 | 0/2 | Not started | - |
+| 4. 전사 엔진 | 1/2 | In progress | - |
 | 5. 회의록 생성 | 0/TBD | Not started | - |
 | 6. 파이프라인 통합 및 자동화 | 0/TBD | Not started | - |
 | 7. UI 완성 | 0/TBD | Not started | - |

@@ -22,8 +22,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### 전사 (STT)
 
-- [ ] **STT-01**: 저장된 한국어 음성 파일을 Galaxy AI(또는 확인된 대안)로 텍스트 전사
-- [ ] **STT-02**: 전사 완료된 텍스트를 로컬에 저장
+- [x] **STT-01**: 저장된 한국어 음성 파일을 Galaxy AI(또는 확인된 대안)로 텍스트 전사
+- [x] **STT-02**: 전사 완료된 텍스트를 로컬에 저장
 - [ ] **STT-03**: 사용자가 전사된 텍스트를 편집할 수 있음 (STT 오류 수정)
 
 ### 회의록 생성
@@ -94,8 +94,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUD-01 | Phase 3 | Complete |
 | AUD-02 | Phase 3 | Complete |
 | AUD-03 | Phase 3 | Complete |
-| STT-01 | Phase 4 | Pending |
-| STT-02 | Phase 4 | Pending |
+| STT-01 | Phase 4 | Complete |
+| STT-02 | Phase 4 | Complete |
 | STT-03 | Phase 4 | Pending |
 | MIN-01 | Phase 5 | Pending |
 | MIN-02 | Phase 5 | Pending |
