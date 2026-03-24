@@ -49,6 +49,15 @@ interface MeetingDao {
         updatedAt: Long
     )
 
+    /** 회의록 생성 완료 후 minutesPath와 파이프라인 상태를 업데이트한다. */
+    @Query("UPDATE meetings SET minutesPath = :minutesPath, pipelineStatus = :status, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateMinutes(
+        id: Long,
+        minutesPath: String,
+        status: String,
+        updatedAt: Long
+    )
+
     /** 오디오 파일 경로로 회의를 조회한다. */
     @Query("SELECT * FROM meetings WHERE audioFilePath = :audioFilePath LIMIT 1")
     suspend fun getMeetingByAudioPath(audioFilePath: String): MeetingEntity?

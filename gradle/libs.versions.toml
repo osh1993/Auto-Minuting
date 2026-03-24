@@ -27,6 +27,9 @@ okhttp = "4.12.0"
 # Plaud SDK 의존성
 guava = "28.2-android"
 
+# AI (Gemini)
+generativeai = "0.9.0"
+
 # 비동기
 coroutines = "1.10.1"
 
@@ -70,6 +73,9 @@ okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor",
 
 # Plaud SDK 의존성
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
+
+# AI (Gemini)
+generativeai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "generativeai" }
 
 # 비동기
 coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }

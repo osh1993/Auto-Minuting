@@ -22,6 +22,10 @@ android {
         val plaudAppSecret: String = project.findProperty("PLAUD_APP_SECRET")?.toString() ?: ""
         buildConfigField("String", "PLAUD_APP_KEY", "\"$plaudAppKey\"")
         buildConfigField("String", "PLAUD_APP_SECRET", "\"$plaudAppSecret\"")
+
+        // Gemini API 인증 키 (local.properties에서 읽음)
+        val geminiApiKey: String = project.findProperty("GEMINI_API_KEY")?.toString() ?: ""
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
     compileOptions {
@@ -80,6 +84,9 @@ dependencies {
 
     // DataStore 설정 저장
     implementation(libs.datastore.preferences)
+
+    // AI (Gemini) -- 회의록 생성
+    implementation(libs.generativeai)
 
     // 코루틴
     implementation(libs.coroutines.android)

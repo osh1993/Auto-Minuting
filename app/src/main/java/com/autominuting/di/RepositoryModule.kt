@@ -2,9 +2,11 @@ package com.autominuting.di
 
 import com.autominuting.data.repository.AudioRepositoryImpl
 import com.autominuting.data.repository.MeetingRepositoryImpl
+import com.autominuting.data.repository.MinutesRepositoryImpl
 import com.autominuting.data.repository.TranscriptionRepositoryImpl
 import com.autominuting.domain.repository.AudioRepository
 import com.autominuting.domain.repository.MeetingRepository
+import com.autominuting.domain.repository.MinutesRepository
 import com.autominuting.domain.repository.TranscriptionRepository
 import dagger.Binds
 import dagger.Module
@@ -14,7 +16,7 @@ import dagger.hilt.components.SingletonComponent
 /**
  * Repository 인터페이스와 구현체를 바인딩하는 Hilt 모듈.
  *
- * MinutesRepository는 Phase 5에서 구현체가 추가될 때 바인딩한다.
+ * MinutesRepository는 Phase 5에서 Gemini API 기반 구현체로 바인딩한다.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -45,4 +47,13 @@ abstract class RepositoryModule {
     abstract fun bindTranscriptionRepository(
         impl: TranscriptionRepositoryImpl
     ): TranscriptionRepository
+
+    /**
+     * MinutesRepository 인터페이스를 MinutesRepositoryImpl 구현체에 바인딩한다.
+     * Gemini API(1차) 경로를 지원하며, 향후 NotebookLM MCP 폴백 추가 가능.
+     */
+    @Binds
+    abstract fun bindMinutesRepository(
+        impl: MinutesRepositoryImpl
+    ): MinutesRepository
 }
