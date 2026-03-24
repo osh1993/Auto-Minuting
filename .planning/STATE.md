@@ -62,6 +62,7 @@ Plan: Not started
 | Phase 06 P01 | 5min | 2 tasks | 10 files |
 | Phase 06 P03 | 3min | 2 tasks | 5 files |
 | Phase 06 P02 | 4min | 2 tasks | 6 files |
+| Phase 07 P02 | 3min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,8 @@ Recent decisions affecting current work:
 - [Phase 06]: collectAsStateWithLifecycle: Settings/Dashboard에서 lifecycle-aware State 수집 패턴 적용
 - [Phase 06]: Worker에서 DataStore 직접 접근 대신 inputData로 설정값 전달 (anti-pattern 방지)
 - [Phase 06]: notifyTranscriptionComplete에 minutesFormat 파라미터 추가하여 알림 액션에 형식 정보 포함
+- [Phase 07]: OutlinedTextField로 검색바 구현: Material 3 SearchBar가 ExperimentalMaterial3Api이므로 안정적인 OutlinedTextField 채택
+- [Phase 07]: 제목 LIKE 검색만 지원: recordedAt epoch millis이므로 날짜 검색은 title 포함 시에만 매칭
 
 ### Pending Todos
 
@@ -115,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T13:39:22.332Z
-Stopped at: Phase 7 context gathered
-Resume file: .planning/phases/07-ui/07-CONTEXT.md
+Last session: 2026-03-24T13:51:36Z
+Stopped at: Completed 07-02-PLAN.md
+Resume file: .planning/phases/07-ui/07-02-SUMMARY.md
