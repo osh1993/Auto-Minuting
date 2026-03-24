@@ -217,9 +217,7 @@ class AudioConverter @Inject constructor() {
                 val b = monoSamples[srcIndex + 1]
                 (a + (b - a) * fraction).toInt().toShort()
             } else {
-                monoSamples.coerceIn(srcIndex, monoSamples.size - 1).let {
-                    monoSamples[it.coerceIn(0, monoSamples.size - 1)]
-                }
+                monoSamples[srcIndex.coerceIn(0, monoSamples.size - 1)]
             }
         }
 

@@ -1,6 +1,7 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
@@ -24,17 +25,18 @@ android {
         buildConfigField("String", "PLAUD_APP_SECRET", "\"$plaudAppSecret\"")
 
         // Gemini API 인증 키 (local.properties에서 읽음)
-        val geminiApiKey: String = project.findProperty("GEMINI_API_KEY")?.toString() ?: ""
+        val localProps = Properties()
+        val localPropsFile = rootProject.file("local.properties")
+        if (localPropsFile.exists()) {
+            localProps.load(localPropsFile.inputStream())
+        }
+        val geminiApiKey: String = localProps.getProperty("GEMINI_API_KEY", "")
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
     }
 
     buildFeatures {
@@ -48,9 +50,18 @@ configurations.all {
     resolutionStrategy.force("com.google.guava:guava:28.2-android")
 }
 
+// KSP/Hilt Guava 버전 충돌 해결
+configurations.all {
+    resolutionStrategy.force("com.google.guava:guava:33.4.0-jre")
+}
+
 dependencies {
     // Plaud SDK (AAR) -- D-01: 1차 오디오 수집 경로
-    implementation(files("libs/plaud-sdk.aar"))
+    // AAR 미배치 시 스텁(NiceBuildSdkWrapper)으로 컴파일 통과, Cloud API 폴백 자동 전환
+    val plaudAar = file("libs/plaud-sdk.aar")
+    if (plaudAar.exists()) {
+        implementation(files(plaudAar))
+    }
     implementation(libs.guava)
 
     // Retrofit + OkHttp -- D-02: Cloud API 폴백 경로
@@ -58,6 +69,9 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
+
+    // Material Design (XML 테마용)
+    implementation(libs.material)
 
     // Compose BOM - 모든 Compose 라이브러리 버전 통합 관리
     implementation(platform(libs.compose.bom))

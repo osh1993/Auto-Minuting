@@ -7,7 +7,7 @@ import androidx.work.Configuration
 import com.autominuting.data.audio.PlaudSdkManager
 import com.autominuting.service.PipelineNotificationHelper
 import dagger.hilt.EntryPoint
-import dagger.hilt.EntryPointAccessors
+import dagger.hilt.EntryPoints
 import dagger.hilt.InstallIn
 import dagger.hilt.android.HiltAndroidApp
 import dagger.hilt.components.SingletonComponent
@@ -52,7 +52,7 @@ class AutoMinutingApplication : Application(), Configuration.Provider {
         super.onCreate()
 
         // EntryPoint를 통해 PlaudSdkManager 획득
-        val entryPoint = EntryPointAccessors.fromApplication(this, AppEntryPoint::class.java)
+        val entryPoint = EntryPoints.get(this, AppEntryPoint::class.java)
         val sdkManager = entryPoint.plaudSdkManager()
 
         // Plaud SDK 초기화 (appKey 미설정 시 Cloud API 폴백)

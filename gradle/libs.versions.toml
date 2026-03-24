@@ -2,7 +2,7 @@
 # 코어 플랫폼
 kotlin = "2.3.20"
 agp = "9.1.0"
-ksp = "2.3.20-1.1.1"
+ksp = "2.3.6"
 
 # UI
 composeBom = "2026.03.00"
@@ -12,7 +12,7 @@ room = "2.8.4"
 datastore = "1.2.1"
 
 # DI
-hilt = "2.56"
+hilt = "2.59.2"
 
 # 백그라운드 처리
 workmanager = "2.11.1"
@@ -25,7 +25,7 @@ retrofit = "2.11.0"
 okhttp = "4.12.0"
 
 # Plaud SDK 의존성
-guava = "28.2-android"
+guava = "33.4.0-android"
 
 # AI (Gemini)
 generativeai = "0.9.0"
@@ -39,6 +39,9 @@ lifecycleRuntimeCompose = "2.9.0"
 coreKtx = "1.16.0"
 
 [libraries]
+# Material Design (XML 테마용)
+material = { group = "com.google.android.material", name = "material", version = "1.12.0" }
+
 # Compose
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 material3 = { group = "androidx.compose.material3", name = "material3" }
