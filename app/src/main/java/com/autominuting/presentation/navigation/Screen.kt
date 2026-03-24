@@ -2,6 +2,7 @@ package com.autominuting.presentation.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
@@ -31,6 +32,16 @@ sealed class Screen(
 
     /** 설정 - 앱 설정 화면 */
     data object Settings : Screen("settings", "설정", Icons.Default.Settings)
+
+    /** 전사 편집 - 전사 텍스트 편집 화면 (Bottom Navigation에 표시되지 않음) */
+    data object TranscriptEdit : Screen(
+        "transcripts/{meetingId}/edit",
+        "전사 편집",
+        Icons.Default.Edit
+    ) {
+        /** meetingId를 포함한 실제 Navigation 경로를 생성한다. */
+        fun createRoute(meetingId: Long) = "transcripts/$meetingId/edit"
+    }
 
     companion object {
         /** Bottom Navigation에 표시될 화면 목록 */

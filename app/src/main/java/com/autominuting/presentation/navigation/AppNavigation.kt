@@ -13,11 +13,14 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.autominuting.presentation.dashboard.DashboardScreen
 import com.autominuting.presentation.minutes.MinutesScreen
 import com.autominuting.presentation.settings.SettingsScreen
+import com.autominuting.presentation.transcripts.TranscriptEditScreen
 import com.autominuting.presentation.transcripts.TranscriptsScreen
 
 /**
@@ -63,7 +66,23 @@ fun AppNavigation() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Dashboard.route) { DashboardScreen() }
-            composable(Screen.Transcripts.route) { TranscriptsScreen() }
+            composable(Screen.Transcripts.route) {
+                TranscriptsScreen(
+                    onEditClick = { meetingId ->
+                        navController.navigate(Screen.TranscriptEdit.createRoute(meetingId))
+                    }
+                )
+            }
+            composable(
+                route = Screen.TranscriptEdit.route,
+                arguments = listOf(
+                    navArgument("meetingId") { type = NavType.LongType }
+                )
+            ) {
+                TranscriptEditScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
             composable(Screen.Minutes.route) { MinutesScreen() }
             composable(Screen.Settings.route) { SettingsScreen() }
         }
