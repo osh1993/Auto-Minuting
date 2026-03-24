@@ -3,6 +3,7 @@ package com.autominuting.service
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.util.Log
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -119,9 +120,14 @@ class AudioCollectionService : Service() {
      * 2. WorkManager로 전사 파이프라인을 트리거 (AUD-03)
      */
     private suspend fun collectAudio() {
-        audioRepository.startAudioCollection().collect { filePath ->
-            updateNotification("오디오 저장 완료: ${File(filePath).name}")
-            triggerTranscriptionPipeline(filePath)
+        try {
+            audioRepository.startAudioCollection().collect { filePath ->
+                updateNotification("오디오 저장 완료: ${File(filePath).name}")
+                triggerTranscriptionPipeline(filePath)
+            }
+        } catch (e: Exception) {
+            Log.e("AudioCollection", "오디오 수집 실패: ${e.message}", e)
+            updateNotification("오디오 수집 실패: ${e.message}")
         }
     }
 

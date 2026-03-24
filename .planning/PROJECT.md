@@ -35,7 +35,7 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 
 ### Active
 
-(v2 마일스톤에서 정의 예정)
+(v2.0 마일스톤 — 아래 Current Milestone 참조)
 
 ### Out of Scope
 
@@ -72,12 +72,38 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 | AnnotatedString Markdown 렌더링 | 외부 라이브러리 없이 직접 구현 | ✓ v1.0 |
 | Room LIKE 검색 | v1 데이터 규모에 FTS 불필요 | ✓ v1.0 |
 
+## Current Milestone: v2.0 실동작 파이프라인 + 기능 확장
+
+**Goal:** 삼성 녹음기 전사 연동 검토, NotebookLM 통합, 파일 관리, Gemini 인증 개선 후, 마지막으로 Plaud BLE 실연결을 수정하여 실제 동작하는 앱으로 완성
+
+**Target features:**
+- 삼성 녹음기 온보드 AI 전사 완료 이벤트 자동 감지 가능성 검토 (불가 시 공유 방식 폴백)
+- NotebookLM 연동 — 앱에서 직접 접속 or 공유 기능으로 전사 텍스트 전달, 클라이언트 기능 내장 가능성 검토
+- 전사파일/회의록 삭제 기능
+- Gemini API 키 설정 UI 구현
+- Gemini OAuth 인증 방식 추가
+- 삼성 녹음기 전사 이벤트 수신 기술 검토 (ContentObserver, Accessibility 등)
+- Plaud SDK BLE 연결 디버깅 및 실제 파일 수신 동작 확인 (마지막 수행)
+
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
 
 **v1.0 Requirements archived to:** `.planning/milestones/v1.0-REQUIREMENTS.md`
 **v1.0 Roadmap archived to:** `.planning/milestones/v1.0-ROADMAP.md`
 
 ---
-*Last updated: 2026-03-25 after v1.0 milestone*
+*Last updated: 2026-03-25 after v2.0 milestone started*

@@ -1,6 +1,7 @@
 package com.autominuting.presentation.dashboard
 
 import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autominuting.domain.model.Meeting
@@ -8,6 +9,7 @@ import com.autominuting.domain.model.MinutesFormat
 import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.domain.repository.MeetingRepository
 import com.autominuting.domain.repository.MinutesRepository
+import com.autominuting.service.AudioCollectionService
 import com.autominuting.data.repository.MinutesRepositoryImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -52,6 +54,29 @@ class DashboardViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = null
         )
+
+    /** 오디오 수집 서비스 실행 상태 */
+    private val _isCollecting = MutableStateFlow(false)
+    val isCollecting: StateFlow<Boolean> = _isCollecting.asStateFlow()
+
+    /** AudioCollectionService를 시작/중지하는 토글 함수 */
+    fun toggleCollection() {
+        try {
+            val intent = Intent(context, AudioCollectionService::class.java)
+            if (_isCollecting.value) {
+                intent.action = AudioCollectionService.ACTION_STOP
+                context.startService(intent)
+                _isCollecting.value = false
+            } else {
+                intent.action = AudioCollectionService.ACTION_START
+                context.startForegroundService(intent)
+                _isCollecting.value = true
+            }
+        } catch (e: Exception) {
+            _testStatus.value = "✗ 서비스 시작 실패: ${e.message}"
+            _isCollecting.value = false
+        }
+    }
 
     /** 테스트 상태 메시지 */
     private val _testStatus = MutableStateFlow("")

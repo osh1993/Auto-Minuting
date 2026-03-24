@@ -12,6 +12,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -38,8 +42,27 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val activePipeline by viewModel.activePipeline.collectAsStateWithLifecycle()
+    val isCollecting by viewModel.isCollecting.collectAsStateWithLifecycle()
     val testStatus by viewModel.testStatus.collectAsStateWithLifecycle()
     val isTestingGemini by viewModel.isTestingGemini.collectAsStateWithLifecycle()
+
+    // BLE 런타임 권한 요청 런처
+    val blePermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.values.all { it }
+        if (allGranted) {
+            viewModel.toggleCollection()
+        }
+    }
+
+    val requiredPermissions = buildList {
+        add(Manifest.permission.BLUETOOTH_CONNECT)
+        add(Manifest.permission.BLUETOOTH_SCAN)
+        if (Build.VERSION.SDK_INT >= 33) {
+            add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }.toTypedArray()
 
     Column(
         modifier = Modifier
@@ -84,6 +107,59 @@ fun DashboardScreen(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
+                    }
+                }
+            }
+        }
+
+        // 녹음기 연결 카드
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (isCollecting)
+                    MaterialTheme.colorScheme.primaryContainer
+                else
+                    MaterialTheme.colorScheme.secondaryContainer
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "녹음기 연결",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = if (isCollecting)
+                        "Plaud 녹음기에서 오디오를 수집하고 있습니다."
+                    else
+                        "녹음기를 연결하여 오디오 수집을 시작합니다.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isCollecting)
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    else
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                if (isCollecting) {
+                    OutlinedButton(
+                        onClick = { viewModel.toggleCollection() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("수집 중지")
+                    }
+                } else {
+                    Button(
+                        onClick = { blePermissionLauncher.launch(requiredPermissions) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("녹음기 연결 시작")
                     }
                 }
             }
