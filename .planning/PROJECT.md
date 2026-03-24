@@ -2,89 +2,82 @@
 
 ## What This Is
 
-Plaud 녹음기에서 동기화되는 음성 파일을 가로채어 로컬에 저장하고, 삼성 Galaxy AI 온보드 전사 기능으로 텍스트로 변환한 뒤, NotebookLM에 소스로 등록하여 회의록을 자동 생성하는 Android 네이티브 앱. 회의 참석 후 녹음기를 연결하면 회의록이 자동으로 완성되는 원클릭 파이프라인을 목표로 한다.
+Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, Whisper 온디바이스 STT로 한국어 텍스트로 전사한 뒤, Gemini 2.5 Flash API로 구조화된 회의록을 자동 생성하는 Android 네이티브 앱. 녹음기를 연결하면 회의록이 자동으로 완성되는 원클릭 파이프라인.
 
 ## Core Value
 
 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다.
 
+## Current State
+
+**Shipped: v1.0 MVP** (2026-03-24)
+
+- 58개 Kotlin 파일, 5,500+ LOC
+- Tech stack: Kotlin 2.3.20, Jetpack Compose (BOM 2026.03), Hilt 2.56, Room 2.8.4, WorkManager
+- 파이프라인: Plaud SDK BLE → Whisper STT → Gemini 2.5 Flash → Markdown 회의록
+- UI: Material 3 Dynamic Color, Bottom Navigation 4탭, Markdown 뷰어, 아카이브 검색
+
 ## Requirements
 
-### Validated
+### Validated (v1.0)
 
-- [x] 전사된 텍스트를 Gemini AI로 처리하여 구조화된 회의록 생성 — Validated in Phase 5: minutes
-- [x] 생성된 회의록을 스마트폰 로컬에 저장 — Validated in Phase 5: minutes
-- [x] 저장된 회의록을 앱 내에서 텍스트로 읽을 수 있다 — Validated in Phase 5: minutes
-- [x] 회의록 형식 선택 기능 (구조화된 회의록 / 요약 / 액션 아이템) — Validated in Phase 6: pipeline-integration
-- [x] 생성된 회의록을 외부 앱으로 공유 (Android Share Intent) — Validated in Phase 6: pipeline-integration
-- [x] 파이프라인 진행 상태 알림 (각 단계별 진행률) — Validated in Phase 6: pipeline-integration
-- [x] 자동화 수준 설정 (완전 자동 / 하이브리드 모드) — Validated in Phase 6: pipeline-integration
-- [x] 회의록 뷰어 — 구조화된 Markdown 렌더링으로 읽기 쉽게 표시 — Validated in Phase 7: UI 완성
-- [x] 과거 회의록 아카이브 — 제목/날짜 검색 및 브라우징 — Validated in Phase 7: UI 완성
+- ✓ Plaud SDK BLE로 오디오 파일 자동 수신 및 로컬 저장 — v1.0
+- ✓ Whisper 온디바이스 STT로 한국어 음성 전사 (ML Kit 폴백) — v1.0
+- ✓ Gemini 2.5 Flash API로 구조화된 회의록 생성 — v1.0
+- ✓ 회의록 3종 형식 선택 (구조화/요약/액션아이템) — v1.0
+- ✓ 회의록 Markdown 뷰어 (AnnotatedString 기반 렌더링) — v1.0
+- ✓ 과거 회의록 제목/날짜 검색 및 브라우징 — v1.0
+- ✓ Android Share Intent로 외부 앱 공유 — v1.0
+- ✓ 파이프라인 단계별 진행 알림 — v1.0
+- ✓ 완전 자동 / 하이브리드 모드 설정 — v1.0
+- ✓ 전사 텍스트 편집 기능 — v1.0
+- ✓ Clean Architecture + Hilt DI + Room DB + WorkManager 인프라 — v1.0
 
 ### Active
 
-- [ ] Plaud 앱 리버스 엔지니어링을 통한 음성 파일 로컬 저장 경로/BLE 통신 분석
-- [ ] Plaud 녹음기에서 전송되는 음성 파일을 훅킹하여 스마트폰 로컬에 저장
-- [ ] 저장 완료 시 Galaxy AI 전사 기능으로 한국어 음성을 텍스트로 변환
-- [ ] 전사된 텍스트를 NotebookLM에 소스로 등록 (지정 노트 또는 새 노트 선택 가능)
-- [ ] NotebookLM 프롬프팅으로 회의록 자동 생성
-- [ ] 생성된 회의록을 스마트폰 로컬에 저장
-- [ ] 회의록 형식 선택 기능 (구조화된 회의록 / 요약 / 커스텀)
-- [ ] 자동화 수준 설정 (완전 자동 / 하이브리드 모드)
+(v2 마일스톤에서 정의 예정)
 
 ### Out of Scope
 
-- iOS 지원 — 삼성 Galaxy AI 온보드 기능에 의존하므로 Android 전용
-- 자체 STT 엔진 구현 — Galaxy AI 온보드 전사 기능 활용
-- Plaud 클라우드 연동 — 로컬 파이프라인으로 처리
+- iOS 지원 — Android 전용 (Galaxy AI, BLE 시스템 통합)
 - 실시간 스트리밍 전사 — 녹음 완료 후 배치 처리 방식
+- Plaud 클라우드 연동 — 로컬 파이프라인으로 처리
+- 자체 STT 엔진 훈련 — Whisper 사전훈련 모델 활용
 
 ## Context
 
-- **Plaud 녹음기**: BLE로 스마트폰과 통신하며, Plaud 앱 실행 시 녹음 파일을 동기화. 로컬 저장 경로가 불확실하여 리버스 엔지니어링 필요
-- **Galaxy AI 전사**: 삼성 갤럭시 스마트폰 내장 온보드 AI 기능으로 음성→텍스트 변환. 네트워크 불필요
-- **NotebookLM**: Google의 AI 노트 서비스. MCP 서버가 현재 설정되어 있으며, API 연동 방식은 리서치 후 결정
+- **오디오 수집**: Plaud SDK v0.2.8 (공식, MIT)로 BLE 연결. Cloud API를 폴백으로 보유
+- **STT**: Whisper(whisper.cpp small) 온디바이스 1차, ML Kit GenAI 2차. Galaxy AI는 서드파티 접근 불가로 폐기
+- **회의록 생성**: Google AI Client SDK로 Gemini 2.5 Flash 직접 호출. NotebookLM MCP는 PC 의존으로 폴백 유지
 - **타깃 언어**: 한국어 녹음/전사가 주 대상
-- **타깃 디바이스**: 삼성 갤럭시 스마트폰 (Galaxy AI 지원 모델)
+- **타깃 디바이스**: 삼성 갤럭시 스마트폰 (minSdk 31, Android 12+)
 
 ## Constraints
 
-- **플랫폼**: Android 네이티브 (Kotlin) — Galaxy AI API 접근성 및 시스템 레벨 통합 필요
-- **하드웨어 의존**: Plaud 녹음기 + 삼성 갤럭시 스마트폰 필수
-- **리버스 엔지니어링 리스크**: Plaud 앱 업데이트 시 파일 경로/통신 프로토콜 변경 가능성
-- **Galaxy AI 가용성**: Galaxy AI 전사 기능이 지원되는 기기/OS 버전에 한정
+- **플랫폼**: Android 네이티브 (Kotlin) — 시스템 레벨 BLE/파일 접근 필요
+- **하드웨어 의존**: Plaud 녹음기 + Android 스마트폰 필수
+- **Plaud SDK 의존**: SDK 업데이트 시 BLE 프로토콜 변경 가능성, appKey 발급 필요
+- **Gemini API 키 필요**: Google AI Studio에서 API 키 발급 필요
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Android 네이티브 (Kotlin) | Galaxy AI 온보드 기능 접근 및 시스템 레벨 BLE/파일 접근 필요 | 확정 |
-| Plaud 앱 리버스 엔지니어링 접근 | 공식 API 미제공, 파일 전달 경로 파악 필요 | SDK 발견으로 역공학 불필요 |
-| NotebookLM 연동 방식 | MCP 서버 vs API 직접 호출 — 리서치 후 결정 | Gemini API 직접 호출 채택 |
-| 자동화 수준 설정 가능 | 사용자별 워크플로우 선호도가 다를 수 있으므로 완전자동/하이브리드 선택 | 유지 |
-| [PoC] 오디오 수집 채택 경로 | Plaud SDK v0.2.8 (공식, MIT) — appKey 발급 전제. 폴백: Cloud API (비공식, JWT 인증) | Plaud SDK 1차 채택 |
-| [PoC] STT 전사 채택 경로 | Galaxy AI 서드파티 접근 불가 확인. Whisper(whisper.cpp small) 온디바이스 1차, ML Kit GenAI 2차 | Whisper 1차 채택 |
-| [PoC] 회의록 생성 채택 경로 | Gemini API 직접 호출 (Firebase AI Logic SDK) — 모바일 독립, 공식 API, 무료 티어. 폴백: NotebookLM MCP (PC 의존) | Gemini API 1차 채택 |
-| [PoC] 대안 파이프라인 | Gemini API 오디오 직접 입력으로 STT 단계 생략 가능 — Phase 5에서 품질 비교 후 결정 | 대안으로 기록 |
-| [PoC] FileObserver 경로 폐기 | Scoped Storage(API 30+)로 타 앱 파일 감시 불가 | 폐기 확정 |
+| Android 네이티브 (Kotlin) | 시스템 레벨 BLE/파일 접근 필요 | ✓ 확정 |
+| Plaud SDK 1차 채택 | 공식 SDK 발견으로 역공학 불필요 | ✓ 채택 |
+| Whisper 온디바이스 STT | Galaxy AI 서드파티 접근 불가, 네트워크 불필요 | ✓ 채택 |
+| Gemini API 직접 호출 | 모바일 독립, 공식 API, 무료 티어 | ✓ 채택 |
+| 3종 프리셋 형식 | 커스텀 프롬프트는 v2로 미룸 | ✓ v1.0 |
+| DataStore 설정 관리 | SharedPreferences 대체, Coroutine/Flow 지원 | ✓ v1.0 |
+| AnnotatedString Markdown 렌더링 | 외부 라이브러리 없이 직접 구현 | ✓ v1.0 |
+| Room LIKE 검색 | v1 데이터 규모에 FTS 불필요 | ✓ v1.0 |
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
 
-**After each phase transition** (via `/gsd:transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd:complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
+**v1.0 Requirements archived to:** `.planning/milestones/v1.0-REQUIREMENTS.md`
+**v1.0 Roadmap archived to:** `.planning/milestones/v1.0-ROADMAP.md`
 
 ---
-*Last updated: 2026-03-24 after Phase 7 UI 완성 — v1.0 마일스톤 완료*
+*Last updated: 2026-03-25 after v1.0 milestone*
