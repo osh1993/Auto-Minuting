@@ -32,6 +32,7 @@ coreKtx = "1.16.0"
 # Compose
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 material3 = { group = "androidx.compose.material3", name = "material3" }
+material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 
 # 네비게이션
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }

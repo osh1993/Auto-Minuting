@@ -36,6 +36,7 @@ dependencies {
     // Compose BOM - 모든 Compose 라이브러리 버전 통합 관리
     implementation(platform(libs.compose.bom))
     implementation(libs.material3)
+    implementation(libs.material.icons.extended)
 
     // 네비게이션
     implementation(libs.navigation.compose)
