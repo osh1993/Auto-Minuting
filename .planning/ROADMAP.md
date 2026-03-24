@@ -74,7 +74,10 @@ Plans:
   1. 저장된 오디오 파일이 한국어 텍스트로 전사되어 로컬에 저장된다
   2. 전사 완료 후 사용자가 전사 텍스트 화면에서 내용을 수정하고 저장할 수 있다
   3. STT 엔진 실패 시 대안 엔진(폴백)으로 자동 전환되어 전사가 완료된다
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 04-01-PLAN.md — Whisper/ML Kit STT 엔진 + TranscriptionRepositoryImpl + Worker 연동
+- [ ] 04-02-PLAN.md — 전사 목록 화면 + 전사 편집 화면 + Navigation 연동
 
 ### Phase 5: 회의록 생성
 **Goal**: 전사된 텍스트가 AI를 통해 구조화된 회의록으로 변환되어 로컬에 저장된다
@@ -120,7 +123,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. PoC — 기술 가능성 검증 | 4/4 | Complete   | 2026-03-24 |
 | 2. 앱 기반 구조 | 0/3 | Not started | - |
 | 3. 오디오 수집 | 0/2 | Not started | - |
-| 4. 전사 엔진 | 0/TBD | Not started | - |
+| 4. 전사 엔진 | 0/2 | Not started | - |
 | 5. 회의록 생성 | 0/TBD | Not started | - |
 | 6. 파이프라인 통합 및 자동화 | 0/TBD | Not started | - |
 | 7. UI 완성 | 0/TBD | Not started | - |
