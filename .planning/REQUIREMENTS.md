@@ -46,7 +46,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **APP-01**: Android 네이티브 앱 (Kotlin + Jetpack Compose)
 - [x] **APP-02**: Clean Architecture (Domain/Data/Presentation 레이어 분리)
-- [ ] **APP-03**: Room DB를 이용한 로컬 데이터 관리 (녹음/전사/회의록)
+- [x] **APP-03**: Room DB를 이용한 로컬 데이터 관리 (녹음/전사/회의록)
 - [ ] **APP-04**: WorkManager를 이용한 파이프라인 단계 체이닝
 
 ## v2 Requirements
@@ -89,7 +89,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | POC-04 | Phase 1 | Complete |
 | APP-01 | Phase 2 | Complete |
 | APP-02 | Phase 2 | Complete |
-| APP-03 | Phase 2 | Pending |
+| APP-03 | Phase 2 | Complete |
 | APP-04 | Phase 2 | Pending |
 | AUD-01 | Phase 3 | Pending |
 | AUD-02 | Phase 3 | Pending |

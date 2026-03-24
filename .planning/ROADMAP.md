@@ -50,7 +50,7 @@ Plans:
 **Plans:** 3 plans
 Plans:
 - [x] 02-01-PLAN.md — Gradle 프로젝트 초기화 + Clean Architecture 패키지 + Hilt DI
-- [ ] 02-02-PLAN.md — Room DB 스키마 + Domain 인터페이스 + Repository DI 바인딩
+- [x] 02-02-PLAN.md — Room DB 스키마 + Domain 인터페이스 + Repository DI 바인딩
 - [ ] 02-03-PLAN.md — Compose Navigation + 4개 빈 화면 + WorkManager 초기화
 
 ### Phase 3: 오디오 수집
