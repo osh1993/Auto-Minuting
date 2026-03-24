@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 간단한 마이크 아이콘 형태 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,22c-5.52,0 -10,4.48 -10,10v20c0,5.52 4.48,10 10,10s10,-4.48 10,-10v-20c0,-5.52 -4.48,-10 -10,-10zM68,52c0,7.73 -6.27,14 -14,14s-14,-6.27 -14,-14h-4c0,9.94 7.66,18.12 17,18.92v9.08h-8v4h20v-4h-8v-9.08c9.34,-0.8 17,-8.98 17,-18.92h-4z" />
+</vector>
