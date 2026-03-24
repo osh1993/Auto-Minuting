@@ -12,7 +12,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **POC-01**: Plaud 앱 APK 디컴파일 및 BLE 프로토콜/파일 저장 경로 분석 완료
 - [x] **POC-02**: Galaxy AI 전사 기능의 서드파티 앱 접근 방법 확인 (API/Intent/Accessibility)
 - [x] **POC-03**: Galaxy AI 불가 시 대안 STT 경로 확인 (Whisper 온디바이스 / Google STT)
-- [ ] **POC-04**: NotebookLM Android 연동 방식 확인 (MCP 릴레이 / Gemini API 직접 호출)
+- [x] **POC-04**: NotebookLM Android 연동 방식 확인 (MCP 릴레이 / Gemini API 직접 호출)
 
 ### 오디오 수집
 
@@ -86,7 +86,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | POC-01 | Phase 1 | Complete |
 | POC-02 | Phase 1 | Complete |
 | POC-03 | Phase 1 | Complete |
-| POC-04 | Phase 1 | Pending |
+| POC-04 | Phase 1 | Complete |
 | APP-01 | Phase 2 | Pending |
 | APP-02 | Phase 2 | Pending |
 | APP-03 | Phase 2 | Pending |
