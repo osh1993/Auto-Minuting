@@ -37,7 +37,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### UI/UX
 
-- [ ] **UI-01**: 회의록 뷰어 — 생성된 회의록을 읽기 쉽게 표시
+- [x] **UI-01**: 회의록 뷰어 — 생성된 회의록을 읽기 쉽게 표시
 - [x] **UI-02**: 파이프라인 진행 상태 알림 (각 단계별 진행률)
 - [x] **UI-03**: 과거 회의록 아카이브 — 검색 및 브라우징
 - [x] **UI-04**: 자동화 수준 설정 — 완전 자동 / 하이브리드 모드 선택
@@ -105,7 +105,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MIN-06 | Phase 6 | Complete |
 | UI-02 | Phase 6 | Complete |
 | UI-04 | Phase 6 | Complete |
-| UI-01 | Phase 7 | Pending |
+| UI-01 | Phase 7 | Complete |
 | UI-03 | Phase 7 | Complete |
 
 **Coverage:**

@@ -117,7 +117,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. 생성된 회의록이 구조화된 뷰어에서 읽기 쉽게 표시된다
   2. 과거 회의록 목록에서 제목/날짜/키워드로 검색하고 원하는 회의록을 열 수 있다
-**Plans:** 2 plans
+**Plans:** 0/2 plans executed
 Plans:
 - [ ] 07-01-PLAN.md — Markdown 뷰어 Composable 구현 + MinutesDetailScreen 교체
 - [ ] 07-02-PLAN.md — 아카이브 검색 (MeetingDao LIKE 쿼리 + SearchBar UI)
@@ -136,4 +136,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 4. 전사 엔진 | 1/2 | In progress | - |
 | 5. 회의록 생성 | 1/2 | In Progress|  |
 | 6. 파이프라인 통합 및 자동화 | 1/3 | In Progress|  |
-| 7. UI 완성 | 0/2 | Not started | - |
+| 7. UI 완성 | 0/2 | Planned    |  |
