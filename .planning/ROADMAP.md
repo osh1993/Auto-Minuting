@@ -31,7 +31,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. 한국어 음성 파일을 프로그래밍적으로 텍스트로 전사할 수 있는 방법(Galaxy AI / ML Kit / Whisper)이 하나 이상 확인된다
   3. 텍스트를 입력으로 회의록을 생성할 수 있는 방법(NotebookLM MCP / Gemini API)이 하나 이상 확인된다
   4. 각 의존성별 채택 경로와 폴백 경로가 결정되어 PROJECT.md Key Decisions에 기록된다
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 01-01-PLAN.md — Plaud 오디오 파일 획득 경로 검증 (APK 분석 + SDK 평가 + Cloud API)
+- [ ] 01-02-PLAN.md — STT 전사 경로 검증 (Galaxy AI 조사 + ML Kit/Whisper 평가)
+- [ ] 01-03-PLAN.md — 회의록 생성 경로 검증 (Gemini API + NotebookLM MCP)
+- [ ] 01-04-PLAN.md — 3개 의존성 종합 결정 문서화 및 PROJECT.md 업데이트
 
 ### Phase 2: 앱 기반 구조
 **Goal**: 이후 모든 파이프라인 구현이 올라갈 수 있는 Clean Architecture 앱 뼈대가 동작한다
@@ -106,7 +111,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. PoC — 기술 가능성 검증 | 0/TBD | Not started | - |
+| 1. PoC — 기술 가능성 검증 | 0/4 | Planning complete | - |
 | 2. 앱 기반 구조 | 0/TBD | Not started | - |
 | 3. 오디오 수집 | 0/TBD | Not started | - |
 | 4. 전사 엔진 | 0/TBD | Not started | - |
