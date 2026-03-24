@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to plan
-stopped_at: Phase 6 context gathered
-last_updated: "2026-03-24T13:00:53.684Z"
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-03-24T13:33:17.369Z"
 progress:
   total_phases: 7
-  completed_phases: 5
-  total_plans: 13
-  completed_plans: 13
+  completed_phases: 6
+  total_plans: 16
+  completed_plans: 16
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다
-**Current focus:** Phase 05 — minutes
+**Current focus:** Phase 06 — pipeline-integration
 
 ## Current Position
 
-Phase: 6
+Phase: 7
 Plan: Not started
 
 ## Performance Metrics
@@ -59,6 +59,9 @@ Plan: Not started
 | Phase 04-stt P02 | 5min | 2 tasks | 6 files |
 | Phase 05 P01 | 4min | 2 tasks | 8 files |
 | Phase 05-minutes P02 | 3min | 2 tasks | 6 files |
+| Phase 06 P01 | 5min | 2 tasks | 10 files |
+| Phase 06 P03 | 3min | 2 tasks | 5 files |
+| Phase 06 P02 | 4min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -92,6 +95,13 @@ Recent decisions affecting current work:
 - [Phase 05]: gemini-2.5-flash 모델 선택 — POC-04에서 한국어 회의록 생성 품질 검증 완료
 - [Phase 05]: MinutesRepositoryImpl 단일 경로 구현 — 향후 NotebookLM MCP 폴백 확장 가능 구조
 - [Phase 05-minutes]: Markdown을 플레인텍스트로 표시: Phase 7에서 렌더러 업그레이드 예정
+- [Phase 06]: DataStore preferencesDataStore 확장 프로퍼티를 파일 최상위에 선언하여 Hilt Module에서 제공
+- [Phase 06]: GeminiEngine에 기본값 파라미터(format = STRUCTURED)로 기존 호출 호환성 유지
+- [Phase 06]: PipelineNotificationHelper를 object 싱글톤으로 구현하여 Worker/Service에서 직접 호출
+- [Phase 06]: MenuAnchorType.PrimaryNotEditable: Compose M3 ExposedDropdownMenuBox readOnly 앵커 타입
+- [Phase 06]: collectAsStateWithLifecycle: Settings/Dashboard에서 lifecycle-aware State 수집 패턴 적용
+- [Phase 06]: Worker에서 DataStore 직접 접근 대신 inputData로 설정값 전달 (anti-pattern 방지)
+- [Phase 06]: notifyTranscriptionComplete에 minutesFormat 파라미터 추가하여 알림 액션에 형식 정보 포함
 
 ### Pending Todos
 
@@ -105,6 +115,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T13:00:53.679Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-pipeline-integration/06-CONTEXT.md
+Last session: 2026-03-24T13:29:14.838Z
+Stopped at: Completed 06-02-PLAN.md
+Resume file: None

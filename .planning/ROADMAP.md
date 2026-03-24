@@ -103,9 +103,9 @@ Plans:
   3. 파이프라인 진행 중 각 단계별 진행률이 알림으로 표시된다
   4. 회의록 형식(구조화된 회의록 / 요약 / 커스텀 템플릿)을 선택할 수 있다
   5. 생성된 회의록을 Android Share Intent로 외부 앱(카카오톡, 이메일 등)에 공유할 수 있다
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 Plans:
-- [ ] 06-01-PLAN.md — 도메인 모델 + DataStore 설정 + GeminiEngine 프롬프트 확장 + 알림 헬퍼
+- [x] 06-01-PLAN.md — 도메인 모델 + DataStore 설정 + GeminiEngine 프롬프트 확장 + 알림 헬퍼
 - [ ] 06-02-PLAN.md — Worker 하이브리드 분기 + 형식 전달 + 알림 업데이트 + BroadcastReceiver
 - [ ] 06-03-PLAN.md — 설정 화면 UI + 회의록 공유 + 대시보드 진행 배너
 **UI hint**: yes
@@ -132,5 +132,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. 오디오 수집 | 0/2 | Not started | - |
 | 4. 전사 엔진 | 1/2 | In progress | - |
 | 5. 회의록 생성 | 1/2 | In Progress|  |
-| 6. 파이프라인 통합 및 자동화 | 0/3 | Not started | - |
+| 6. 파이프라인 통합 및 자동화 | 1/3 | In Progress|  |
 | 7. UI 완성 | 0/TBD | Not started | - |

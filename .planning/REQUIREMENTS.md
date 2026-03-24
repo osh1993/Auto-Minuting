@@ -28,19 +28,19 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### 회의록 생성
 
-- [ ] **MIN-01**: 전사된 텍스트를 NotebookLM(또는 확인된 대안)에 소스로 등록
-- [ ] **MIN-02**: 지정된 노트 또는 새 노트에 소스 등록 선택 가능
-- [ ] **MIN-03**: 프롬프팅으로 회의록 자동 생성
-- [ ] **MIN-04**: 생성된 회의록을 스마트폰 로컬에 저장
-- [ ] **MIN-05**: 회의록 형식 선택 가능 (구조화된 회의록 / 요약 / 커스텀 템플릿)
-- [ ] **MIN-06**: 생성된 회의록을 외부 앱으로 공유 (Android Share Intent)
+- [x] **MIN-01**: 전사된 텍스트를 NotebookLM(또는 확인된 대안)에 소스로 등록
+- [x] **MIN-02**: 지정된 노트 또는 새 노트에 소스 등록 선택 가능
+- [x] **MIN-03**: 프롬프팅으로 회의록 자동 생성
+- [x] **MIN-04**: 생성된 회의록을 스마트폰 로컬에 저장
+- [x] **MIN-05**: 회의록 형식 선택 가능 (구조화된 회의록 / 요약 / 커스텀 템플릿)
+- [x] **MIN-06**: 생성된 회의록을 외부 앱으로 공유 (Android Share Intent)
 
 ### UI/UX
 
 - [ ] **UI-01**: 회의록 뷰어 — 생성된 회의록을 읽기 쉽게 표시
-- [ ] **UI-02**: 파이프라인 진행 상태 알림 (각 단계별 진행률)
+- [x] **UI-02**: 파이프라인 진행 상태 알림 (각 단계별 진행률)
 - [ ] **UI-03**: 과거 회의록 아카이브 — 검색 및 브라우징
-- [ ] **UI-04**: 자동화 수준 설정 — 완전 자동 / 하이브리드 모드 선택
+- [x] **UI-04**: 자동화 수준 설정 — 완전 자동 / 하이브리드 모드 선택
 
 ### 앱 기반
 
@@ -97,14 +97,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STT-01 | Phase 4 | Complete |
 | STT-02 | Phase 4 | Complete |
 | STT-03 | Phase 4 | Complete |
-| MIN-01 | Phase 5 | Pending |
-| MIN-02 | Phase 5 | Pending |
-| MIN-03 | Phase 5 | Pending |
-| MIN-04 | Phase 5 | Pending |
-| MIN-05 | Phase 6 | Pending |
-| MIN-06 | Phase 6 | Pending |
-| UI-02 | Phase 6 | Pending |
-| UI-04 | Phase 6 | Pending |
+| MIN-01 | Phase 5 | Complete |
+| MIN-02 | Phase 5 | Complete |
+| MIN-03 | Phase 5 | Complete |
+| MIN-04 | Phase 5 | Complete |
+| MIN-05 | Phase 6 | Complete |
+| MIN-06 | Phase 6 | Complete |
+| UI-02 | Phase 6 | Complete |
+| UI-04 | Phase 6 | Complete |
 | UI-01 | Phase 7 | Pending |
 | UI-03 | Phase 7 | Pending |
 
