@@ -61,7 +61,10 @@ Plans:
   1. Plaud 녹음기를 연결하면 오디오 파일이 앱 내부 저장소에 저장된다
   2. 오디오 수집이 Foreground Service로 백그라운드에서 동작하며 앱을 닫아도 계속 실행된다
   3. 새 오디오 파일이 감지되면 파이프라인 다음 단계(전사)가 자동으로 시작된다
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 03-01-PLAN.md — Gradle 의존성 + Plaud SDK/Cloud API 데이터 레이어 + AudioRepository 구현
+- [ ] 03-02-PLAN.md — Foreground Service + TranscriptionTriggerWorker + Application SDK 초기화
 
 ### Phase 4: 전사 엔진
 **Goal**: 저장된 한국어 오디오 파일이 텍스트로 전사되어 로컬에 저장되며 사용자가 내용을 확인·수정할 수 있다
@@ -116,7 +119,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. PoC — 기술 가능성 검증 | 4/4 | Complete   | 2026-03-24 |
 | 2. 앱 기반 구조 | 0/3 | Not started | - |
-| 3. 오디오 수집 | 0/TBD | Not started | - |
+| 3. 오디오 수집 | 0/2 | Not started | - |
 | 4. 전사 엔진 | 0/TBD | Not started | - |
 | 5. 회의록 생성 | 0/TBD | Not started | - |
 | 6. 파이프라인 통합 및 자동화 | 0/TBD | Not started | - |
