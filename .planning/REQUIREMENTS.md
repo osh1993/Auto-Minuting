@@ -17,8 +17,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### 오디오 수집
 
 - [x] **AUD-01**: Plaud 녹음기에서 전송되는 음성 파일을 감지하여 로컬 저장소에 저장
-- [ ] **AUD-02**: 음성 파일 저장이 Foreground Service로 백그라운드에서 자동 처리
-- [ ] **AUD-03**: 새로운 오디오 파일 감지 시 파이프라인이 자동으로 시작
+- [x] **AUD-02**: 음성 파일 저장이 Foreground Service로 백그라운드에서 자동 처리
+- [x] **AUD-03**: 새로운 오디오 파일 감지 시 파이프라인이 자동으로 시작
 
 ### 전사 (STT)
 
@@ -92,8 +92,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | APP-03 | Phase 2 | Complete |
 | APP-04 | Phase 2 | Complete |
 | AUD-01 | Phase 3 | Complete |
-| AUD-02 | Phase 3 | Pending |
-| AUD-03 | Phase 3 | Pending |
+| AUD-02 | Phase 3 | Complete |
+| AUD-03 | Phase 3 | Complete |
 | STT-01 | Phase 4 | Pending |
 | STT-02 | Phase 4 | Pending |
 | STT-03 | Phase 4 | Pending |

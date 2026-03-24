@@ -64,7 +64,7 @@ Plans:
 **Plans:** 2 plans
 Plans:
 - [x] 03-01-PLAN.md — Gradle 의존성 + Plaud SDK/Cloud API 데이터 레이어 + AudioRepository 구현
-- [ ] 03-02-PLAN.md — Foreground Service + TranscriptionTriggerWorker + Application SDK 초기화
+- [x] 03-02-PLAN.md — Foreground Service + TranscriptionTriggerWorker + Application SDK 초기화
 
 ### Phase 4: 전사 엔진
 **Goal**: 저장된 한국어 오디오 파일이 텍스트로 전사되어 로컬에 저장되며 사용자가 내용을 확인·수정할 수 있다
