@@ -40,6 +40,19 @@ interface MeetingDao {
         updatedAt: Long
     )
 
+    /** 전사 완료 후 transcriptPath와 파이프라인 상태를 업데이트한다. */
+    @Query("UPDATE meetings SET transcriptPath = :transcriptPath, pipelineStatus = :status, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateTranscript(
+        id: Long,
+        transcriptPath: String,
+        status: String,
+        updatedAt: Long
+    )
+
+    /** 오디오 파일 경로로 회의를 조회한다. */
+    @Query("SELECT * FROM meetings WHERE audioFilePath = :audioFilePath LIMIT 1")
+    suspend fun getMeetingByAudioPath(audioFilePath: String): MeetingEntity?
+
     /** 회의를 삭제한다. */
     @Query("DELETE FROM meetings WHERE id = :id")
     suspend fun delete(id: Long)

@@ -2,8 +2,10 @@ package com.autominuting.di
 
 import com.autominuting.data.repository.AudioRepositoryImpl
 import com.autominuting.data.repository.MeetingRepositoryImpl
+import com.autominuting.data.repository.TranscriptionRepositoryImpl
 import com.autominuting.domain.repository.AudioRepository
 import com.autominuting.domain.repository.MeetingRepository
+import com.autominuting.domain.repository.TranscriptionRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -12,8 +14,7 @@ import dagger.hilt.components.SingletonComponent
 /**
  * Repository 인터페이스와 구현체를 바인딩하는 Hilt 모듈.
  *
- * TranscriptionRepository, MinutesRepository는
- * Phase 4~5에서 구현체가 추가될 때 바인딩한다.
+ * MinutesRepository는 Phase 5에서 구현체가 추가될 때 바인딩한다.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -35,4 +36,13 @@ abstract class RepositoryModule {
     abstract fun bindAudioRepository(
         impl: AudioRepositoryImpl
     ): AudioRepository
+
+    /**
+     * TranscriptionRepository 인터페이스를 TranscriptionRepositoryImpl 구현체에 바인딩한다.
+     * Whisper(1차) + ML Kit/SpeechRecognizer(2차) 이중 경로를 지원한다.
+     */
+    @Binds
+    abstract fun bindTranscriptionRepository(
+        impl: TranscriptionRepositoryImpl
+    ): TranscriptionRepository
 }
