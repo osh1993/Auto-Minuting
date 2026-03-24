@@ -83,36 +83,36 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| POC-01 | Phase ? | Pending |
-| POC-02 | Phase ? | Pending |
-| POC-03 | Phase ? | Pending |
-| POC-04 | Phase ? | Pending |
-| AUD-01 | Phase ? | Pending |
-| AUD-02 | Phase ? | Pending |
-| AUD-03 | Phase ? | Pending |
-| STT-01 | Phase ? | Pending |
-| STT-02 | Phase ? | Pending |
-| STT-03 | Phase ? | Pending |
-| MIN-01 | Phase ? | Pending |
-| MIN-02 | Phase ? | Pending |
-| MIN-03 | Phase ? | Pending |
-| MIN-04 | Phase ? | Pending |
-| MIN-05 | Phase ? | Pending |
-| MIN-06 | Phase ? | Pending |
-| UI-01 | Phase ? | Pending |
-| UI-02 | Phase ? | Pending |
-| UI-03 | Phase ? | Pending |
-| UI-04 | Phase ? | Pending |
-| APP-01 | Phase ? | Pending |
-| APP-02 | Phase ? | Pending |
-| APP-03 | Phase ? | Pending |
-| APP-04 | Phase ? | Pending |
+| POC-01 | Phase 1 | Pending |
+| POC-02 | Phase 1 | Pending |
+| POC-03 | Phase 1 | Pending |
+| POC-04 | Phase 1 | Pending |
+| APP-01 | Phase 2 | Pending |
+| APP-02 | Phase 2 | Pending |
+| APP-03 | Phase 2 | Pending |
+| APP-04 | Phase 2 | Pending |
+| AUD-01 | Phase 3 | Pending |
+| AUD-02 | Phase 3 | Pending |
+| AUD-03 | Phase 3 | Pending |
+| STT-01 | Phase 4 | Pending |
+| STT-02 | Phase 4 | Pending |
+| STT-03 | Phase 4 | Pending |
+| MIN-01 | Phase 5 | Pending |
+| MIN-02 | Phase 5 | Pending |
+| MIN-03 | Phase 5 | Pending |
+| MIN-04 | Phase 5 | Pending |
+| MIN-05 | Phase 6 | Pending |
+| MIN-06 | Phase 6 | Pending |
+| UI-02 | Phase 6 | Pending |
+| UI-04 | Phase 6 | Pending |
+| UI-01 | Phase 7 | Pending |
+| UI-03 | Phase 7 | Pending |
 
 **Coverage:**
 - v1 requirements: 24 total
-- Mapped to phases: 0
-- Unmapped: 24 ⚠️
+- Mapped to phases: 24
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after initial definition*
+*Last updated: 2026-03-24 after roadmap creation*
