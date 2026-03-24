@@ -34,8 +34,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 4 plans
 Plans:
 - [ ] 01-01-PLAN.md — Plaud 오디오 파일 획득 경로 검증 (APK 분석 + SDK 평가 + Cloud API)
-- [ ] 01-02-PLAN.md — STT 전사 경로 검증 (Galaxy AI 조사 + ML Kit/Whisper 평가)
-- [ ] 01-03-PLAN.md — 회의록 생성 경로 검증 (Gemini API + NotebookLM MCP)
+- [x] 01-02-PLAN.md — STT 전사 경로 검증 (Galaxy AI 조사 + ML Kit/Whisper 평가)
+- [x] 01-03-PLAN.md — 회의록 생성 경로 검증 (Gemini API + NotebookLM MCP)
 - [ ] 01-04-PLAN.md — 3개 의존성 종합 결정 문서화 및 PROJECT.md 업데이트
 
 ### Phase 2: 앱 기반 구조
