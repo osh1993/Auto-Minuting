@@ -16,6 +16,12 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+
+        // Plaud SDK 인증 키 (local.properties에서 읽음)
+        val plaudAppKey: String = project.findProperty("PLAUD_APP_KEY")?.toString() ?: ""
+        val plaudAppSecret: String = project.findProperty("PLAUD_APP_SECRET")?.toString() ?: ""
+        buildConfigField("String", "PLAUD_APP_KEY", "\"$plaudAppKey\"")
+        buildConfigField("String", "PLAUD_APP_SECRET", "\"$plaudAppSecret\"")
     }
 
     compileOptions {
@@ -29,10 +35,26 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
+// Guava 버전 충돌 방지 (Plaud SDK가 28.2 요구)
+configurations.all {
+    resolutionStrategy.force("com.google.guava:guava:28.2-android")
+}
+
 dependencies {
+    // Plaud SDK (AAR) -- D-01: 1차 오디오 수집 경로
+    implementation(files("libs/plaud-sdk.aar"))
+    implementation(libs.guava)
+
+    // Retrofit + OkHttp -- D-02: Cloud API 폴백 경로
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
+
     // Compose BOM - 모든 Compose 라이브러리 버전 통합 관리
     implementation(platform(libs.compose.bom))
     implementation(libs.material3)
