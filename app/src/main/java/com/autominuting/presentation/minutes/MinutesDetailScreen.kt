@@ -40,8 +40,8 @@ import java.time.format.DateTimeFormatter
 
 /**
  * 회의록 상세 읽기 화면.
- * 회의 정보와 회의록 Markdown 내용을 플레인텍스트로 표시한다.
- * 텍스트 선택이 가능하며, Phase 7에서 Markdown 렌더러로 업그레이드 예정이다.
+ * 회의 정보와 회의록 Markdown 내용을 Markdown 렌더링으로 표시한다.
+ * 텍스트 선택이 가능하다.
  *
  * @param onBack 뒤로가기 콜백
  * @param viewModel 회의록 상세 상태를 관리하는 ViewModel
@@ -167,12 +167,10 @@ fun MinutesDetailScreen(
                         )
                     }
                 } else {
-                    // 회의록 Markdown 내용을 플레인텍스트로 표시 (텍스트 선택 가능)
+                    // 회의록 Markdown 내용을 구조화된 타이포그래피로 렌더링 (텍스트 선택 가능)
                     SelectionContainer {
-                        Text(
+                        MarkdownText(
                             text = minutesContent,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(16.dp)
