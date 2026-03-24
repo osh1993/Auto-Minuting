@@ -13,11 +13,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
@@ -35,8 +39,8 @@ import java.time.format.DateTimeFormatter
 
 /**
  * 회의록 목록 화면.
- * 생성된 회의록 목록을 Card 형태로 표시하며, 파이프라인 상태를 칩으로 보여준다.
- * 회의록 완료된 항목을 탭하면 상세 화면으로 이동한다.
+ * 상단에 검색바를 제공하며, 생성된 회의록 목록을 Card 형태로 표시한다.
+ * 파이프라인 상태를 칩으로 보여주고, 완료된 항목을 탭하면 상세 화면으로 이동한다.
  *
  * @param onMinutesClick 회의록 상세 화면으로 이동하는 콜백 (meetingId 전달)
  * @param viewModel 회의록 목록 상태를 관리하는 ViewModel
@@ -47,47 +51,86 @@ fun MinutesScreen(
     viewModel: MinutesViewModel = hiltViewModel()
 ) {
     val meetings by viewModel.meetings.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
 
-    if (meetings.isEmpty()) {
-        // 빈 목록 안내
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Description,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                Text(
-                    text = "생성된 회의록이 없습니다",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    } else {
-        LazyColumn(
+    Column(modifier = Modifier.fillMaxSize()) {
+        // 검색바
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = viewModel::onSearchQueryChange,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(meetings, key = { it.id }) { meeting ->
-                MinutesMeetingCard(
-                    meeting = meeting,
-                    onClick = {
-                        // COMPLETED 상태에서만 상세 화면으로 이동
-                        if (meeting.pipelineStatus == PipelineStatus.COMPLETED && meeting.minutesPath != null) {
-                            onMinutesClick(meeting.id)
-                        }
-                    }
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            placeholder = {
+                Text(text = "회의록 검색...")
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "검색"
                 )
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "검색어 지우기"
+                        )
+                    }
+                }
+            },
+            singleLine = true
+        )
+
+        if (meetings.isEmpty()) {
+            // 빈 목록 안내: 검색 결과 없음 vs 전체 목록 비어있음 구분
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Description,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = if (searchQuery.isNotBlank()) {
+                            "검색 결과가 없습니다"
+                        } else {
+                            "생성된 회의록이 없습니다"
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(meetings, key = { it.id }) { meeting ->
+                    MinutesMeetingCard(
+                        meeting = meeting,
+                        onClick = {
+                            // COMPLETED 상태에서만 상세 화면으로 이동
+                            if (meeting.pipelineStatus == PipelineStatus.COMPLETED && meeting.minutesPath != null) {
+                                onMinutesClick(meeting.id)
+                            }
+                        }
+                    )
+                }
             }
         }
     }
