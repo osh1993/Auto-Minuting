@@ -4,6 +4,8 @@ import android.content.Context
 import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.autominuting.data.local.dao.MeetingDao
@@ -101,7 +103,20 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
 
             Log.d(TAG, "전사 파이프라인 완료: $transcriptPath")
 
-            // outputData에 transcriptPath 포함 (Phase 5 체이닝용)
+            // 전사 완료 후 회의록 생성 Worker 자동 체이닝
+            val minutesWorkRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
+                .setInputData(
+                    workDataOf(
+                        MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
+                        MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath
+                    )
+                )
+                .build()
+            WorkManager.getInstance(applicationContext)
+                .enqueue(minutesWorkRequest)
+            Log.d(TAG, "회의록 생성 Worker 체이닝 완료: meetingId=$meetingId")
+
+            // outputData에 transcriptPath 포함
             Result.success(
                 workDataOf(KEY_TRANSCRIPT_PATH to transcriptPath)
             )
