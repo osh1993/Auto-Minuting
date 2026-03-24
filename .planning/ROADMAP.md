@@ -88,7 +88,10 @@ Plans:
   2. 사용자가 기존 노트 또는 새 노트를 선택하여 소스를 등록할 수 있다
   3. 생성된 회의록이 스마트폰 로컬에 파일로 저장된다
   4. 저장된 회의록을 앱 내에서 텍스트로 읽을 수 있다
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 05-01-PLAN.md — Gemini API 데이터 레이어 + MinutesRepositoryImpl + MinutesGenerationWorker
+- [ ] 05-02-PLAN.md — 회의록 목록 화면 + 회의록 상세 읽기 화면 + Navigation 연동
 
 ### Phase 6: 파이프라인 통합 및 자동화
 **Goal**: 오디오 감지부터 회의록 저장까지 전체 파이프라인이 사용자 개입 없이 자동으로 완료되며, 형식 선택·공유·진행 알림이 동작한다
@@ -124,6 +127,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 2. 앱 기반 구조 | 0/3 | Not started | - |
 | 3. 오디오 수집 | 0/2 | Not started | - |
 | 4. 전사 엔진 | 1/2 | In progress | - |
-| 5. 회의록 생성 | 0/TBD | Not started | - |
+| 5. 회의록 생성 | 0/2 | Not started | - |
 | 6. 파이프라인 통합 및 자동화 | 0/TBD | Not started | - |
 | 7. UI 완성 | 0/TBD | Not started | - |
