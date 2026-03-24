@@ -51,7 +51,7 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — Gradle 프로젝트 초기화 + Clean Architecture 패키지 + Hilt DI
 - [x] 02-02-PLAN.md — Room DB 스키마 + Domain 인터페이스 + Repository DI 바인딩
-- [ ] 02-03-PLAN.md — Compose Navigation + 4개 빈 화면 + WorkManager 초기화
+- [x] 02-03-PLAN.md — Compose Navigation + 4개 빈 화면 + WorkManager 초기화
 
 ### Phase 3: 오디오 수집
 **Goal**: Plaud 녹음기에서 전송되는 오디오 파일이 앱 내부 저장소에 자동으로 저장된다
