@@ -1,5 +1,6 @@
 package com.autominuting.domain.repository
 
+import com.autominuting.domain.model.MinutesFormat
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -15,7 +16,10 @@ interface MinutesRepository {
      * @param transcriptText 전사된 회의 텍스트
      * @return 성공 시 생성된 회의록 텍스트, 실패 시 예외를 포함한 Result
      */
-    suspend fun generateMinutes(transcriptText: String): Result<String>
+    suspend fun generateMinutes(
+        transcriptText: String,
+        format: MinutesFormat = MinutesFormat.STRUCTURED
+    ): Result<String>
 
     /** 현재 회의록 생성이 진행 중인지 여부를 관찰한다. */
     fun isGenerating(): Flow<Boolean>

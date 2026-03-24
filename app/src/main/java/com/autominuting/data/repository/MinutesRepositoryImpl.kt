@@ -3,6 +3,7 @@ package com.autominuting.data.repository
 import android.content.Context
 import android.util.Log
 import com.autominuting.data.minutes.GeminiEngine
+import com.autominuting.domain.model.MinutesFormat
 import com.autominuting.domain.repository.MinutesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +46,10 @@ class MinutesRepositoryImpl @Inject constructor(
      * @param transcriptText 전사된 회의 텍스트
      * @return 성공 시 생성된 회의록 Markdown 텍스트, 실패 시 예외를 포함한 Result
      */
-    override suspend fun generateMinutes(transcriptText: String): Result<String> =
+    override suspend fun generateMinutes(
+        transcriptText: String,
+        format: MinutesFormat
+    ): Result<String> =
         withContext(Dispatchers.IO) {
             _isGenerating.value = true
             try {
@@ -54,7 +58,7 @@ class MinutesRepositoryImpl @Inject constructor(
                 // 1차: Gemini 엔진 시도
                 val result = try {
                     Log.d(TAG, "1차 경로: ${geminiEngine.engineName()} 시도")
-                    geminiEngine.generate(transcriptText)
+                    geminiEngine.generate(transcriptText, format)
                 } catch (e: Exception) {
                     Log.w(TAG, "Gemini 회의록 생성 예외: ${e.message}")
                     Result.failure(e)

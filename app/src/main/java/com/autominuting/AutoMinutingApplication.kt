@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.autominuting.data.audio.PlaudSdkManager
+import com.autominuting.service.PipelineNotificationHelper
 import dagger.hilt.EntryPoint
 import dagger.hilt.EntryPointAccessors
 import dagger.hilt.InstallIn
@@ -57,6 +58,9 @@ class AutoMinutingApplication : Application(), Configuration.Provider {
         // Plaud SDK 초기화 (appKey 미설정 시 Cloud API 폴백)
         val appKey = BuildConfig.PLAUD_APP_KEY
         val appSecret = BuildConfig.PLAUD_APP_SECRET
+
+        // 파이프라인 진행 알림 채널 등록
+        PipelineNotificationHelper.createChannel(this)
 
         if (appKey.isNotBlank() && appSecret.isNotBlank()) {
             sdkManager.initialize(appKey, appSecret)
