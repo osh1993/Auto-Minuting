@@ -72,6 +72,8 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.androidx.compiler)
 
     // WorkManager 백그라운드 작업
     implementation(libs.work.runtime.ktx)
