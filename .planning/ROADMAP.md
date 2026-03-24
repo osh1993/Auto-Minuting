@@ -77,7 +77,7 @@ Plans:
 **Plans:** 2 plans
 Plans:
 - [x] 04-01-PLAN.md — Whisper/ML Kit STT 엔진 + TranscriptionRepositoryImpl + Worker 연동
-- [ ] 04-02-PLAN.md — 전사 목록 화면 + 전사 편집 화면 + Navigation 연동
+- [x] 04-02-PLAN.md — 전사 목록 화면 + 전사 편집 화면 + Navigation 연동
 
 ### Phase 5: 회의록 생성
 **Goal**: 전사된 텍스트가 AI를 통해 구조화된 회의록으로 변환되어 로컬에 저장된다
