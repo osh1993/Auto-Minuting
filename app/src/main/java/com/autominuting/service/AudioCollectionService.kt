@@ -16,6 +16,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.autominuting.R
+import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.domain.repository.AudioRepository
 import com.autominuting.worker.TranscriptionTriggerWorker
 import dagger.hilt.android.AndroidEntryPoint
@@ -46,6 +47,10 @@ class AudioCollectionService : Service() {
     /** WorkManager: 전사 파이프라인 Worker 예약 */
     @Inject
     lateinit var workManager: WorkManager
+
+    /** 사용자 설정 Repository: 자동화 모드 및 회의록 형식 조회 */
+    @Inject
+    lateinit var userPreferencesRepository: UserPreferencesRepository
 
     /** 서비스 전용 코루틴 스코프 (SupervisorJob으로 개별 실패 격리) */
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -123,13 +128,21 @@ class AudioCollectionService : Service() {
     /**
      * 전사 파이프라인을 WorkManager로 트리거한다.
      *
-     * 오디오 파일 경로를 inputData로 전달하여
-     * TranscriptionTriggerWorker가 전사를 시작하도록 한다.
+     * 오디오 파일 경로와 사용자 설정(자동화 모드, 회의록 형식)을
+     * inputData로 전달하여 TranscriptionTriggerWorker가 전사를 시작하도록 한다.
      *
      * @param filePath 저장된 오디오 파일의 절대 경로
      */
-    private fun triggerTranscriptionPipeline(filePath: String) {
-        val inputData = workDataOf("audioFilePath" to filePath)
+    private suspend fun triggerTranscriptionPipeline(filePath: String) {
+        // enqueue 시점에 사용자 설정값 읽기
+        val automationMode = userPreferencesRepository.getAutomationModeOnce()
+        val minutesFormat = userPreferencesRepository.getMinutesFormatOnce()
+
+        val inputData = workDataOf(
+            "audioFilePath" to filePath,
+            "automationMode" to automationMode.name,
+            "minutesFormat" to minutesFormat.name
+        )
 
         val constraints = Constraints.Builder()
             .setRequiresBatteryNotLow(true)

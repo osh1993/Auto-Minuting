@@ -8,8 +8,10 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.autominuting.data.local.dao.MeetingDao
 import com.autominuting.data.repository.MinutesRepositoryImpl
+import com.autominuting.domain.model.MinutesFormat
 import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.domain.repository.MinutesRepository
+import com.autominuting.service.PipelineNotificationHelper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.io.File
@@ -56,7 +58,16 @@ class MinutesGenerationWorker @AssistedInject constructor(
                 File(applicationContext.filesDir, "transcripts/${meetingId}.txt").absolutePath
             }
 
-        Log.d(TAG, "회의록 생성 시작: meetingId=$meetingId, transcriptPath=$transcriptPath")
+        // inputData에서 형식 설정 읽기
+        val minutesFormatName = inputData.getString(KEY_MINUTES_FORMAT)
+            ?: MinutesFormat.STRUCTURED.name
+        val minutesFormat = try {
+            MinutesFormat.valueOf(minutesFormatName)
+        } catch (e: Exception) {
+            MinutesFormat.STRUCTURED
+        }
+
+        Log.d(TAG, "회의록 생성 시작: meetingId=$meetingId, transcriptPath=$transcriptPath, format=$minutesFormat")
 
         // 전사 텍스트 파일 읽기
         val transcriptFile = File(transcriptPath)
@@ -91,8 +102,11 @@ class MinutesGenerationWorker @AssistedInject constructor(
             updatedAt = System.currentTimeMillis()
         )
 
-        // 회의록 생성 (Gemini API 1차)
-        val generateResult = minutesRepository.generateMinutes(transcriptText)
+        // 회의록 생성 중 알림
+        PipelineNotificationHelper.updateProgress(applicationContext, "회의록 생성 중...")
+
+        // 회의록 생성 (Gemini API 1차) — 형식 전달
+        val generateResult = minutesRepository.generateMinutes(transcriptText, minutesFormat)
 
         return if (generateResult.isSuccess) {
             val minutesText = generateResult.getOrThrow()
@@ -123,6 +137,9 @@ class MinutesGenerationWorker @AssistedInject constructor(
 
             Log.d(TAG, "회의록 파이프라인 완료: $minutesPath")
 
+            // 완료 알림 (공유 액션 포함)
+            PipelineNotificationHelper.notifyComplete(applicationContext, meetingId, minutesText)
+
             // outputData에 minutesPath 포함
             Result.success(
                 workDataOf(KEY_MINUTES_PATH to minutesPath)
@@ -131,6 +148,9 @@ class MinutesGenerationWorker @AssistedInject constructor(
             val error = generateResult.exceptionOrNull()
             val errorMessage = error?.message ?: "알 수 없는 회의록 생성 오류"
             Log.e(TAG, "회의록 생성 실패: $errorMessage", error)
+
+            // 실패 알림
+            PipelineNotificationHelper.updateProgress(applicationContext, "회의록 생성 실패", ongoing = false)
 
             // 파이프라인 상태를 FAILED로 업데이트
             meetingDao.updatePipelineStatus(
@@ -148,6 +168,7 @@ class MinutesGenerationWorker @AssistedInject constructor(
         const val KEY_MEETING_ID = "meetingId"
         const val KEY_TRANSCRIPT_PATH = "transcriptPath"
         const val KEY_MINUTES_PATH = "minutesPath"
+        const val KEY_MINUTES_FORMAT = "minutesFormat"
         private const val TAG = "MinutesGeneration"
     }
 }

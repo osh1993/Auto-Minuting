@@ -10,8 +10,11 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.autominuting.data.local.dao.MeetingDao
 import com.autominuting.data.repository.TranscriptionRepositoryImpl
+import com.autominuting.domain.model.AutomationMode
+import com.autominuting.domain.model.MinutesFormat
 import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.domain.repository.TranscriptionRepository
+import com.autominuting.service.PipelineNotificationHelper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
@@ -48,6 +51,12 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
                 return Result.failure()
             }
 
+        // inputData에서 설정값 읽기 (AudioCollectionService에서 전달)
+        val automationMode = inputData.getString(KEY_AUTOMATION_MODE)
+            ?: AutomationMode.FULL_AUTO.name
+        val minutesFormat = inputData.getString(KEY_MINUTES_FORMAT)
+            ?: MinutesFormat.STRUCTURED.name
+
         // meetingId가 없으면 audioFilePath로 DB에서 조회 (기존 호환성)
         val meetingId = inputData.getLong(KEY_MEETING_ID, -1L).let { id ->
             if (id > 0) id
@@ -61,7 +70,7 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
         }
 
         val now = System.currentTimeMillis()
-        Log.d(TAG, "전사 파이프라인 시작: meetingId=$meetingId, audioPath=$audioFilePath")
+        Log.d(TAG, "전사 파이프라인 시작: meetingId=$meetingId, audioPath=$audioFilePath, mode=$automationMode")
 
         // 파이프라인 상태를 TRANSCRIBING으로 업데이트
         meetingDao.updatePipelineStatus(
@@ -70,6 +79,9 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
             errorMessage = null,
             updatedAt = now
         )
+
+        // 전사 시작 알림
+        PipelineNotificationHelper.updateProgress(applicationContext, "전사 중...")
 
         // 전사 수행 (Whisper 1차 -> ML Kit 2차 폴백)
         val transcribeResult = transcriptionRepository.transcribe(audioFilePath)
@@ -103,18 +115,28 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
 
             Log.d(TAG, "전사 파이프라인 완료: $transcriptPath")
 
-            // 전사 완료 후 회의록 생성 Worker 자동 체이닝
-            val minutesWorkRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
-                .setInputData(
-                    workDataOf(
-                        MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
-                        MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath
+            // 자동화 모드에 따라 분기
+            if (automationMode == AutomationMode.FULL_AUTO.name) {
+                // 완전 자동: 회의록 생성 Worker 자동 체이닝
+                val minutesWorkRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
+                    .setInputData(
+                        workDataOf(
+                            MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
+                            MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath,
+                            MinutesGenerationWorker.KEY_MINUTES_FORMAT to minutesFormat
+                        )
                     )
+                    .build()
+                WorkManager.getInstance(applicationContext)
+                    .enqueue(minutesWorkRequest)
+                Log.d(TAG, "완전 자동 모드: 회의록 생성 Worker 체이닝")
+            } else {
+                // 하이브리드: 알림만 표시, 사용자 확인 대기
+                PipelineNotificationHelper.notifyTranscriptionComplete(
+                    applicationContext, meetingId, transcriptPath, minutesFormat
                 )
-                .build()
-            WorkManager.getInstance(applicationContext)
-                .enqueue(minutesWorkRequest)
-            Log.d(TAG, "회의록 생성 Worker 체이닝 완료: meetingId=$meetingId")
+                Log.d(TAG, "하이브리드 모드: 전사 완료 알림 표시, 사용자 확인 대기")
+            }
 
             // outputData에 transcriptPath 포함
             Result.success(
@@ -141,6 +163,8 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
         const val KEY_AUDIO_FILE_PATH = "audioFilePath"
         const val KEY_MEETING_ID = "meetingId"
         const val KEY_TRANSCRIPT_PATH = "transcriptPath"
+        const val KEY_AUTOMATION_MODE = "automationMode"
+        const val KEY_MINUTES_FORMAT = "minutesFormat"
         private const val TAG = "TranscriptionTrigger"
     }
 }
