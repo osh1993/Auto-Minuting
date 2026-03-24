@@ -43,6 +43,11 @@ class MeetingRepositoryImpl @Inject constructor(
         updatedAt = Instant.now().toEpochMilli()
     )
 
+    override fun searchMeetings(query: String): Flow<List<Meeting>> =
+        meetingDao.searchMeetings(query).map { list ->
+            list.map { it.toDomain() }
+        }
+
     override suspend fun deleteMeeting(id: Long) =
         meetingDao.delete(id)
 }

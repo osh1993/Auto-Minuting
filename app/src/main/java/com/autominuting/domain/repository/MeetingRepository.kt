@@ -29,6 +29,9 @@ interface MeetingRepository {
         errorMessage: String? = null
     )
 
+    /** 제목에 검색어를 포함하는 회의를 조회한다. */
+    fun searchMeetings(query: String): Flow<List<Meeting>>
+
     /** 회의를 삭제한다. */
     suspend fun deleteMeeting(id: Long)
 }

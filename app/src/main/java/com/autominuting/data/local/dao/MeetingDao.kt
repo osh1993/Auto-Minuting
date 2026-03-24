@@ -62,6 +62,10 @@ interface MeetingDao {
     @Query("SELECT * FROM meetings WHERE audioFilePath = :audioFilePath LIMIT 1")
     suspend fun getMeetingByAudioPath(audioFilePath: String): MeetingEntity?
 
+    /** 제목에 검색어를 포함하는 회의를 녹음 시각 역순으로 조회한다. */
+    @Query("SELECT * FROM meetings WHERE title LIKE '%' || :query || '%' ORDER BY recordedAt DESC")
+    fun searchMeetings(query: String): Flow<List<MeetingEntity>>
+
     /** 회의를 삭제한다. */
     @Query("DELETE FROM meetings WHERE id = :id")
     suspend fun delete(id: Long)
