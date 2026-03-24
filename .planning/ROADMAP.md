@@ -47,8 +47,11 @@ Plans:
   2. Room DB가 초기화되고 MeetingEntity 및 PipelineStatus 상태 머신 스키마가 마이그레이션 없이 동작한다
   3. Hilt DI 그래프가 컴파일 타임 오류 없이 구성된다
   4. WorkManager가 초기화되어 테스트 Worker가 백그라운드에서 실행·완료된다
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 3 plans
+Plans:
+- [ ] 02-01-PLAN.md — Gradle 프로젝트 초기화 + Clean Architecture 패키지 + Hilt DI
+- [ ] 02-02-PLAN.md — Room DB 스키마 + Domain 인터페이스 + Repository DI 바인딩
+- [ ] 02-03-PLAN.md — Compose Navigation + 4개 빈 화면 + WorkManager 초기화
 
 ### Phase 3: 오디오 수집
 **Goal**: Plaud 녹음기에서 전송되는 오디오 파일이 앱 내부 저장소에 자동으로 저장된다
@@ -112,7 +115,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. PoC — 기술 가능성 검증 | 4/4 | Complete   | 2026-03-24 |
-| 2. 앱 기반 구조 | 0/TBD | Not started | - |
+| 2. 앱 기반 구조 | 0/3 | Not started | - |
 | 3. 오디오 수집 | 0/TBD | Not started | - |
 | 4. 전사 엔진 | 0/TBD | Not started | - |
 | 5. 회의록 생성 | 0/TBD | Not started | - |
