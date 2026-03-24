@@ -18,6 +18,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.autominuting.presentation.dashboard.DashboardScreen
+import com.autominuting.presentation.minutes.MinutesDetailScreen
 import com.autominuting.presentation.minutes.MinutesScreen
 import com.autominuting.presentation.settings.SettingsScreen
 import com.autominuting.presentation.transcripts.TranscriptEditScreen
@@ -83,7 +84,23 @@ fun AppNavigation() {
                     onBack = { navController.popBackStack() }
                 )
             }
-            composable(Screen.Minutes.route) { MinutesScreen() }
+            composable(Screen.Minutes.route) {
+                MinutesScreen(
+                    onMinutesClick = { meetingId ->
+                        navController.navigate(Screen.MinutesDetail.createRoute(meetingId))
+                    }
+                )
+            }
+            composable(
+                route = Screen.MinutesDetail.route,
+                arguments = listOf(
+                    navArgument("meetingId") { type = NavType.LongType }
+                )
+            ) {
+                MinutesDetailScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
             composable(Screen.Settings.route) { SettingsScreen() }
         }
     }
