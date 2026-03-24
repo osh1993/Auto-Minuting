@@ -63,7 +63,7 @@ Plans:
   3. 새 오디오 파일이 감지되면 파이프라인 다음 단계(전사)가 자동으로 시작된다
 **Plans:** 2 plans
 Plans:
-- [ ] 03-01-PLAN.md — Gradle 의존성 + Plaud SDK/Cloud API 데이터 레이어 + AudioRepository 구현
+- [x] 03-01-PLAN.md — Gradle 의존성 + Plaud SDK/Cloud API 데이터 레이어 + AudioRepository 구현
 - [ ] 03-02-PLAN.md — Foreground Service + TranscriptionTriggerWorker + Application SDK 초기화
 
 ### Phase 4: 전사 엔진
