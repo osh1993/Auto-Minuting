@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: 실동작 파이프라인 + 기능 확장
-status: Ready to plan
+status: Milestone complete
 stopped_at: Phase 10 context gathered
-last_updated: "2026-03-25T21:29:32.231Z"
+last_updated: "2026-03-25T22:14:50.431Z"
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 10
-  completed_plans: 9
+  total_plans: 13
+  completed_plans: 11
 ---
 
 # Project State

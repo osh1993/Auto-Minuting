@@ -31,7 +31,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 - [x] **Phase 10: NotebookLM 반자동 연동** - 공유 Intent + Custom Tabs + MCP 검토 (2일 타임박스) (completed 2026-03-25)
 - [x] **Phase 11: 삼성 자동 감지 스파이크** - ContentObserver/FileObserver 실기기 검증 (48시간 타임박스) (completed 2026-03-25)
 - [x] **Phase 12: Google OAuth 인증** - Credential Manager로 API 키 없이 Gemini 사용 경로 추가 (completed 2026-03-25)
-- [ ] **Phase 13: Plaud BLE 실기기 디버깅** - BLE 연결 안정화 및 오디오 파일 수신 E2E 동작 확인
+- [x] **Phase 13: Plaud BLE 실기기 디버깅** - BLE 연결 안정화 및 오디오 파일 수신 E2E 동작 확인 (completed 2026-03-25)
 
 ## Phase Details
 
@@ -137,4 +137,4 @@ Phases execute in numeric order: 8 -> 9 -> 10 -> 11 -> 12 -> 13
 | 10. NotebookLM 반자동 연동 | v2.0 | 0/2 | Complete    | 2026-03-25 |
 | 11. 삼성 자동 감지 스파이크 | v2.0 | 0/2 | Complete    | 2026-03-25 |
 | 12. Google OAuth 인증 | v2.0 | 0/3 | Complete    | 2026-03-25 |
-| 13. Plaud BLE 실기기 디버깅 | v2.0 | 0/3 | Not started | - |
+| 13. Plaud BLE 실기기 디버깅 | v2.0 | 0/3 | Complete    | 2026-03-25 |
