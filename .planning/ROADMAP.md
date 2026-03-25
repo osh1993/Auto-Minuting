@@ -70,6 +70,10 @@ Plans:
   1. 사용자가 회의록 화면에서 NotebookLM 앱으로 공유 Intent를 보낼 수 있다
   2. 사용자가 앱 내에서 Custom Tabs로 NotebookLM 웹을 열 수 있다
   3. MCP 서버 API를 통한 노트북 생성/소스 추가 가능성이 검토 문서로 정리된다
+**Plans**: 2 plans
+Plans:
+- [ ] 10-01-PLAN.md — NotebookLM 공유 Intent + Custom Tabs 폴백 구현 (NotebookLmHelper + UI 버튼)
+- [ ] 10-02-PLAN.md — MCP 서버 API 검토 문서 작성 (실동작 테스트 + Android 통합 가능성 평가)
 **UI hint**: yes
 
 ### Phase 11: 삼성 자동 감지 스파이크
@@ -116,7 +120,7 @@ Phases execute in numeric order: 8 -> 9 -> 10 -> 11 -> 12 -> 13
 | 7. UI 완성 | v1.0 | 2/2 | Complete | 2026-03-24 |
 | 8. 기반 강화 | v2.0 | 1/2 | In Progress|  |
 | 9. 삼성 공유 수신 | v2.0 | 0/1 | Not started | - |
-| 10. NotebookLM 반자동 연동 | v2.0 | 0/? | Not started | - |
+| 10. NotebookLM 반자동 연동 | v2.0 | 0/2 | Not started | - |
 | 11. 삼성 자동 감지 스파이크 | v2.0 | 0/? | Not started | - |
 | 12. Google OAuth 인증 | v2.0 | 0/? | Not started | - |
 | 13. Plaud BLE 실기기 디버깅 | v2.0 | 0/? | Not started | - |
