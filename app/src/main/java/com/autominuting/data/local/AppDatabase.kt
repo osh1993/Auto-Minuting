@@ -3,6 +3,8 @@ package com.autominuting.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.autominuting.data.local.converter.Converters
 import com.autominuting.data.local.dao.MeetingDao
 import com.autominuting.data.local.entity.MeetingEntity
@@ -13,12 +15,21 @@ import com.autominuting.data.local.entity.MeetingEntity
  */
 @Database(
     entities = [MeetingEntity::class],
-    version = 1,
-    exportSchema = false
+    version = 2,
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     /** meetings 테이블에 접근하는 DAO를 반환한다. */
     abstract fun meetingDao(): MeetingDao
+
+    companion object {
+        /** v1 -> v2: meetings 테이블에 source 컬럼 추가 */
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE meetings ADD COLUMN source TEXT NOT NULL DEFAULT 'PLAUD_BLE'")
+            }
+        }
+    }
 }

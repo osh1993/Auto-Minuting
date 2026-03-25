@@ -30,7 +30,8 @@ object DatabaseModule {
         context,
         AppDatabase::class.java,
         "auto_minuting.db"
-    ).build()
+    ).addMigrations(AppDatabase.MIGRATION_1_2)
+    .build()
 
     /**
      * MeetingDao를 제공한다.

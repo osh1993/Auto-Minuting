@@ -27,5 +27,7 @@ data class Meeting(
     val pipelineStatus: PipelineStatus,
     val errorMessage: String? = null,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant,
+    /** 데이터 소스 (PLAUD_BLE, SAMSUNG_SHARE 등) */
+    val source: String = "PLAUD_BLE"
 )

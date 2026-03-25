@@ -34,6 +34,10 @@ android {
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -101,6 +105,9 @@ dependencies {
 
     // AI (Gemini) -- 회의록 생성
     implementation(libs.generativeai)
+
+    // 보안 (암호화 저장소)
+    implementation(libs.security.crypto)
 
     // 코루틴
     implementation(libs.coroutines.android)

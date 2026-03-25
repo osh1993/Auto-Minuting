@@ -23,6 +23,10 @@ interface MeetingDao {
     @Query("SELECT * FROM meetings WHERE id = :id")
     fun getMeetingById(id: Long): Flow<MeetingEntity?>
 
+    /** 삭제 전 파일 경로 조회용 일회성 조회 */
+    @Query("SELECT * FROM meetings WHERE id = :id")
+    suspend fun getMeetingByIdOnce(id: Long): MeetingEntity?
+
     /** 회의를 삽입하고 생성된 행 ID를 반환한다. 충돌 시 교체한다. */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: MeetingEntity): Long
