@@ -22,6 +22,7 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 - Phase 8: 회의 삭제(DB+파일 정합성), Gemini API 키 설정 UI(암호화 저장), Room DB v2 마이그레이션, 인증 추상화
 - Phase 9: 삼성 녹음앱 공유 Intent 수신 → Gemini 회의록 자동 생성, 출처 뱃지 표시
 - Phase 10: NotebookLM 공유 버튼 + Custom Tabs 폴백 + MCP 검토 문서
+- Phase 11: 삼성 자동 감지 스파이크 — Partial Go (오디오 감지 가능, 전사 텍스트 직접 감지 불가)
 
 ## Requirements
 
