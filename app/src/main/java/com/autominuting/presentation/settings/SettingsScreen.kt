@@ -1,5 +1,6 @@
 package com.autominuting.presentation.settings
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -7,14 +8,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -27,6 +38,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -154,6 +167,116 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "하이브리드 모드: 전사 완료 후 확인을 거쳐 회의록 생성",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            }
+
+            // --- Gemini API 키 섹션 ---
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Gemini API",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = "Gemini API 키를 입력하면 내장 키 대신 사용합니다",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val apiKeyValidationState by viewModel.apiKeyValidationState.collectAsStateWithLifecycle()
+            val hasApiKey by viewModel.hasApiKey.collectAsStateWithLifecycle()
+            var apiKeyInput by remember { mutableStateOf("") }
+            var isKeyVisible by remember { mutableStateOf(false) }
+
+            // API 키 입력 필드
+            OutlinedTextField(
+                value = apiKeyInput,
+                onValueChange = {
+                    apiKeyInput = it
+                    viewModel.resetApiKeyValidationState()
+                },
+                label = { Text("Gemini API 키") },
+                visualTransformation = if (isKeyVisible)
+                    VisualTransformation.None
+                else
+                    PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { isKeyVisible = !isKeyVisible }) {
+                        Icon(
+                            imageVector = if (isKeyVisible)
+                                Icons.Default.VisibilityOff
+                            else
+                                Icons.Default.Visibility,
+                            contentDescription = if (isKeyVisible) "숨기기" else "보기"
+                        )
+                    }
+                },
+                singleLine = true,
+                enabled = apiKeyValidationState !is ApiKeyValidationState.Validating,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 저장 버튼 + 상태 표시
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = { viewModel.validateAndSaveApiKey(apiKeyInput.trim()) },
+                    enabled = apiKeyInput.isNotBlank() && apiKeyValidationState !is ApiKeyValidationState.Validating
+                ) {
+                    if (apiKeyValidationState is ApiKeyValidationState.Validating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    Text("검증 후 저장")
+                }
+
+                if (hasApiKey) {
+                    OutlinedButton(onClick = {
+                        viewModel.clearApiKey()
+                        apiKeyInput = ""
+                    }) {
+                        Text("키 삭제")
+                    }
+                }
+            }
+
+            // 검증 결과 메시지
+            when (val state = apiKeyValidationState) {
+                is ApiKeyValidationState.Success -> {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "API 키가 저장되었습니다",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                is ApiKeyValidationState.Error -> {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = state.message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                else -> {}
+            }
+
+            if (hasApiKey) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "사용자 API 키 사용 중",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.tertiary
                 )
