@@ -1,7 +1,13 @@
 package com.autominuting.presentation.settings
 
+import android.app.Activity
+import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.autominuting.data.auth.AuthMode
+import com.autominuting.data.auth.AuthState
+import com.autominuting.data.auth.GoogleAuthRepository
 import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.data.security.SecureApiKeyRepository
 import com.autominuting.domain.model.AutomationMode
@@ -19,7 +25,7 @@ import javax.inject.Inject
 
 /**
  * 설정 화면의 상태를 관리하는 ViewModel.
- * 회의록 형식 및 자동화 모드 설정을 DataStore를 통해 읽고 쓴다.
+ * 회의록 형식, 자동화 모드, Gemini 인증(API 키/OAuth) 설정을 DataStore를 통해 관리한다.
  */
 /** API 키 검증 상태 */
 sealed interface ApiKeyValidationState {
@@ -32,8 +38,13 @@ sealed interface ApiKeyValidationState {
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val secureApiKeyRepository: SecureApiKeyRepository
+    private val secureApiKeyRepository: SecureApiKeyRepository,
+    private val googleAuthRepository: GoogleAuthRepository
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "SettingsViewModel"
+    }
 
     /** 현재 선택된 회의록 형식 */
     val minutesFormat: StateFlow<MinutesFormat> = userPreferencesRepository.minutesFormat
@@ -51,6 +62,17 @@ class SettingsViewModel @Inject constructor(
             initialValue = AutomationMode.FULL_AUTO
         )
 
+    /** 현재 인증 모드 (API 키 / OAuth) */
+    val authMode: StateFlow<AuthMode> = userPreferencesRepository.authMode
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = AuthMode.API_KEY
+        )
+
+    /** Google 인증 상태 */
+    val authState: StateFlow<AuthState> = googleAuthRepository.authState
+
     /** API 키 검증 상태 */
     private val _apiKeyValidationState = MutableStateFlow<ApiKeyValidationState>(ApiKeyValidationState.Idle)
     val apiKeyValidationState: StateFlow<ApiKeyValidationState> = _apiKeyValidationState.asStateFlow()
@@ -62,6 +84,11 @@ class SettingsViewModel @Inject constructor(
     init {
         // 초기 로드: 저장된 API 키 존재 여부 확인
         _hasApiKey.value = secureApiKeyRepository.getGeminiApiKey() != null
+
+        // 저장된 Google 인증 상태 복원
+        viewModelScope.launch {
+            googleAuthRepository.restoreAuthState()
+        }
     }
 
     /** 회의록 형식을 변경한다. */
@@ -75,6 +102,57 @@ class SettingsViewModel @Inject constructor(
     fun setAutomationMode(mode: AutomationMode) {
         viewModelScope.launch {
             userPreferencesRepository.setAutomationMode(mode)
+        }
+    }
+
+    /** 인증 모드를 변경한다. */
+    fun setAuthMode(mode: AuthMode) {
+        viewModelScope.launch {
+            userPreferencesRepository.setAuthMode(mode)
+        }
+    }
+
+    /**
+     * Google 계정으로 로그인한다.
+     * Credential Manager는 Activity Context가 필요하므로 파라미터로 받는다.
+     *
+     * @param activityContext Activity 컨텍스트
+     */
+    fun signInWithGoogle(activityContext: Context) {
+        viewModelScope.launch {
+            googleAuthRepository.signIn(activityContext)
+
+            // 로그인 성공 시 자동으로 access token 권한 부여 시도
+            if (googleAuthRepository.isSignedIn()) {
+                val activity = activityContext as? Activity
+                if (activity != null) {
+                    googleAuthRepository.authorize(activity)
+                } else {
+                    Log.w(TAG, "Activity 컨텍스트가 아니어서 자동 권한 부여 건너뜀")
+                }
+            }
+        }
+    }
+
+    /**
+     * Gemini API 접근 권한을 수동으로 요청한다.
+     *
+     * @param activity Activity 인스턴스
+     */
+    fun authorizeGeminiAccess(activity: Activity) {
+        viewModelScope.launch {
+            googleAuthRepository.authorize(activity)
+        }
+    }
+
+    /**
+     * Google 로그아웃을 수행한다.
+     * 인증 모드를 API 키로 리셋한다.
+     */
+    fun signOut() {
+        viewModelScope.launch {
+            googleAuthRepository.signOut()
+            userPreferencesRepository.setAuthMode(AuthMode.API_KEY)
         }
     }
 
