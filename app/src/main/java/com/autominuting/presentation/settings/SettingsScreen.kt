@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -43,8 +44,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.platform.LocalContext
 import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.MinutesFormat
+import com.autominuting.util.NotebookLmHelper
 
 /**
  * 설정 화면.
@@ -60,6 +63,7 @@ fun SettingsScreen(
 ) {
     val selectedFormat by viewModel.minutesFormat.collectAsStateWithLifecycle()
     val automationMode by viewModel.automationMode.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -280,6 +284,33 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.tertiary
                 )
+            }
+
+            // --- NotebookLM 섹션 ---
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "NotebookLM",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = "NotebookLM에서 AI 기반 회의록 분석을 활용할 수 있습니다",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedButton(
+                onClick = { NotebookLmHelper.openNotebookLmWeb(context) }
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("NotebookLM 열기")
             }
         }
     }

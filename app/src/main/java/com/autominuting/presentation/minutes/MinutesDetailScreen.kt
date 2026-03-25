@@ -13,7 +13,9 @@ import androidx.compose.foundation.verticalScroll
 import android.content.Intent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Share
+import com.autominuting.util.NotebookLmHelper
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -74,8 +76,22 @@ fun MinutesDetailScreen(
                     }
                 },
                 actions = {
-                    // 공유 버튼: 회의록 내용이 있을 때만 표시
+                    // NotebookLM 전용 버튼 + 공유 버튼: 회의록 내용이 있을 때만 표시
                     if (minutesContent.isNotBlank()) {
+                        // NotebookLM 전용 버튼
+                        IconButton(onClick = {
+                            NotebookLmHelper.shareToNotebookLm(
+                                context = context,
+                                title = meeting?.title ?: "회의록",
+                                content = minutesContent
+                            )
+                        }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                                contentDescription = "NotebookLM으로 보내기"
+                            )
+                        }
+                        // 일반 공유 버튼
                         IconButton(onClick = {
                             val sendIntent = Intent().apply {
                                 action = Intent.ACTION_SEND
