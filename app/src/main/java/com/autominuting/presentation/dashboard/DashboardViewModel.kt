@@ -4,9 +4,11 @@ import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.autominuting.data.audio.BleConnectionState
 import com.autominuting.domain.model.Meeting
 import com.autominuting.domain.model.MinutesFormat
 import com.autominuting.domain.model.PipelineStatus
+import com.autominuting.domain.repository.AudioRepository
 import com.autominuting.domain.repository.MeetingRepository
 import com.autominuting.domain.repository.MinutesRepository
 import com.autominuting.service.AudioCollectionService
@@ -22,17 +24,32 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 import java.time.Instant
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+
+/**
+ * BLE 디버그 로그 항목.
+ *
+ * @param timestamp 로그 발생 시각 (HH:mm:ss)
+ * @param message 로그 메시지
+ */
+data class BleLogEntry(
+    val timestamp: String,
+    val message: String
+)
 
 /**
  * 대시보드 화면의 상태를 관리하는 ViewModel.
  * 현재 진행 중인 파이프라인이 있으면 해당 회의 정보를 제공한다.
+ * BLE 연결 상태를 실시간으로 노출하고, 디버그 로그를 기록한다.
  * 디버그 모드에서 테스트 데이터 삽입 및 Gemini API 테스트를 지원한다.
  */
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val meetingRepository: MeetingRepository,
     private val minutesRepository: MinutesRepository,
+    private val audioRepository: AudioRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -58,6 +75,59 @@ class DashboardViewModel @Inject constructor(
     /** 오디오 수집 서비스 실행 상태 */
     private val _isCollecting = MutableStateFlow(false)
     val isCollecting: StateFlow<Boolean> = _isCollecting.asStateFlow()
+
+    /** BLE 연결 상태 (AudioRepository에서 위임) */
+    val bleConnectionState: StateFlow<BleConnectionState> =
+        audioRepository.getBleConnectionState()
+
+    /** BLE 디버그 로그 목록 (최신 항목이 앞쪽, 최대 20건) */
+    private val _bleLogEntries = MutableStateFlow<List<BleLogEntry>>(emptyList())
+    val bleLogEntries: StateFlow<List<BleLogEntry>> = _bleLogEntries.asStateFlow()
+
+    /** 시간 포맷터 */
+    private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+
+    init {
+        // BLE 연결 상태 변화를 감지하여 로그에 기록
+        observeBleState()
+    }
+
+    /** BLE 상태 변화를 구독하여 디버그 로그에 타임스탬프와 함께 추가한다 */
+    private fun observeBleState() {
+        viewModelScope.launch {
+            var previousState: BleConnectionState? = null
+            bleConnectionState.collect { newState ->
+                if (previousState != null && previousState != newState) {
+                    val timestamp = LocalTime.now().format(timeFormatter)
+                    val prevName = getStateName(previousState!!)
+                    val newName = getStateName(newState)
+                    val entry = BleLogEntry(
+                        timestamp = timestamp,
+                        message = "상태변경: $prevName -> $newName"
+                    )
+                    // 최신 항목을 앞에 추가, 최대 20건 유지
+                    _bleLogEntries.value = (listOf(entry) + _bleLogEntries.value).take(20)
+                }
+                previousState = newState
+            }
+        }
+    }
+
+    /** BleConnectionState의 표시용 이름을 반환한다 */
+    private fun getStateName(state: BleConnectionState): String = when (state) {
+        is BleConnectionState.IDLE -> "IDLE"
+        is BleConnectionState.SCANNING -> "SCANNING"
+        is BleConnectionState.DEVICE_FOUND -> "DEVICE_FOUND"
+        is BleConnectionState.CONNECTING -> "CONNECTING"
+        is BleConnectionState.CONNECTED -> "CONNECTED"
+        is BleConnectionState.DISCONNECTED -> "DISCONNECTED"
+        is BleConnectionState.ERROR -> "ERROR"
+    }
+
+    /** BLE 디버그 로그를 지운다 */
+    fun clearBleLog() {
+        _bleLogEntries.value = emptyList()
+    }
 
     /** AudioCollectionService를 시작/중지하는 토글 함수 */
     fun toggleCollection() {

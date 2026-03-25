@@ -16,25 +16,38 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bluetooth
+import androidx.compose.material.icons.filled.BluetoothConnected
+import androidx.compose.material.icons.filled.BluetoothDisabled
+import androidx.compose.material.icons.filled.BluetoothSearching
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.autominuting.data.audio.BleConnectionState
 import com.autominuting.domain.model.PipelineStatus
 
 /**
  * 대시보드 화면.
  * 앱의 메인 홈 화면으로, 진행 중인 파이프라인이 있으면 상단 배너로 상태를 표시한다.
+ * BLE 연결 상태를 실시간으로 표시하고, 디버그 로그 섹션에서 BLE 이벤트를 확인할 수 있다.
  * 디버그 모드에서 테스트 데이터 삽입 및 Gemini API 테스트 버튼을 제공한다.
  */
 @Composable
@@ -45,8 +58,10 @@ fun DashboardScreen(
     val isCollecting by viewModel.isCollecting.collectAsStateWithLifecycle()
     val testStatus by viewModel.testStatus.collectAsStateWithLifecycle()
     val isTestingGemini by viewModel.isTestingGemini.collectAsStateWithLifecycle()
+    val bleState by viewModel.bleConnectionState.collectAsStateWithLifecycle()
+    val bleLogEntries by viewModel.bleLogEntries.collectAsStateWithLifecycle()
 
-    // BLE 런타임 권한 요청 런처
+    // BLE 런타임 권한 요청 런처 (BLUETOOTH_CONNECT, BLUETOOTH_SCAN 필수)
     val blePermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -112,7 +127,7 @@ fun DashboardScreen(
             }
         }
 
-        // 녹음기 연결 카드
+        // 녹음기 연결 카드 (BLE 상태 표시 포함)
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,11 +140,34 @@ fun DashboardScreen(
             )
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "녹음기 연결",
-                    style = MaterialTheme.typography.titleMedium
-                )
+                // 타이틀 및 BLE 상태 아이콘
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = getBleStateIcon(bleState),
+                        contentDescription = "BLE 상태",
+                        modifier = Modifier.size(24.dp),
+                        tint = getBleStateColor(bleState)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "녹음기 연결",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // BLE 연결 상태 텍스트
+                Text(
+                    text = getBleStateText(bleState),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = getBleStateColor(bleState)
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
                 Text(
                     text = if (isCollecting)
                         "Plaud 녹음기에서 오디오를 수집하고 있습니다."
@@ -240,5 +278,108 @@ fun DashboardScreen(
                 }
             }
         }
+
+        // BLE 디버그 로그 섹션
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "BLE 로그",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (bleLogEntries.isNotEmpty()) {
+                        TextButton(
+                            onClick = { viewModel.clearBleLog() }
+                        ) {
+                            Text("로그 지우기")
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (bleLogEntries.isEmpty()) {
+                    Text(
+                        text = "BLE 이벤트가 없습니다. 녹음기를 연결하면 로그가 표시됩니다.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    // 최신 로그 항목을 상단에 표시 (최대 20건)
+                    Column {
+                        bleLogEntries.forEachIndexed { index, entry ->
+                            Text(
+                                text = "[${entry.timestamp}] ${entry.message}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            if (index < bleLogEntries.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = 2.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 하단 여백
+        Spacer(modifier = Modifier.height(16.dp))
     }
+}
+
+/**
+ * BLE 연결 상태에 따른 표시 텍스트를 반환한다.
+ */
+@Composable
+private fun getBleStateText(state: BleConnectionState): String = when (state) {
+    is BleConnectionState.IDLE -> "대기 중"
+    is BleConnectionState.SCANNING -> "기기 검색 중..."
+    is BleConnectionState.DEVICE_FOUND -> "기기 발견됨 - 연결 중..."
+    is BleConnectionState.CONNECTING -> "연결 중..."
+    is BleConnectionState.CONNECTED -> "연결됨"
+    is BleConnectionState.DISCONNECTED -> "연결 끊어짐"
+    is BleConnectionState.ERROR -> "오류: ${state.reason}"
+}
+
+/**
+ * BLE 연결 상태에 따른 아이콘을 반환한다.
+ */
+@Composable
+private fun getBleStateIcon(state: BleConnectionState): ImageVector = when (state) {
+    is BleConnectionState.IDLE -> Icons.Default.Bluetooth
+    is BleConnectionState.SCANNING -> Icons.Default.BluetoothSearching
+    is BleConnectionState.DEVICE_FOUND -> Icons.Default.BluetoothSearching
+    is BleConnectionState.CONNECTING -> Icons.Default.BluetoothSearching
+    is BleConnectionState.CONNECTED -> Icons.Default.BluetoothConnected
+    is BleConnectionState.DISCONNECTED -> Icons.Default.BluetoothDisabled
+    is BleConnectionState.ERROR -> Icons.Default.Error
+}
+
+/**
+ * BLE 연결 상태에 따른 색상을 반환한다.
+ * CONNECTED는 primaryContainer, ERROR는 errorContainer 계열 색상을 사용한다.
+ */
+@Composable
+private fun getBleStateColor(state: BleConnectionState) = when (state) {
+    is BleConnectionState.IDLE -> MaterialTheme.colorScheme.onSurfaceVariant
+    is BleConnectionState.SCANNING -> MaterialTheme.colorScheme.tertiary
+    is BleConnectionState.DEVICE_FOUND -> MaterialTheme.colorScheme.tertiary
+    is BleConnectionState.CONNECTING -> MaterialTheme.colorScheme.tertiary
+    is BleConnectionState.CONNECTED -> MaterialTheme.colorScheme.primary
+    is BleConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.onSurfaceVariant
+    is BleConnectionState.ERROR -> MaterialTheme.colorScheme.error
 }
