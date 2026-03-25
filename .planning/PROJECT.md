@@ -24,6 +24,7 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 - Phase 10: NotebookLM 공유 버튼 + Custom Tabs 폴백 + MCP 검토 문서
 - Phase 11: 삼성 자동 감지 스파이크 — Partial Go (오디오 감지 가능, 전사 텍스트 직접 감지 불가)
 - Phase 12: Google OAuth 인증 — MinutesEngine 인터페이스, Credential Manager, GeminiOAuthEngine(REST API)
+- Phase 13: Plaud BLE 실기기 디버깅 — SDK 스텁 교체, 실제 BLE 연결 흐름, getFileList 세션 수집, 디버그 UI
 
 ## Requirements
 
