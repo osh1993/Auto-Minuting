@@ -16,7 +16,7 @@
 ### NotebookLM 공유 (NLMK-01)
 - **D-01:** 기존 MinutesDetailScreen의 Share 버튼(ACTION_SEND)은 유지 — NotebookLM 앱이 설치되어 있으면 공유 대상에 자동 표시
 - **D-02:** 별도 NotebookLM 전용 버튼을 MinutesDetailScreen TopAppBar에 추가 — NotebookLM 아이콘(또는 텍스트 버튼)
-- **D-03:** 전용 버튼 클릭 시 NotebookLM 앱(com.google.android.apps.notebooklm)이 설치되어 있으면 직접 Intent 전송
+- **D-03:** 전용 버튼 클릭 시 NotebookLM 앱(com.google.android.apps.labs.language.tailwind — 리서치에서 확인된 실제 패키지명)이 설치되어 있으면 직접 Intent 전송
 - **D-04:** NotebookLM 앱 미설치 시 Custom Tabs로 notebooklm.google.com 열기 (폴백)
 
 ### Custom Tabs (NLMK-02)
@@ -25,9 +25,9 @@
 - **D-07:** androidx.browser (Custom Tabs) 의존성 추가
 
 ### MCP 서버 통합 (NLMK-03)
-- **D-08:** MCP 서버 API를 통한 노트북 생성/소스 추가 실동작 통합 구현
-- **D-09:** 검토 문서(MCP-REVIEW.md) 작성 — API 가능성, 제약사항, 앱 내 통합 방안 정리
-- **D-10:** 타임박스 초과 시 검토 문서만으로 NLMK-03 충족 (성공 기준이 "검토 문서로 정리")
+- **D-08:** ~~MCP 서버 API를 통한 실동작 통합 구현~~ → 리서치 결과 MCP 서버가 stdio 프로토콜(Puppeteer 브라우저 자동화) 기반으로 REST API를 제공하지 않아 Android 앱에서 직접 호출 불가. D-10으로 대체.
+- **D-09:** 검토 문서(MCP-REVIEW.md) 작성 — API 가능성, 제약사항, 기술적 한계, 대안 방안 정리
+- **D-10:** 검토 문서(MCP-REVIEW.md)로 NLMK-03 충족 (성공 기준이 "검토 문서로 정리"). MCP 서버 실동작 테스트 결과도 포함.
 
 ### Claude's Discretion
 - NotebookLM 전용 버튼의 아이콘/디자인 (Material 3 스타일 준수)
