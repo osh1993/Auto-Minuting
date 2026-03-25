@@ -36,6 +36,9 @@ coroutines = "1.10.1"
 # 보안
 securityCrypto = "1.0.0"
 
+# 브라우저 (Custom Tabs)
+browser = "1.9.0"
+
 # AndroidX 코어
 activityCompose = "1.10.1"
 lifecycleRuntimeCompose = "2.9.0"
@@ -94,6 +97,9 @@ core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx"
 
 # 보안
 security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+
+# 브라우저 (Custom Tabs)
+browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

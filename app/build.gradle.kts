@@ -109,6 +109,9 @@ dependencies {
     // 보안 (암호화 저장소)
     implementation(libs.security.crypto)
 
+    // Custom Tabs (NotebookLM 웹 연동)
+    implementation(libs.browser)
+
     // 코루틴
     implementation(libs.coroutines.android)
 
