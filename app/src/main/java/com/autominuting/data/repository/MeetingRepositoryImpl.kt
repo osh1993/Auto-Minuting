@@ -7,6 +7,7 @@ import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.domain.repository.MeetingRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.io.File
 import java.time.Instant
 import javax.inject.Inject
 
@@ -48,6 +49,20 @@ class MeetingRepositoryImpl @Inject constructor(
             list.map { it.toDomain() }
         }
 
-    override suspend fun deleteMeeting(id: Long) =
+    override suspend fun deleteMeeting(id: Long) {
+        // 1. 파일 경로 조회 (삭제 전에 Entity에서 가져와야 함)
+        val entity = meetingDao.getMeetingByIdOnce(id) ?: return
+
+        // 2. 연관 파일 삭제 (실패해도 DB 삭제 진행 -- 고아 파일 > 고아 레코드)
+        listOfNotNull(
+            entity.audioFilePath,
+            entity.transcriptPath,
+            entity.minutesPath
+        ).forEach { path ->
+            try { File(path).delete() } catch (_: Exception) { }
+        }
+
+        // 3. DB 레코드 삭제
         meetingDao.delete(id)
+    }
 }

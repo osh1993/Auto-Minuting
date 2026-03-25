@@ -1,6 +1,7 @@
 package com.autominuting.presentation.minutes
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -25,9 +27,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -52,6 +58,7 @@ fun MinutesScreen(
 ) {
     val meetings by viewModel.meetings.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    var meetingToDelete by remember { mutableStateOf<Meeting?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         // 검색바
@@ -128,10 +135,25 @@ fun MinutesScreen(
                             if (meeting.pipelineStatus == PipelineStatus.COMPLETED && meeting.minutesPath != null) {
                                 onMinutesClick(meeting.id)
                             }
+                        },
+                        onDeleteRequest = { id ->
+                            meetingToDelete = meetings.find { it.id == id }
                         }
                     )
                 }
             }
+        }
+
+        // 삭제 확인 대화상자
+        meetingToDelete?.let { meeting ->
+            DeleteConfirmationDialog(
+                meetingTitle = meeting.title,
+                onConfirm = {
+                    viewModel.deleteMeeting(meeting.id)
+                    meetingToDelete = null
+                },
+                onDismiss = { meetingToDelete = null }
+            )
         }
     }
 }
@@ -140,19 +162,21 @@ fun MinutesScreen(
  * 개별 회의록 항목 카드.
  * 회의 제목, 녹음 시각, 파이프라인 상태를 표시한다.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun MinutesMeetingCard(
     meeting: Meeting,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDeleteRequest: (Long) -> Unit
 ) {
     val isClickable = meeting.pipelineStatus == PipelineStatus.COMPLETED && meeting.minutesPath != null
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .then(
-                if (isClickable) Modifier.clickable(onClick = onClick)
-                else Modifier
+            .combinedClickable(
+                onClick = { if (isClickable) onClick() },
+                onLongClick = { onDeleteRequest(meeting.id) }
             ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -234,6 +258,31 @@ private fun MinutesPipelineStatusChip(status: PipelineStatus) {
             containerColor = containerColor,
             labelColor = labelColor
         )
+    )
+}
+
+/**
+ * 회의록 삭제 확인 대화상자.
+ * 삭제 시 관련 오디오, 전사, 회의록 파일이 모두 삭제됨을 안내한다.
+ */
+@Composable
+private fun DeleteConfirmationDialog(
+    meetingTitle: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("회의록 삭제") },
+        text = { Text("\"$meetingTitle\" 회의록을 삭제할까요?\n관련된 오디오, 전사, 회의록 파일이 모두 삭제됩니다.") },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("삭제", color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("취소") }
+        }
     )
 }
 

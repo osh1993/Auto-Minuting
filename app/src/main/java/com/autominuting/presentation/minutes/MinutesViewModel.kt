@@ -7,6 +7,7 @@ import com.autominuting.domain.repository.MeetingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -60,6 +61,13 @@ class MinutesViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
         )
+
+    /** 회의를 삭제한다 (DB + 연관 파일). */
+    fun deleteMeeting(id: Long) {
+        viewModelScope.launch {
+            meetingRepository.deleteMeeting(id)
+        }
+    }
 
     /**
      * 회의록 파일의 내용을 읽어 반환한다.
