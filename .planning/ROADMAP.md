@@ -46,7 +46,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
   4. Room DB v1에서 v2로 마이그레이션이 기존 데이터 손실 없이 수행된다
 **Plans**: 2 plans
 Plans:
-- [ ] 08-01-PLAN.md — DB 마이그레이션 (v1->v2, source 필드) + 회의 삭제 기능 (파일+DB 정합성, long-press UX)
+- [x] 08-01-PLAN.md — DB 마이그레이션 (v1->v2, source 필드) + 회의 삭제 기능 (파일+DB 정합성, long-press UX)
 - [ ] 08-02-PLAN.md — API 키 암호화 저장 (SecureApiKeyRepository) + GeminiEngine 인증 추상화 + 설정 UI
 **UI hint**: yes
 
@@ -111,7 +111,7 @@ Phases execute in numeric order: 8 -> 9 -> 10 -> 11 -> 12 -> 13
 | 5. 회의록 생성 | v1.0 | 2/2 | Complete | 2026-03-24 |
 | 6. 파이프라인 통합 및 자동화 | v1.0 | 3/3 | Complete | 2026-03-24 |
 | 7. UI 완성 | v1.0 | 2/2 | Complete | 2026-03-24 |
-| 8. 기반 강화 | v2.0 | 0/2 | Not started | - |
+| 8. 기반 강화 | v2.0 | 1/2 | In Progress|  |
 | 9. 삼성 공유 수신 | v2.0 | 0/? | Not started | - |
 | 10. NotebookLM 반자동 연동 | v2.0 | 0/? | Not started | - |
 | 11. 삼성 자동 감지 스파이크 | v2.0 | 0/? | Not started | - |
