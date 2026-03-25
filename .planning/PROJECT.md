@@ -11,11 +11,13 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 ## Current State
 
 **Shipped: v1.0 MVP** (2026-03-24)
+**Phase 8 완료** (2026-03-25) — 기반 강화
 
 - 58개 Kotlin 파일, 5,500+ LOC
 - Tech stack: Kotlin 2.3.20, Jetpack Compose (BOM 2026.03), Hilt 2.56, Room 2.8.4, WorkManager
 - 파이프라인: Plaud SDK BLE → Whisper STT → Gemini 2.5 Flash → Markdown 회의록
 - UI: Material 3 Dynamic Color, Bottom Navigation 4탭, Markdown 뷰어, 아카이브 검색
+- Phase 8: 회의 삭제(DB+파일 정합성), Gemini API 키 설정 UI(암호화 저장), Room DB v2 마이그레이션, 인증 추상화
 
 ## Requirements
 
