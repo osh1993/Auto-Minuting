@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.FileObserver
 import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -23,6 +24,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,12 +42,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.autominuting.presentation.theme.AutoMinutingTheme
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -55,6 +59,7 @@ import java.util.Locale
  *
  * SpikeService를 시작/중지하고, 감지된 이벤트를 실시간으로 표시한다.
  * MediaStore 스냅샷 조회와 텍스트 파일 스캔 기능도 제공한다.
+ * Before/After 스냅샷 비교 검증 기능을 포함한다.
  *
  * 이 코드는 스파이크 전용이며 임시 코드이다.
  */
@@ -67,7 +72,8 @@ class SpikeLogActivity : ComponentActivity() {
                     onStartService = { startSpikeService() },
                     onStopService = { stopSpikeService() },
                     onQuerySnapshot = { queryMediaStoreSnapshot() },
-                    onQueryTextFiles = { queryTextFiles() }
+                    onQueryTextFiles = { queryTextFiles() },
+                    contentResolverProvider = { contentResolver }
                 )
             }
         }
@@ -229,16 +235,28 @@ fun SpikeLogScreen(
     onStartService: () -> Unit,
     onStopService: () -> Unit,
     onQuerySnapshot: () -> List<SnapshotItem>,
-    onQueryTextFiles: () -> List<SnapshotItem>
+    onQueryTextFiles: () -> List<SnapshotItem>,
+    contentResolverProvider: () -> android.content.ContentResolver
 ) {
     // 실시간 감지 이벤트 수집
     val detectionEvents = remember { mutableStateListOf<DetectionEvent>() }
     val isRunning by SpikeService.isRunning.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
 
     // 스냅샷/텍스트 파일 결과
     var snapshotItems by remember { mutableStateOf<List<SnapshotItem>>(emptyList()) }
     var textFileItems by remember { mutableStateOf<List<SnapshotItem>>(emptyList()) }
     var showingMode by remember { mutableStateOf(ShowingMode.LOG) }
+
+    // 검증 스냅샷 상태
+    var beforeAudioSnapshot by remember { mutableStateOf<List<MediaStoreEntry>?>(null) }
+    var beforeTextSnapshot by remember { mutableStateOf<List<MediaStoreEntry>?>(null) }
+    var verificationReport by remember { mutableStateOf<String?>(null) }
+
+    // FileObserver 상태
+    var fileObserver by remember { mutableStateOf<FileObserver?>(null) }
+    val fileObserverEvents = remember { mutableStateListOf<String>() }
+    var fileObserverRunning by remember { mutableStateOf(false) }
 
     // Runtime 퍼미션 요청
     val permissionsToRequest = buildList {
@@ -328,22 +346,94 @@ fun SpikeLogScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 스냅샷/텍스트 파일 스캔 버튼
+            // 검증 시나리오 버튼 (Before/After 스냅샷)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            val cr = contentResolverProvider()
+                            beforeAudioSnapshot = SpikeVerificationHelper.snapshotMediaStoreAudio(cr)
+                            beforeTextSnapshot = SpikeVerificationHelper.snapshotMediaStoreFiles(cr)
+                            verificationReport = null
+                            showingMode = ShowingMode.VERIFICATION
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiary
+                    )
+                ) {
+                    Text("검증 시작\n(Before 스냅샷)", maxLines = 2)
+                }
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            val cr = contentResolverProvider()
+                            val afterAudio = SpikeVerificationHelper.snapshotMediaStoreAudio(cr)
+                            val afterText = SpikeVerificationHelper.snapshotMediaStoreFiles(cr)
+                            val audioDiff = SpikeVerificationHelper.diffSnapshots(
+                                beforeAudioSnapshot ?: emptyList(), afterAudio
+                            )
+                            val textDiff = SpikeVerificationHelper.diffSnapshots(
+                                beforeTextSnapshot ?: emptyList(), afterText
+                            )
+                            verificationReport = SpikeVerificationHelper.formatReport(
+                                audioEntries = beforeAudioSnapshot ?: emptyList(),
+                                textEntries = beforeTextSnapshot ?: emptyList(),
+                                audioDiff = audioDiff,
+                                textDiff = textDiff
+                            )
+                            showingMode = ShowingMode.VERIFICATION
+                        }
+                    },
+                    enabled = beforeAudioSnapshot != null,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiary
+                    )
+                ) {
+                    Text("검증 완료\n(After + Diff)", maxLines = 2)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // FileObserver 검증 + 기존 스캔 버튼
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 OutlinedButton(onClick = {
+                    if (!fileObserverRunning) {
+                        fileObserverEvents.clear()
+                        val obs = SpikeVerificationHelper.createVoiceRecorderFileObserver { eventType, path ->
+                            val eventName = when (eventType) {
+                                FileObserver.CREATE -> "CREATE"
+                                FileObserver.CLOSE_WRITE -> "CLOSE_WRITE"
+                                FileObserver.MOVED_TO -> "MOVED_TO"
+                                FileObserver.DELETE -> "DELETE"
+                                else -> "OTHER($eventType)"
+                            }
+                            fileObserverEvents.add(0, "$eventName: $path")
+                        }
+                        obs.startWatching()
+                        fileObserver = obs
+                        fileObserverRunning = true
+                        showingMode = ShowingMode.FILE_OBSERVER
+                    } else {
+                        fileObserver?.stopWatching()
+                        fileObserver = null
+                        fileObserverRunning = false
+                    }
+                }) {
+                    Text(if (fileObserverRunning) "FileObserver 중지" else "FileObserver 시작")
+                }
+                OutlinedButton(onClick = {
                     snapshotItems = onQuerySnapshot()
                     showingMode = ShowingMode.SNAPSHOT
                 }) {
                     Text("MediaStore 스냅샷")
-                }
-                OutlinedButton(onClick = {
-                    textFileItems = onQueryTextFiles()
-                    showingMode = ShowingMode.TEXT_FILES
-                }) {
-                    Text("텍스트 파일 스캔")
                 }
                 OutlinedButton(onClick = {
                     showingMode = ShowingMode.LOG
@@ -421,6 +511,78 @@ fun SpikeLogScreen(
                         }
                     }
                 }
+
+                ShowingMode.VERIFICATION -> {
+                    Text(
+                        text = "검증 결과",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    if (verificationReport != null) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Text(
+                                text = verificationReport!!,
+                                modifier = Modifier.padding(12.dp),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    } else {
+                        val audioCount = beforeAudioSnapshot?.size ?: 0
+                        val textCount = beforeTextSnapshot?.size ?: 0
+                        Text(
+                            text = "Before 스냅샷 저장 완료.\n" +
+                                    "오디오: ${audioCount}개, 텍스트: ${textCount}개\n\n" +
+                                    "이제 삼성 녹음앱에서 녹음 + 전사를 수행한 후\n" +
+                                    "'검증 완료 (After + Diff)' 버튼을 누르세요.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                ShowingMode.FILE_OBSERVER -> {
+                    Text(
+                        text = "FileObserver 이벤트 (${fileObserverEvents.size}건)" +
+                                if (fileObserverRunning) " - 감시 중" else " - 중지됨",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    if (fileObserverEvents.isEmpty()) {
+                        Text(
+                            text = "FileObserver 이벤트가 없습니다.\n" +
+                                    "Recordings/Voice Recorder/ 경로를 감시 중입니다.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    LazyColumn {
+                        items(fileObserverEvents) { eventLog ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                )
+                            ) {
+                                Text(
+                                    text = eventLog,
+                                    modifier = Modifier.padding(8.dp),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                    }
+                }
             }
         }
     }
@@ -428,7 +590,7 @@ fun SpikeLogScreen(
 
 /** 표시 모드 */
 enum class ShowingMode {
-    LOG, SNAPSHOT, TEXT_FILES
+    LOG, SNAPSHOT, TEXT_FILES, VERIFICATION, FILE_OBSERVER
 }
 
 /** 감지 이벤트 카드 */
