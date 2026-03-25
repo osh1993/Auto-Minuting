@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.autominuting.data.auth.AuthMode
 import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.MinutesFormat
 import kotlinx.coroutines.flow.Flow
@@ -15,8 +16,8 @@ import javax.inject.Singleton
 /**
  * 사용자 설정을 DataStore로 관리하는 Repository.
  *
- * 회의록 형식(MinutesFormat)과 자동화 모드(AutomationMode) 설정을
- * Flow로 관찰하거나 즉시 조회할 수 있다.
+ * 회의록 형식(MinutesFormat), 자동화 모드(AutomationMode),
+ * 인증 모드(AuthMode), Google 계정 정보를 Flow로 관찰하거나 즉시 조회할 수 있다.
  */
 @Singleton
 class UserPreferencesRepository @Inject constructor(
@@ -29,6 +30,15 @@ class UserPreferencesRepository @Inject constructor(
 
         /** 자동화 모드 설정 키 */
         val AUTOMATION_MODE_KEY = stringPreferencesKey("automation_mode")
+
+        /** 인증 모드 설정 키 */
+        val AUTH_MODE_KEY = stringPreferencesKey("auth_mode")
+
+        /** Google 계정 이메일 */
+        val GOOGLE_EMAIL_KEY = stringPreferencesKey("google_email")
+
+        /** Google 계정 표시 이름 */
+        val GOOGLE_DISPLAY_NAME_KEY = stringPreferencesKey("google_display_name")
     }
 
     /** 현재 회의록 형식 설정을 관찰한다. 기본값: STRUCTURED */
@@ -41,6 +51,22 @@ class UserPreferencesRepository @Inject constructor(
     val automationMode: Flow<AutomationMode> = dataStore.data.map { prefs ->
         val name = prefs[AUTOMATION_MODE_KEY] ?: AutomationMode.FULL_AUTO.name
         AutomationMode.valueOf(name)
+    }
+
+    /** 현재 인증 모드 설정을 관찰한다. 기본값: API_KEY */
+    val authMode: Flow<AuthMode> = dataStore.data.map { prefs ->
+        val name = prefs[AUTH_MODE_KEY] ?: AuthMode.API_KEY.name
+        AuthMode.valueOf(name)
+    }
+
+    /** 저장된 Google 계정 이메일을 관찰한다. */
+    val googleEmail: Flow<String?> = dataStore.data.map { prefs ->
+        prefs[GOOGLE_EMAIL_KEY]
+    }
+
+    /** 저장된 Google 계정 표시 이름을 관찰한다. */
+    val googleDisplayName: Flow<String?> = dataStore.data.map { prefs ->
+        prefs[GOOGLE_DISPLAY_NAME_KEY]
     }
 
     /**
@@ -60,6 +86,38 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setAutomationMode(mode: AutomationMode) {
         dataStore.edit { prefs ->
             prefs[AUTOMATION_MODE_KEY] = mode.name
+        }
+    }
+
+    /**
+     * 인증 모드를 변경한다.
+     * @param mode 새로운 인증 모드
+     */
+    suspend fun setAuthMode(mode: AuthMode) {
+        dataStore.edit { prefs ->
+            prefs[AUTH_MODE_KEY] = mode.name
+        }
+    }
+
+    /**
+     * Google 계정 정보를 저장한다.
+     * @param displayName 표시 이름
+     * @param email 이메일 주소
+     */
+    suspend fun setGoogleAccount(displayName: String, email: String) {
+        dataStore.edit { prefs ->
+            prefs[GOOGLE_DISPLAY_NAME_KEY] = displayName
+            prefs[GOOGLE_EMAIL_KEY] = email
+        }
+    }
+
+    /**
+     * Google 계정 정보를 삭제한다.
+     */
+    suspend fun clearGoogleAccount() {
+        dataStore.edit { prefs ->
+            prefs.remove(GOOGLE_DISPLAY_NAME_KEY)
+            prefs.remove(GOOGLE_EMAIL_KEY)
         }
     }
 

@@ -1,7 +1,7 @@
 package com.autominuting.di
 
-import com.autominuting.data.minutes.GeminiEngine
 import com.autominuting.data.minutes.MinutesEngine
+import com.autominuting.data.minutes.MinutesEngineSelector
 import com.autominuting.data.repository.AudioRepositoryImpl
 import com.autominuting.data.repository.MeetingRepositoryImpl
 import com.autominuting.data.repository.MinutesRepositoryImpl
@@ -18,7 +18,8 @@ import dagger.hilt.components.SingletonComponent
 /**
  * Repository 인터페이스와 구현체를 바인딩하는 Hilt 모듈.
  *
- * MinutesRepository는 Phase 5에서 Gemini API 기반 구현체로 바인딩한다.
+ * MinutesEngine은 MinutesEngineSelector를 통해 인증 모드에 따라
+ * GeminiEngine(API 키) 또는 GeminiOAuthEngine(OAuth)을 선택한다.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -60,11 +61,11 @@ abstract class RepositoryModule {
     ): MinutesRepository
 
     /**
-     * MinutesEngine 인터페이스를 GeminiEngine 구현체에 바인딩한다.
-     * 기본 바인딩은 API 키 모드. Plan 02에서 OAuth 엔진 추가 예정.
+     * MinutesEngine 인터페이스를 MinutesEngineSelector에 바인딩한다.
+     * 인증 모드(API 키/OAuth)에 따라 적절한 엔진을 동적 선택한다.
      */
     @Binds
     abstract fun bindMinutesEngine(
-        impl: GeminiEngine
+        impl: MinutesEngineSelector
     ): MinutesEngine
 }
