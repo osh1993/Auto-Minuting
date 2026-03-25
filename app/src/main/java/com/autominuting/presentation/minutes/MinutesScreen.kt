@@ -190,6 +190,24 @@ private fun MinutesMeetingCard(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
+            // 출처 뱃지 (삼성 공유)
+            if (meeting.source == "SAMSUNG_SHARE") {
+                Spacer(modifier = Modifier.height(4.dp))
+                SuggestionChip(
+                    onClick = {},
+                    label = {
+                        Text(
+                            text = "삼성 공유",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
+                    colors = SuggestionChipDefaults.suggestionChipColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        labelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                )
+            }
+
             Spacer(modifier = Modifier.height(4.dp))
 
             // 녹음 시각 + 파이프라인 상태 칩
