@@ -58,6 +58,9 @@ Plans:
   1. 삼성 녹음앱의 공유 버튼에서 Auto Minuting이 대상 앱으로 표시된다
   2. 공유된 전사 텍스트가 STT 단계를 건너뛰고 Gemini 회의록 생성 파이프라인에 진입한다
   3. 공유로 생성된 회의록이 기존 회의 목록에 출처(삼성 공유)와 함께 표시된다
+**Plans**: 1 plans
+Plans:
+- [ ] 09-01-PLAN.md — ShareReceiverActivity 생성 + Manifest intent-filter 등록 + 출처 뱃지 UI
 
 ### Phase 10: NotebookLM 반자동 연동
 **Goal**: 사용자가 회의록을 NotebookLM에 전달하여 AI 분석을 활용할 수 있다
@@ -112,7 +115,7 @@ Phases execute in numeric order: 8 -> 9 -> 10 -> 11 -> 12 -> 13
 | 6. 파이프라인 통합 및 자동화 | v1.0 | 3/3 | Complete | 2026-03-24 |
 | 7. UI 완성 | v1.0 | 2/2 | Complete | 2026-03-24 |
 | 8. 기반 강화 | v2.0 | 1/2 | In Progress|  |
-| 9. 삼성 공유 수신 | v2.0 | 0/? | Not started | - |
+| 9. 삼성 공유 수신 | v2.0 | 0/1 | Not started | - |
 | 10. NotebookLM 반자동 연동 | v2.0 | 0/? | Not started | - |
 | 11. 삼성 자동 감지 스파이크 | v2.0 | 0/? | Not started | - |
 | 12. Google OAuth 인증 | v2.0 | 0/? | Not started | - |
