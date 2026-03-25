@@ -1,309 +1,344 @@
-# 도메인 함정 (Domain Pitfalls)
+# 도메인 함정 (Domain Pitfalls) — v2.0 기능 확장
 
-**도메인:** BLE 녹음기 역공학 + 온디바이스 전사 + NotebookLM 자동 회의록 생성 Android 앱
-**조사일:** 2026-03-24
-**전체 신뢰도:** MEDIUM (웹 검색 도구 제한으로 일부 항목은 훈련 데이터 기반)
+**도메인:** Android 회의록 자동화 앱 v2.0 기능 추가
+**조사일:** 2026-03-25
+**대상 기능:** 삼성 녹음기 전사 연동, NotebookLM 통합, Gemini OAuth/API 키 UI, 파일 삭제, Plaud BLE 디버깅
+**전체 신뢰도:** MEDIUM-HIGH (코드베이스 직접 분석 기반, 웹 검색 제한으로 일부 항목은 훈련 데이터 기반)
 
 ---
 
 ## 치명적 함정 (Critical Pitfalls)
 
-프로젝트를 근본적으로 좌절시키거나 대규모 재작업을 초래하는 실수.
+아키텍처 변경이나 기능 전체 폐기를 초래하는 실수들.
 
 ---
 
-### 함정 C1: Plaud BLE 프로토콜이 암호화되어 있을 가능성
+### CP-1: 삼성 녹음기 전사 완료 감지 — 존재하지 않는 API에 의존
 
-**무엇이 잘못되는가:** Plaud 녹음기와 공식 앱 사이의 BLE 통신이 표준 GATT 프로파일이 아닌 커스텀 프로토콜을 사용하고, 페이로드가 암호화/난독화되어 있어 역공학이 불가능하거나 극도로 어려운 상황.
+**무엇이 잘못되는가:** 삼성 녹음기(Samsung Voice Recorder)에는 전사 완료를 알려주는 공개 API, Intent, Broadcast가 없다. ContentObserver로 MediaStore 변경을 감시하는 접근법을 선택하면, "전사 완료된 파일"을 구분할 수 없어 오탐(false positive)이 대량 발생한다.
 
-**왜 발생하는가:** 대부분의 상용 BLE 기기는 표준 프로파일(Heart Rate, Battery 등) 위에 벤더 전용 서비스/특성을 구현한다. Plaud는 오디오 파일이라는 대용량 데이터를 전송하므로 자체 전송 프로토콜을 사용할 가능성이 높다. 펌웨어 업데이트로 암호화 키나 프로토콜이 변경될 수 있다.
+**왜 발생하는가:** 삼성 녹음기는 전사 결과를 자체 앱 내부 스토리지(`/data/data/com.sec.android.app.voicenote/`)에 저장한다. Android Scoped Storage 정책으로 서드파티 앱은 이 경로에 접근 불가. ContentObserver는 MediaStore 레벨 변경만 감지하며, 전사 텍스트 파일은 MediaStore에 등록되지 않을 가능성이 높다.
 
 **결과:**
-- BLE 직접 인터셉트 방식 자체가 불가능해질 수 있음
-- 역공학에 투자한 시간이 전부 낭비됨
-- 프로젝트의 핵심 전제가 무너짐
+- ContentObserver 기반 자동 감지 구현에 수주간 투자 후 "불가능"이라는 결론
+- Accessibility Service 접근은 Play Store 정책 위반 리스크 (접근성 서비스 남용 금지 정책, Google이 2024년부터 강화 적용)
+- 자동 감지가 불가능하면 v2.0 핵심 기능 하나가 통째로 사라짐
 
 **예방:**
-1. **Phase 1 첫 스프린트에서 PoC 필수**: nRF Connect 등으로 Plaud BLE 서비스/특성을 스캔하고, 데이터 패턴을 분석하여 암호화 여부를 최우선 확인
-2. **대안 경로 사전 설계**: BLE 직접 인터셉트가 불가능할 경우의 Plan B를 초기에 수립:
-   - Plan B-1: Plaud 앱이 로컬 저장소에 저장하는 파일을 FileObserver/MediaStore로 감시
-   - Plan B-2: Android Accessibility Service로 Plaud 앱 UI 자동화
-   - Plan B-3: Plaud 앱의 APK를 디컴파일하여 파일 저장 경로/API 엔드포인트 분석
-3. **타임박스 설정**: BLE 역공학에 최대 2주 타임박스. 그 안에 진전이 없으면 Plan B로 전환
+1. **Phase 1 첫 48시간 내 기술 검증(Spike) 최우선 수행.** 실기기에서 삼성 녹음기 전사 후 다음 명령으로 확인:
+   - `adb shell content query --uri content://media/external/file` — MediaStore 변경 여부
+   - `adb shell ls -la /sdcard/` — 외부 저장소에 전사 파일 생성 여부
+   - ContentObserver 테스트 앱으로 onChange 이벤트 로그 수집
+2. **폴백을 기본 경로로 확정.** "공유(Share Intent)로 전사 텍스트 수신" 방식을 1순위 구현 경로로 설정. 자동 감지는 보너스
+3. Share Intent 수신 Activity를 `text/plain` MIME 타입으로 등록하면 삼성 녹음기의 "공유" 버튼에서 즉시 동작 가능
 
-**감지 신호:**
-- nRF Connect에서 Plaud의 GATT 서비스가 모두 커스텀 UUID(128비트)로만 구성됨
-- characteristic 값을 읽어도 패턴 인식이 안 되는 바이너리 데이터
-- Plaud 앱이 BLE 연결 전에 핸드셰이크/인증 과정을 수행
+**감지 신호:** `adb shell`로 삼성 녹음기 전사 파일 경로를 확인했을 때, 앱 내부 저장소(`/data/data/`)에만 존재하면 자동 감지는 사실상 불가능
 
-**해당 페이즈:** Phase 1 (BLE 분석/PoC) - 가장 처음에 검증해야 하는 핵심 리스크
+**신뢰도:** MEDIUM — 삼성 녹음기 내부 구조는 비공개이므로 실기기 검증 필수
 
 ---
 
-### 함정 C2: Samsung Galaxy AI 전사 기능에 공개 API가 없을 가능성
+### CP-2: NotebookLM에 공식 REST API가 없다는 사실을 무시한 통합 설계
 
-**무엇이 잘못되는가:** Galaxy AI의 온디바이스 전사 기능은 삼성 내장 앱(녹음 앱, 통화 앱 등)에서만 사용 가능하고, 서드파티 앱이 프로그래밍적으로 호출할 수 있는 SDK/API가 존재하지 않는 상황.
+**무엇이 잘못되는가:** NotebookLM에는 공식 REST API가 없다(PROJECT.md에도 기록). 비공식 MCP 서버(`notebooklm-mcp`)가 존재하지만 이것은 브라우저 세션 쿠키 기반이며, Android 앱에서 직접 호출하기에 부적합하다. PC에서 실행되는 MCP 서버에 의존하면, "모바일 독립 실행"이라는 앱 핵심 가치를 잃는다.
 
-**왜 발생하는가:** 삼성의 Galaxy AI 기능 중 상당수는 시스템 앱에 통합되어 있으며, 공개 SDK로 노출되지 않는다. Samsung Developer 포털의 Galaxy AI 섹션은 주로 Galaxy AI가 탑재된 기기에서의 앱 최적화에 초점을 맞추고 있지, Galaxy AI 기능을 서드파티 앱에서 호출할 수 있는 API를 제공하지 않을 수 있다.
+**왜 발생하는가:** NotebookLM MCP 서버가 존재하니 "API가 있다"고 착각. 실제로 MCP 서버는 웹 UI를 자동화하는 방식이거나 인증된 브라우저 세션에 의존. Android 앱에서 이 경로를 사용하면 인증 유지, 세션 만료, 헤드리스 브라우저 필요 등 문제가 쏟아진다.
 
 **결과:**
-- 자체 STT 엔진을 구현하지 않겠다는 설계 전제가 깨짐
-- 대체 STT 솔루션 도입 필요 (Google Speech-to-Text, Whisper 등)
-- 온디바이스 처리라는 프라이버시 장점 상실 가능
+- NotebookLM "직접 연동" 구현 착수 후 인증 벽에 부딪혀 기능 전체 폐기
+- 사용자가 PC를 켜놓아야 하는 종속성 발생
+- Google이 비공식 접근을 차단하면 기능 즉시 사망
 
 **예방:**
-1. **Phase 1에서 Samsung Developer 포털 및 One UI SDK 문서 정밀 조사**: Galaxy AI 전사 관련 Intent, ContentProvider, 또는 SDK가 존재하는지 확인
-2. **대안 STT 솔루션 사전 조사**:
-   - Google ML Kit On-Device Speech Recognition (한국어 지원 확인 필요)
-   - OpenAI Whisper (on-device 실행 가능하나 리소스 부담)
-   - Google Cloud Speech-to-Text (클라우드 기반, 비용 발생)
-   - Android 내장 SpeechRecognizer API (품질 제한적)
-3. **삼성 개발자 포럼/커뮤니티에서 직접 문의**: Galaxy AI 전사 API 공개 여부 확인
+1. **NotebookLM 연동은 "공유" 방식으로 한정.** Android Share Intent 또는 Custom Tabs로 NotebookLM 앱/웹에 전사 텍스트를 전달하는 것이 현실적 상한
+2. **Gemini API 직접 호출(현재 `GeminiEngine`)이 핵심 경로.** NotebookLM은 선택적 보조 기능으로 위치 확정
+3. 구현 범위: "앱에서 NotebookLM 웹 열기 + 전사 텍스트 클립보드 복사" 또는 "공유 Intent로 텍스트 전달" 수준의 반자동화
+4. **Custom Tabs 사용 시 주의:** Chrome에서 로그인된 Google 계정과 앱 OAuth 계정이 다를 수 있으므로 UX에서 안내 필요
 
-**감지 신호:**
-- Samsung Developer 포털에서 transcription API, speech-to-text SDK 검색 시 결과 없음
-- Galaxy AI 관련 SDK가 AI 기반 이미지/텍스트 처리에 한정됨
-- 온디바이스 전사를 사용하는 서드파티 앱 사례를 찾을 수 없음
+**감지 신호:** "NotebookLM API endpoint"로 검색 시 공식 문서가 나오지 않으면 직접 통합 포기
 
-**해당 페이즈:** Phase 1 (기술 검증) - BLE PoC와 병렬로 즉시 검증
+**신뢰도:** HIGH — PROJECT.md에 "NotebookLM API: No official REST API" 기록 확인
 
 ---
 
-### 함정 C3: NotebookLM에 공식 API가 없어 자동화가 불안정
+### CP-3: Gemini API 키를 BuildConfig에 하드코딩한 채 OAuth 전환 시 기존 파이프라인 파괴
 
-**무엇이 잘못되는가:** NotebookLM은 Google의 실험적 제품으로 공식 REST API를 제공하지 않는다. MCP 서버를 통한 자동화는 비공식 경로에 의존하므로, Google의 UI/백엔드 변경 시 언제든 깨질 수 있다.
+**무엇이 잘못되는가:** 현재 `GeminiEngine`(코드 확인 완료)은 `BuildConfig.GEMINI_API_KEY`를 직접 읽어 `GenerativeModel`을 생성한다. OAuth 인증을 추가할 때 이 코드를 직접 수정하면, API 키 모드와 OAuth 모드를 동시에 지원할 수 없다. 또한 **Google AI Client SDK(`com.google.ai.client.generativeai`)는 API 키 인증만 지원**하며 OAuth Bearer 토큰을 처리하는 코드 경로가 없을 가능성이 높다.
 
-**왜 발생하는가:** NotebookLM은 2023년 출시 이후 빠르게 진화 중이며, 공식 API 로드맵이 불확실하다. MCP 서버는 웹 인터페이스를 자동화하는 방식이므로 Google의 프론트엔드/백엔드 변경에 취약하다.
+**왜 발생하는가:** `GeminiEngine`이 인증 방식을 하드코딩(`BuildConfig.GEMINI_API_KEY`)하고 있어서, 인증 제공자를 추상화하지 않으면 두 방식 공존이 불가능. OAuth 토큰은 만료되는데, 백그라운드 `WorkManager` 작업 중 토큰 갱신 실패를 처리하는 로직이 없다.
 
 **결과:**
-- NotebookLM 업데이트마다 MCP 서버 호환성 깨짐
-- 회의록 생성 파이프라인 전체가 불안정해짐
-- 사용자 경험의 핵심인 자동화가 무너짐
+- `GenerativeModel(apiKey = oauthToken)` 시도 시 401 Unauthorized — SDK가 API 키와 OAuth를 다르게 처리
+- API 키 사용자와 OAuth 사용자를 동시에 지원 불가
+- OAuth 토큰 만료 시 `MinutesGenerationWorker` 전체 중단, WorkManager 무한 재시도
 
 **예방:**
-1. **NotebookLM 의존도를 최소화하는 아키텍처 설계**: 회의록 생성 로직을 추상화하여 NotebookLM 외 다른 LLM(Gemini API 직접 호출, GPT 등)으로 교체 가능하게 설계
-2. **MCP 서버 장애 시 폴백 경로 구현**: NotebookLM MCP 실패 시 Gemini API로 직접 회의록 생성하는 대체 파이프라인
-3. **NotebookLM MCP 서버의 안정성 검증**: 현재 사용 중인 MCP 서버의 유지보수 상태, 업데이트 빈도, 커뮤니티 활성도 확인
+1. **OAuth 경로는 처음부터 Retrofit REST API 직접 호출로 설계.** SDK는 API 키 경로에만 사용:
+   ```kotlin
+   interface GeminiAuthProvider {
+       suspend fun getApiKey(): String?        // API 키 경로 → SDK 사용
+       suspend fun getAuthToken(): String?     // OAuth 경로 → REST API 사용
+       fun authMode(): AuthMode               // API_KEY | OAUTH
+   }
+   ```
+2. **GeminiEngine을 인증 제공자에 의존하도록 리팩터링** 후에 OAuth 구현 착수
+3. **순서: API 키 설정 UI 먼저** (DataStore에 저장) → `BuildConfig` 의존 제거 → 그 후 OAuth 추가
+4. **초기 프로토타입에서 SDK에 OAuth 토큰 전달 테스트** — 실패 시 REST API 경로 확정
 
-**감지 신호:**
-- MCP 서버가 특정 NotebookLM 기능 호출 시 간헐적 실패
-- NotebookLM 웹 UI 업데이트 후 MCP 서버 기능 중단
-- MCP 서버 GitHub 리포에 이슈 증가, 유지보수자 응답 지연
+**감지 신호:** `GenerativeModel` 생성자에 OAuth 토큰을 전달하는 방법이 없으면 REST API 래퍼 필요
 
-**해당 페이즈:** Phase 2 (NotebookLM 연동) - 하지만 아키텍처 추상화는 Phase 1에서 설계
+**신뢰도:** HIGH (인증 추상화 필요성) / MEDIUM (SDK OAuth 미지원 — 실제 테스트 필요)
 
 ---
 
-### 함정 C4: BLE 대용량 오디오 파일 전송의 기술적 한계
+### CP-4: Room DB 삭제와 파일시스템 삭제의 불일치 (Orphaned Files / Dangling References)
 
-**무엇이 잘못되는가:** BLE는 본질적으로 소용량 데이터 전송용으로 설계되었다. 1시간 회의 녹음 파일(수십~수백 MB)을 BLE로 전송하려면 Plaud가 자체 프로토콜로 청크 분할/재조립을 구현했을 것이며, 이를 역공학하는 것은 단순한 GATT 읽기와는 차원이 다른 복잡도이다.
+**무엇이 잘못되는가:** 현재 `MeetingDao.delete(id)`는 DB 레코드만 삭제한다(코드 확인 완료). `audioFilePath`, `transcriptPath`, `minutesPath`에 연결된 실제 파일은 파일시스템에 그대로 남는다. 반대로 파일만 삭제하고 DB를 업데이트하지 않으면, UI에서 "파일 없음" 크래시가 발생한다.
 
-**왜 발생하는가:**
-- BLE의 기본 MTU는 23바이트 (ATT 헤더 제외 시 실제 페이로드 20바이트)
-- MTU 협상으로 최대 517바이트까지 확장 가능하지만 여전히 소량
-- 대용량 파일은 수만~수십만 개의 청크로 분할 전송됨
-- 전송 중 연결 끊김, 청크 유실, 순서 꼬임 등 처리 필요
+**왜 발생하는가:** `MeetingRepositoryImpl.deleteMeeting()`이 `meetingDao.delete(id)`만 호출하고 파일 삭제 로직이 전혀 없다(코드 확인 완료). Room 트랜잭션과 파일시스템 작업은 원자적(atomic)이 아니므로, 한쪽만 성공할 수 있다.
 
 **결과:**
-- BLE 프로토콜 역공학 난이도가 예상보다 훨씬 높음
-- 불완전한 역공학 시 파일 손상/불완전 전송
-- 전송 시간이 매우 길어 사용자 경험 저하
+- 삭제 기능을 사용할수록 수백 MB의 오디오 파일이 저장소에 계속 누적
+- DB 삭제 성공 → 파일 삭제 실패 → 저장소 누수
+- 파일 먼저 삭제 → DB 삭제 실패 → UI에서 존재하지 않는 파일 접근 → 크래시
 
 **예방:**
-1. **Plaud의 실제 전송 방식 먼저 확인**: BLE가 아닌 Classic Bluetooth SPP나 Wi-Fi Direct를 사용할 가능성도 있음
-2. **BLE 직접 인터셉트 대신 파일 시스템 감시 우선 검토**: Plaud 앱이 파일을 로컬에 저장한 후 이를 감시하는 것이 더 단순하고 안정적
-3. **APK 디컴파일로 저장 경로 파악**: jadx 등으로 Plaud APK를 디컴파일하여 파일 저장 경로와 포맷을 확인
+1. **삭제 순서: DB 먼저, 파일 나중.** DB 삭제가 실패하면 롤백 가능하므로 더 안전:
+   ```kotlin
+   suspend fun deleteMeeting(id: Long) {
+       val meeting = meetingDao.getMeetingByIdOnce(id) ?: return
+       meetingDao.delete(id)  // 1단계: DB 삭제
+       // 2단계: 파일 삭제 (실패해도 DB는 정리됨 — 고아 파일은 주기적 정리)
+       listOfNotNull(meeting.audioFilePath, meeting.transcriptPath, meeting.minutesPath)
+           .forEach { path -> File(path).delete() }
+   }
+   ```
+2. **주기적 고아 파일 정리** WorkManager 작업 추가 (DB에 없는 파일 스캔 후 삭제)
+3. **파일 읽기 시 null-safe 처리:** 파일이 없으면 "파일이 삭제됨" UI 표시 (크래시 방지)
+4. `MeetingDao`에 `getMeetingByIdOnce(): MeetingEntity?` (suspend, non-Flow) 함수 추가 필요
 
-**감지 신호:**
-- Plaud 동기화 시 BLE뿐 아니라 Classic Bluetooth 연결도 함께 설정됨
-- 동기화 시간이 파일 크기에 비해 비교적 빠름 (BLE가 아닌 다른 채널 사용 의심)
-- nRF Connect 로그에서 대용량 데이터 전송 흔적이 없음
+**감지 신호:** 앱 저장소 크기가 사용 기간에 비례하여 계속 증가하면 고아 파일 누수
 
-**해당 페이즈:** Phase 1 (BLE 분석) - 가장 처음에 검증
+**신뢰도:** HIGH — `MeetingRepositoryImpl.kt`, `MeetingDao.kt` 코드 직접 확인. 파일 삭제 로직 완전 부재
 
 ---
 
 ## 중간 수준 함정 (Moderate Pitfalls)
 
-프로젝트 일정 지연이나 기능 품질 저하를 초래하는 실수.
+기능 지연이나 사용자 경험 저하를 유발하는 실수들.
 
 ---
 
-### 함정 M1: Plaud 앱 업데이트로 역공학 결과 무효화
+### MP-1: Share Intent 수신을 기존 MainActivity에 합치면 딥링크 충돌
 
-**무엇이 잘못되는가:** Plaud 앱이 업데이트되면 파일 저장 경로, BLE 프로토콜, 파일 포맷이 변경되어 기존 역공학 결과가 무효화된다.
+**무엇이 잘못되는가:** 삼성 녹음기에서 "공유"로 전사 텍스트를 보내면 `ACTION_SEND` Intent가 발생한다. 이것을 기존 `MainActivity`의 `intent-filter`에 추가하면, 앱이 이미 실행 중일 때 Activity 재생성이나 `onNewIntent` 처리 누락으로 데이터가 유실된다.
 
-**왜 발생하는가:** 앱 업데이트는 통제 불가능한 외부 요인이다. 특히 Plaud가 보안 강화(파일 암호화, 저장 경로 변경, Scoped Storage 적용 등)를 하면 기존 방식이 완전히 깨진다.
+**왜 발생하는가:** 현재 `MainActivity`는 `MAIN/LAUNCHER` intent-filter만 가지고 있다(AndroidManifest.xml 확인). 여기에 `ACTION_SEND`를 추가하면, 런치 모드 설정에 따라 새 인스턴스가 생성되거나 기존 인스턴스의 `onNewIntent`가 호출되는데, Compose Navigation 상태가 꼬일 수 있다.
 
 **예방:**
-1. Plaud 앱 자동 업데이트 비활성화 안내 (사용자 가이드)
-2. 역공학 의존 포인트를 최소화 (파일 경로 하드코딩 대신 패턴 매칭)
-3. Plaud 앱 버전별 호환성 매트릭스 유지
-4. 앱 업데이트 감지 시 사용자에게 경고하는 기능 구현
+1. **전용 `ShareReceiverActivity` 생성** (투명 Activity 패턴 — theme: `@android:style/Theme.Translucent.NoTitleBar`)
+2. 수신한 텍스트를 즉시 Repository/WorkManager에 전달 후 Activity 즉시 종료 (`finish()`)
+3. AndroidManifest에 MIME 타입 등록 — `text/plain` 필수, `text/*`도 추가 권장
+4. **실기기에서 삼성 녹음기가 실제로 보내는 MIME 타입과 Extra 키를 확인** (`EXTRA_TEXT` vs `EXTRA_STREAM`)
+5. **수신한 텍스트가 전사 텍스트인지 확인 불가** — `ACTION_SEND`는 모든 앱에서 전송 가능하므로 "이 텍스트로 회의록을 생성하시겠습니까?" 확인 화면 필수
 
-**해당 페이즈:** Phase 1 설계 시 고려, Phase 3 (안정화)에서 방어 로직 구현
+**신뢰도:** HIGH — Android Share Intent 표준 패턴, 현재 AndroidManifest.xml 분석 기반
 
 ---
 
-### 함정 M2: Android Scoped Storage로 인한 파일 접근 제한
+### MP-2: Gemini OAuth에서 Credential Manager vs 구형 GoogleSignIn 혼용
 
-**무엇이 잘못되는가:** Android 10+ (API 29+)의 Scoped Storage 정책으로, 다른 앱(Plaud)이 저장한 파일에 직접 접근이 불가능하다.
+**무엇이 잘못되는가:** Android에서 Google OAuth 구현 시 Credential Manager(2024년 이후 권장)와 `GoogleSignInClient`(deprecated)가 혼재한다. 잘못된 라이브러리를 선택하면 Android 14+ 기기에서 로그인 실패가 발생하거나, deprecated 라이브러리 제거 시 재작성이 필요하다.
 
-**왜 발생하는가:** Google이 프라이버시 강화를 위해 점진적으로 파일 시스템 접근을 제한해 왔다. Android 11+에서는 MANAGE_EXTERNAL_STORAGE 권한도 Google Play 정책으로 제한된다.
+**왜 발생하는가:** Google의 인증 라이브러리 전환이 진행 중이며, 검색 결과의 대부분이 구형 `GoogleSignIn` 방식을 설명. 또한 Credential Manager는 Play Services 버전에 의존하여 구형 기기에서 실패할 수 있다.
 
 **예방:**
-1. **Plaud 앱의 실제 파일 저장 위치 확인**: 내부 저장소, 앱별 외부 저장소, 공유 저장소 중 어디인지 확인
-2. **MediaStore API 활용 가능성 검토**: Plaud가 MediaStore에 오디오 파일을 등록하는 경우 표준 API로 접근 가능
-3. **루트 없이 접근 가능한 방법 우선 탐색**: SAF(Storage Access Framework), ContentProvider 쿼리 등
-4. **ADB 디버그 모드에서의 테스트와 실제 릴리스 환경 차이 인지**
+1. **Credential Manager + Google Identity Services** 사용 (2025년 이후 권장 방식)
+2. `com.google.android.libraries.identity.googleid` 의존성 사용
+3. Gemini API OAuth 스코프: `https://www.googleapis.com/auth/generative-language`
+4. **Play Services 버전 부족 시** "Google Play Services 업데이트 필요" 안내 메시지 표시
+5. OAuth 토큰 갱신 실패 시 API 키로 폴백하는 전략 (양쪽 다 설정된 경우)
 
-**해당 페이즈:** Phase 1 (파일 접근 PoC)
+**신뢰도:** MEDIUM — Credential Manager는 확인된 권장 방식이나, Gemini API 스코프는 실제 테스트 필요
 
 ---
 
-### 함정 M3: 한국어 전사 품질의 기대치 불일치
+### MP-3: Plaud SDK BLE 디버깅 시 에뮬레이터에서 시간 낭비
 
-**무엇이 잘못되는가:** 온디바이스 STT의 한국어 인식 품질이 회의록으로 사용하기에 부족한 수준일 수 있다.
-
-**왜 발생하는가:**
-- 온디바이스 모델은 클라우드 모델 대비 정확도가 낮음
-- 한국어는 영어 대비 STT 모델 학습 데이터가 적음
-- 회의 환경: 다중 화자, 겹치는 발화, 전문 용어, 마이크 거리
+**무엇이 잘못되는가:** Android 에뮬레이터는 BLE를 지원하지 않는다. 현재 `NiceBuildSdkWrapper`가 스텁으로 항상 `onError(-1)`을 반환하는 구조이므로(코드 확인 완료), 실제 Plaud 녹음기 + 실 Android 기기가 없으면 BLE 디버깅이 물리적으로 불가능하다.
 
 **예방:**
-1. **다양한 실제 회의 환경에서 전사 품질 테스트**
-2. **전사 후 후처리 파이프라인 구현**: 맞춤법 교정, 문장 분리, 화자 분리
-3. **사용자에게 품질 기대치 명확히 전달**
-4. **회의록 생성 시 LLM의 오류 보정 능력 활용**
+1. **BLE 디버깅 Phase를 마지막에 배치** (PROJECT.md의 v2.0 계획과 일치)
+2. **nRF Connect 앱으로 Plaud BLE 서비스/특성(UUID)을 먼저 스캔** 후 SDK 호출 전 연결 가능성 확인
+3. **SDK 콜백 로깅을 최대한 상세하게:** `PlaudBleListener`의 모든 콜백에 `Log.d` 추가
+4. **Android 12+(API 31) 런타임 퍼미션:** `BLUETOOTH_CONNECT` 미승인 시 무음 실패 — Manifest에 선언은 되어 있으나(확인 완료) 런타임 요청 로직 확인 필요
+5. **BLE GATT 133 에러:** Android BLE의 고질적 문제. 재연결 시 최소 2초 딜레이 필요, `BluetoothGatt.close()` 반드시 호출 후 재생성
 
-**해당 페이즈:** Phase 2 (전사 연동) 및 Phase 3 (품질 개선)
+**감지 신호:** `scanBle`이 에러 코드를 반환하는데 원인 불명 → 대부분 퍼미션 미승인 또는 Bluetooth 어댑터 비활성화
+
+**신뢰도:** HIGH — Android BLE 공통 경험 + `PlaudSdkManager.kt` 코드 직접 확인
 
 ---
 
-### 함정 M4: NotebookLM MCP 인증/세션 관리 복잡성
+### MP-4: API 키를 DataStore에 평문 저장 + EncryptedSharedPreferences 초기화 실패
 
-**무엇이 잘못되는가:** NotebookLM MCP 서버는 Google 계정 인증을 필요로 하며, Android 앱에서 이를 자동으로 처리하려면 OAuth 토큰 관리, 세션 유지, 재인증 흐름을 구현해야 한다.
-
-**왜 발생하는가:**
-- MCP 서버가 로컬 머신(PC)에서 실행되도록 설계되어 있어 Android 앱과의 통합이 자연스럽지 않음
-- Google OAuth 토큰의 만료/갱신 처리 필요
-- 앱이 백그라운드에서 실행될 때 인증 팝업을 띄울 수 없음
+**무엇이 잘못되는가:** DataStore Preferences는 암호화되지 않은 파일이다. Gemini API 키를 그대로 저장하면 루팅된 기기나 adb backup으로 키가 노출된다. 그러나 EncryptedSharedPreferences로 전환하면 일부 기기/OS 버전에서 Android Keystore 접근 실패로 앱이 크래시한다.
 
 **예방:**
-1. **중간 서버를 두거나 NotebookLM의 실제 통신 프로토콜을 직접 사용하는 방안 검토**
-2. **Google 계정 인증 토큰을 Android의 AccountManager를 통해 관리**
-3. **인증 실패 시 우아한 폴백**: 전사 결과를 로컬에 보관하고, 재인증 후 일괄 처리
+1. **EncryptedSharedPreferences 사용** (`androidx.security:security-crypto`)을 기본으로 시도
+2. **try-catch로 초기화 실패 시 일반 DataStore로 폴백** — 보안은 떨어지지만 기능은 동작:
+   ```kotlin
+   val securePrefs = try {
+       EncryptedSharedPreferences.create(...)
+   } catch (e: Exception) {
+       Log.w(TAG, "암호화 저장소 초기화 실패, 일반 저장소 사용")
+       context.getSharedPreferences("gemini_prefs", MODE_PRIVATE)
+   }
+   ```
+3. API 키 입력 UI에서 `visualTransformation = PasswordVisualTransformation()` (Compose)으로 마스킹
+4. **Crashlytics/로그에서 `KeyStoreException` 모니터링** — 문제 기기 파악
 
-**해당 페이즈:** Phase 2 (NotebookLM 연동 아키텍처 설계)
+**신뢰도:** HIGH — Android 보안 표준 가이드 + EncryptedSharedPreferences 불안정성은 공지된 문제
 
 ---
 
-### 함정 M5: 백그라운드 프로세싱의 Android 제한
+### MP-5: Room 스키마 마이그레이션 누락 — v2.0 기능 추가 시 기존 사용자 앱 크래시
 
-**무엇이 잘못되는가:** 원클릭 자동화를 위해 앱이 백그라운드에서 전체 파이프라인을 수행해야 하는데, Android의 백그라운드 실행 제한으로 프로세스가 중단된다.
+**무엇이 잘못되는가:** v2.0에서 소스 타입(`sourceType`), 소프트 삭제(`isDeleted`) 등 컬럼 추가 시, Room DB 버전을 올리지 않으면 `IllegalStateException: Room cannot verify the data integrity`로 앱이 즉시 크래시한다.
 
-**왜 발생하는가:**
-- Android 8.0+: 백그라운드 서비스 실행 제한
-- Android 12+: 포그라운드 서비스 시작 제한 강화
-- 삼성의 앱 절전 기능이 공격적
+**왜 발생하는가:** 현재 `AppDatabase`가 `version = 1`, `exportSchema = false`로 설정되어 있다(코드 확인 완료). 스키마 JSON이 생성되지 않아 마이그레이션 SQL을 자동으로 검증할 수 없는 상태.
 
 **예방:**
-1. **Foreground Service + 알림 사용**
-2. **WorkManager로 전사/업로드 작업 스케줄링**
-3. **삼성 기기 전용 배터리 최적화 제외 안내**
-4. **CompanionDeviceManager로 BLE 연결 이벤트 처리**
+1. **`exportSchema = true`로 변경** 후 스키마 JSON 파일을 버전 관리에 포함
+2. 컬럼 추가 시 반드시 `Migration(1, 2)` 작성:
+   ```kotlin
+   val MIGRATION_1_2 = object : Migration(1, 2) {
+       override fun migrate(db: SupportSQLiteDatabase) {
+           db.execSQL("ALTER TABLE meetings ADD COLUMN sourceType TEXT NOT NULL DEFAULT 'PLAUD_BLE'")
+       }
+   }
+   ```
+3. **`fallbackToDestructiveMigration()` 사용 절대 금지** — 기존 사용자의 회의록 전부 삭제됨
+4. 테스트에서 `MigrationTestHelper`로 마이그레이션 검증
 
-**해당 페이즈:** Phase 2 (자동화 파이프라인 구현)
+**감지 신호:** `AppDatabase`의 `version`이 1인 채로 `MeetingEntity`에 컬럼을 추가하면 기존 사용자의 앱 즉시 크래시
+
+**신뢰도:** HIGH — Room 표준 동작, `AppDatabase.kt` 코드 직접 확인
+
+---
+
+### MP-6: ContentObserver 배터리 소모 + 메모리 누수
+
+**무엇이 잘못되는가:** MediaStore URI에 ContentObserver를 상시 등록하면, 다른 앱의 미디어 작업(사진 촬영, 파일 다운로드 등)에도 `onChange`가 호출되어 불필요한 wake-up과 배터리 소모가 발생한다. 또한 Service 종료 시 해제하지 않으면 메모리 누수.
+
+**예방:**
+1. `onChange`에서 빠르게 필터링 (경로/파일명 패턴 매칭) — 불필요한 이벤트는 즉시 return
+2. 사용자가 "삼성 녹음기 자동 감지" 토글을 켤 때만 Observer 등록
+3. `onDestroy()`에서 반드시 `contentResolver.unregisterContentObserver()` 호출
+4. 현재 `AudioCollectionService.onDestroy()`에 코루틴 정리는 있으나(확인 완료) ContentObserver 해제 패턴은 추가 필요
+
+**신뢰도:** HIGH — Android ContentObserver 공식 문서 확인
 
 ---
 
 ## 경미한 함정 (Minor Pitfalls)
 
+개발 속도를 늦추거나 기술 부채를 쌓는 실수들.
+
 ---
 
-### 함정 L1: 오디오 파일 포맷 호환성
+### mP-1: Share Intent 수신 시 대용량 전사 텍스트로 ANR
 
-**무엇이 잘못되는가:** Plaud 녹음기가 독자적인 오디오 포맷이나 인코딩을 사용하여, STT 엔진이 직접 처리하지 못하는 경우.
+**무엇이 잘못되는가:** `Intent.EXTRA_TEXT`로 수신되는 전사 텍스트가 수만 자(1시간 회의 기준)일 수 있다. UI 스레드에서 바로 DB 저장이나 파일 쓰기를 수행하면 ANR이 발생한다.
 
 **예방:**
-1. Plaud가 사용하는 오디오 포맷 확인 (WAV, FLAC, OGG, 독자 포맷 등)
-2. 선택한 STT 엔진의 지원 포맷과 교차 확인
-3. 필요 시 FFmpeg Android 빌드(mobile-ffmpeg 등)를 포함하여 변환 레이어 구현
-
-**해당 페이즈:** Phase 1 (파일 분석 시 포맷 확인)
+- 수신 즉시 코루틴(Dispatchers.IO)으로 파일 저장 후 WorkManager에 파일 경로만 전달
+- ShareReceiverActivity에서 UI 렌더링 없이 즉시 처리 후 `finish()`
 
 ---
 
-### 함정 L2: 회의록 포맷의 일관성 부재
+### mP-2: Gemini API 키 설정 UI에서 유효성 검증 누락
 
-**무엇이 잘못되는가:** LLM 기반 회의록 생성은 프롬프트가 같아도 매번 다른 구조/스타일의 결과를 반환한다.
+**무엇이 잘못되는가:** 사용자가 잘못된 API 키를 입력해도 저장되고, 회의록 생성 시점(WorkManager 백그라운드)에서야 실패가 발견된다.
 
 **예방:**
-1. 회의록 템플릿을 명확히 정의하고 프롬프트에 포함
-2. 생성 후 후처리로 필수 섹션(참석자, 안건, 결정사항, 액션아이템) 존재 여부 검증
-3. few-shot 예제를 프롬프트에 포함하여 출력 형식 고정
-
-**해당 페이즈:** Phase 2 (회의록 생성 프롬프트 설계)
+- 키 저장 전에 간단한 Gemini API 호출(`GET /v1beta/models`)로 유효성 검증
+- 검증 실패 시 저장 차단 및 에러 메시지 표시
+- 검증 중 로딩 인디케이터 표시
 
 ---
 
-### 함정 L3: 대용량 전사 텍스트의 LLM 컨텍스트 윈도우 초과
+### mP-3: 다중 소스(Plaud BLE + 삼성 녹음기 공유)에서 중복 회의 생성
 
-**무엇이 잘못되는가:** 1-2시간 회의의 전사 텍스트는 수만 토큰에 달할 수 있으며, 입력 제한을 초과할 수 있다.
+**무엇이 잘못되는가:** 같은 회의를 Plaud로 녹음하고, 삼성 녹음기로도 녹음한 경우, 두 경로에서 파이프라인이 동시에 트리거되어 중복 회의록이 생성된다.
 
 **예방:**
-1. 전사 텍스트를 시간 단위로 청크 분할하여 전송
-2. 요약 후 통합 요약의 2단계 처리 파이프라인 설계
-3. 불필요한 필러(음, 어, 그) 제거로 텍스트 압축
-
-**해당 페이즈:** Phase 2 (파이프라인 설계)
+- `MeetingEntity`에 `sourceType` 컬럼 추가 (`PLAUD_BLE`, `SAMSUNG_SHARE`, `MANUAL`)
+- 파이프라인 트리거 시 타임스탬프 기반 중복 감지 (동일 시간대 +-5분 이내 회의 존재 여부)
+- UI에서 "유사한 시간대의 회의가 이미 있습니다" 알림 표시
 
 ---
 
-### 함정 L4: Google Play Store 배포 시 정책 위반
+### mP-4: NotebookLM 연동 범위를 과도하게 잡아 시간 낭비
 
-**무엇이 잘못되는가:** 다른 앱의 파일을 접근하거나, MANAGE_EXTERNAL_STORAGE 권한을 요청하거나, Accessibility Service를 남용하면 Google Play 정책 위반으로 앱이 거부/삭제될 수 있다.
+**무엇이 잘못되는가:** "앱 내에서 NotebookLM을 완전 제어하겠다"는 목표를 잡으면, API가 없는 상태에서 웹뷰 해킹이나 자동화 시도에 빠진다.
 
 **예방:**
-1. Google Play 배포를 1차 목표로 하지 않고, 사이드로딩(APK 직접 설치) 방식 우선 고려
-2. Google Play 배포 시 필요 권한을 최소화하고 정책 준수 여부 사전 검토
-3. Accessibility Service 사용은 Google Play 정책상 거의 불가능하므로 대안 탐색
-
-**해당 페이즈:** Phase 3 (배포 준비)
+- 구현 범위를 명확히 한정: (1) 전사 텍스트를 공유 Intent로 전달, (2) NotebookLM 웹 URL을 Custom Tabs로 열기
+- 최대 2일 타임박스. 그 이상 소요 시 "브라우저 열기 + 클립보드 복사" 수준으로 확정
 
 ---
 
-## 페이즈별 주의사항 요약
+### mP-5: Foreground Service 타입 추가 시 AndroidManifest 퍼미션 누락
 
-| 페이즈 주제 | 잠재 함정 | 대응 전략 |
-|------------|----------|----------|
-| Phase 1: BLE 분석 및 기술 검증 | C1 (BLE 암호화), C4 (대용량 전송), M2 (Scoped Storage), L1 (오디오 포맷) | 2주 타임박스 PoC, Plan B 사전 설계, APK 디컴파일 병행 |
-| Phase 1: Galaxy AI 검증 | C2 (API 미존재) | 삼성 개발자 문서 정밀 조사, 대안 STT 사전 조사 |
-| Phase 2: 전사 파이프라인 | M3 (한국어 품질), M5 (백그라운드 제한) | 실제 환경 품질 테스트, Foreground Service + WorkManager |
-| Phase 2: NotebookLM 연동 | C3 (API 불안정), M4 (인증 관리), L3 (컨텍스트 초과) | 추상화 레이어, 폴백 경로, 청크 처리 |
-| Phase 3: 안정화/배포 | M1 (앱 업데이트 대응), L2 (포맷 일관성), L4 (Play Store 정책) | 버전 호환성 매트릭스, 템플릿 시스템, 사이드로딩 우선 |
+**무엇이 잘못되는가:** ContentObserver를 별도 Foreground Service로 운영할 경우, Android 14+에서는 `foregroundServiceType`을 적절히 선언하지 않으면 크래시. 현재 `AudioCollectionService`는 `connectedDevice` 타입.
 
----
-
-## 프로젝트 생존 가능성 핵심 판단 포인트
-
-이 프로젝트는 **3개의 외부 의존성**(Plaud, Samsung Galaxy AI, NotebookLM) 모두에 공식 API가 없거나 불확실한 상태에서 출발한다. 이는 일반적인 앱 개발과 근본적으로 다른 리스크 프로파일이다.
-
-**Phase 1의 유일한 목표는 다음 3가지 질문에 답하는 것이어야 한다:**
-
-1. **Plaud 파일을 가져올 수 있는가?** (BLE 직접 / 파일 시스템 감시 / APK 분석 중 하나라도)
-2. **프로그래밍적으로 STT를 수행할 수 있는가?** (Galaxy AI API / Google ML Kit / Whisper 중 하나라도)
-3. **프로그래밍적으로 회의록을 생성할 수 있는가?** (NotebookLM MCP / Gemini API 직접 호출 중 하나라도)
-
-세 질문 중 하나라도 불가능이면 프로젝트 범위를 재정의해야 한다.
+**예방:**
+- 새 서비스 추가 시 `foregroundServiceType` 선언 필수 (`dataSync` 또는 `specialUse`)
+- Android 14 `FOREGROUND_SERVICE_DATA_SYNC` 퍼미션 Manifest에 추가
+- 가능하면 기존 서비스에 합치지 않고 책임별로 분리
 
 ---
 
-## 소스
+## Phase별 경고 매트릭스
 
-- Android BLE 공식 문서: https://developer.android.com/develop/connectivity/bluetooth/ble/ble-overview (HIGH 신뢰도)
-- Android Scoped Storage 정책: 훈련 데이터 기반 (MEDIUM 신뢰도)
-- Samsung Galaxy AI API 가용성: 훈련 데이터 기반 (LOW 신뢰도 - 반드시 검증 필요)
-- NotebookLM API 상태: 프로젝트 컨텍스트의 MCP 서버 존재 확인 (MEDIUM 신뢰도)
-- BLE MTU/전송 제한: 훈련 데이터 기반 (HIGH 신뢰도 - BLE 스펙은 표준)
-- Android 백그라운드 실행 제한: 훈련 데이터 기반 (HIGH 신뢰도 - 잘 문서화된 플랫폼 제한)
+| Phase 주제 | 예상 함정 | 심각도 | 완화 전략 |
+|------------|----------|--------|----------|
+| 삼성 녹음기 전사 감지 Spike | CP-1: 자동 감지 불가능 가능성 | **치명적** | Phase 1 첫 48시간 내 실기기 검증 → 불가 시 공유 방식 확정 |
+| GeminiEngine 인증 추상화 | CP-3: 파이프라인 파괴, SDK OAuth 미지원 | **치명적** | AuthProvider 인터페이스 선 설계, OAuth는 REST API 경로 |
+| 파일 삭제 기능 | CP-4: DB-파일 불일치 | **치명적** | 삭제 UseCase에서 양쪽 처리, 고아 파일 정리 |
+| 삼성 녹음기 공유 수신 | MP-1: Intent 충돌, mP-1: ANR | 중간 | 전용 ShareReceiverActivity + 확인 화면 + 비동기 처리 |
+| Gemini API 키 UI | MP-4: 보안/호환성, mP-2: 유효성 미검증 | 중간 | EncryptedSharedPreferences(폴백 있음) + 저장 전 검증 |
+| Gemini OAuth | MP-2: 라이브러리 선택 | 중간 | Credential Manager 사용, SDK 미지원 시 REST API |
+| NotebookLM 연동 | CP-2: API 부재 | **치명적** | 공유 방식으로 한정, 2일 타임박스 |
+| Room 스키마 변경 | MP-5: 마이그레이션 누락 | 중간 | exportSchema=true, Migration 작성, 파괴적 마이그레이션 금지 |
+| Plaud BLE 디버깅 | MP-3: 에뮬레이터 불가, GATT 133 | 중간 | 마지막 Phase, 실기기 + nRF Connect 필수 |
+
+---
+
+## Phase 순서 권장 (함정 기반)
+
+함정의 심각도와 의존 관계를 고려한 최적 순서:
+
+1. **삼성 녹음기 감지 Spike** — CP-1 즉시 확인. 불가 판정 시 기능 범위 축소. 최소 투자로 최대 리스크 해소
+2. **GeminiEngine 인증 추상화 + API 키 설정 UI** — CP-3 사전 방지. BuildConfig 의존 제거. 이후 OAuth의 기반
+3. **파일 삭제 기능 + Room 마이그레이션** — CP-4 + MP-5 동시 해결. DB 정합성 확보
+4. **삼성 녹음기 공유 수신** — Spike 결과로 확정된 경로 구현. ShareReceiverActivity + 파이프라인 연결
+5. **NotebookLM 연동** — CP-2 범위 한정. 공유/Custom Tabs 수준. 2일 타임박스
+6. **Gemini OAuth** — MP-2 대응. 인증 추상화가 이미 되어 있으므로 안전하게 추가
+7. **Plaud BLE 디버깅** — MP-3. 실기기 필수, 다른 기능과 병행 불가, 마지막 수행
+
+---
+
+## 출처
+
+- 현재 코드베이스 직접 분석: `GeminiEngine.kt`, `MeetingDao.kt`, `MeetingRepositoryImpl.kt`, `PlaudSdkManager.kt`, `AudioCollectionService.kt`, `AndroidManifest.xml`, `AppDatabase.kt`, `MeetingEntity.kt` — HIGH
+- Android ContentObserver 공식 문서: https://developer.android.com/reference/android/database/ContentObserver — HIGH
+- Android BLE 공식 가이드: https://developer.android.com/develop/connectivity/bluetooth/ble/ble-overview — HIGH
+- Android Scoped Storage 정책: https://developer.android.com/about/versions/11/privacy/storage — HIGH
+- Room 마이그레이션 가이드: https://developer.android.com/training/data-storage/room/migrating-db-versions — HIGH
+- Android Credential Manager: https://developer.android.com/identity/sign-in/credential-manager — MEDIUM
+- NotebookLM 공식 API 부재: PROJECT.md 기록 확인 — HIGH
+- Samsung Voice Recorder 내부 구조: 비공개, 실기기 검증 필요 — LOW
+- Google AI Client SDK OAuth 지원: 미확인, 실제 테스트 필요 — LOW
+- EncryptedSharedPreferences 안정성: Android 보안 라이브러리 알려진 이슈 — MEDIUM
