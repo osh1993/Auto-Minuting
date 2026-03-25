@@ -1,5 +1,7 @@
 package com.autominuting.di
 
+import com.autominuting.data.minutes.GeminiEngine
+import com.autominuting.data.minutes.MinutesEngine
 import com.autominuting.data.repository.AudioRepositoryImpl
 import com.autominuting.data.repository.MeetingRepositoryImpl
 import com.autominuting.data.repository.MinutesRepositoryImpl
@@ -56,4 +58,13 @@ abstract class RepositoryModule {
     abstract fun bindMinutesRepository(
         impl: MinutesRepositoryImpl
     ): MinutesRepository
+
+    /**
+     * MinutesEngine 인터페이스를 GeminiEngine 구현체에 바인딩한다.
+     * 기본 바인딩은 API 키 모드. Plan 02에서 OAuth 엔진 추가 예정.
+     */
+    @Binds
+    abstract fun bindMinutesEngine(
+        impl: GeminiEngine
+    ): MinutesEngine
 }

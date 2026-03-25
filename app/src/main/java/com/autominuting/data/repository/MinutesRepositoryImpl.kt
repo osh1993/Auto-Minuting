@@ -2,7 +2,7 @@ package com.autominuting.data.repository
 
 import android.content.Context
 import android.util.Log
-import com.autominuting.data.minutes.GeminiEngine
+import com.autominuting.data.minutes.MinutesEngine
 import com.autominuting.domain.model.MinutesFormat
 import com.autominuting.domain.repository.MinutesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,7 +24,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class MinutesRepositoryImpl @Inject constructor(
-    private val geminiEngine: GeminiEngine,
+    private val minutesEngine: MinutesEngine,
     @ApplicationContext private val context: Context
 ) : MinutesRepository {
 
@@ -57,8 +57,8 @@ class MinutesRepositoryImpl @Inject constructor(
 
                 // 1차: Gemini 엔진 시도
                 val result = try {
-                    Log.d(TAG, "1차 경로: ${geminiEngine.engineName()} 시도")
-                    geminiEngine.generate(transcriptText, format)
+                    Log.d(TAG, "1차 경로: ${minutesEngine.engineName()} 시도")
+                    minutesEngine.generate(transcriptText, format)
                 } catch (e: Exception) {
                     Log.w(TAG, "Gemini 회의록 생성 예외: ${e.message}")
                     Result.failure(e)

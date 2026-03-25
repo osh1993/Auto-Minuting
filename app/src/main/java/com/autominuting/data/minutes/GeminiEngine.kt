@@ -13,11 +13,12 @@ import javax.inject.Singleton
  *
  * Google AI Client SDK(generativeai)를 사용하며, Firebase 없이 API 키만으로 동작한다.
  * 모델: gemini-2.5-flash (POC-04에서 검증된 모델)
+ * MinutesEngine 인터페이스를 구현하여 API 키 모드 엔진으로 동작한다.
  */
 @Singleton
 class GeminiEngine @Inject constructor(
     private val secureApiKeyRepository: SecureApiKeyRepository
-) {
+) : MinutesEngine {
 
     companion object {
         private const val TAG = "GeminiEngine"
@@ -105,9 +106,9 @@ class GeminiEngine @Inject constructor(
      * @param format 회의록 출력 형식 (기본값: STRUCTURED)
      * @return 성공 시 Markdown 형식의 회의록, 실패 시 예외를 포함한 Result
      */
-    suspend fun generate(
+    override suspend fun generate(
         transcriptText: String,
-        format: MinutesFormat = MinutesFormat.STRUCTURED
+        format: MinutesFormat
     ): Result<String> {
         // 사용자 설정 API 키 우선, 없으면 BuildConfig 폴백
         val apiKey = secureApiKeyRepository.getGeminiApiKey()
@@ -151,5 +152,12 @@ class GeminiEngine @Inject constructor(
     }
 
     /** 엔진 이름을 반환한다 (로깅용). */
-    fun engineName(): String = "Gemini 2.5 Flash"
+    override fun engineName(): String = "Gemini 2.5 Flash"
+
+    /** API 키가 설정되어 있으면 사용 가능하다. */
+    override fun isAvailable(): Boolean {
+        val apiKey = secureApiKeyRepository.getGeminiApiKey()
+            ?: BuildConfig.GEMINI_API_KEY
+        return apiKey.isNotBlank()
+    }
 }
