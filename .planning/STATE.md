@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: 실동작 파이프라인 + 기능 확장
-status: Defining requirements
-stopped_at: null
+status: Ready to plan
+stopped_at: v2.0 로드맵 생성 완료
 last_updated: "2026-03-25T00:00:00.000Z"
 progress:
-  total_phases: 0
-  completed_phases: 0
+  total_phases: 13
+  completed_phases: 7
   total_plans: 0
   completed_plans: 0
 ---
@@ -18,54 +18,42 @@ progress:
 
 See: .planning/PROJECT.md (updated 2026-03-25)
 
-**Core value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다
-**Current focus:** Not started (defining requirements)
+**Core value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다.
+**Current focus:** Phase 8 - 기반 강화
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-25 — Milestone v2.0 started
+Phase: 8 of 13 (기반 강화)
+Plan: 0 of ? in current phase
+Status: Ready to plan
+Last activity: 2026-03-25 — v2.0 로드맵 생성 완료
+
+Progress: [██████████░░░░░░░░░░] 54% (v1.0 7/7 phases complete, v2.0 0/6 phases)
 
 ## Performance Metrics
 
 **Velocity:**
+- Total plans completed: 18 (v1.0)
+- Average duration: ~3.5 min/plan
+- Total execution time: ~63 min
 
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
-
-**By Phase:**
+**By Phase (v1.0):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| Phase 1 PoC | 4 | 14min | 3.5min |
+| Phase 2 기반 | 3 | 10min | 3.3min |
+| Phase 3 오디오 | 2 | 6min | 3.0min |
+| Phase 4 전사 | 2 | 10min | 5.0min |
+| Phase 5 회의록 | 2 | 7min | 3.5min |
+| Phase 6 통합 | 3 | 12min | 4.0min |
+| Phase 7 UI | 2 | 6min | 3.0min |
 
 **Recent Trend:**
-
-- Last 5 plans: -
-- Trend: -
+- v1.0 전체 완료, v2.0 시작 시점
+- Trend: Stable (~3.5 min/plan)
 
 *Updated after each plan completion*
-| Phase 01 P02 | 4min | 3 tasks | 6 files |
-| Phase 01 P03 | 4min | 3 tasks | 6 files |
-| Phase 01-poc P01 | 4min | 3 tasks | 5 files |
-| Phase 01-poc P04 | 2min | 2 tasks | 2 files |
-| Phase 02 P01 | 4min | 2 tasks | 29 files |
-| Phase 02 P02 | 2min | 2 tasks | 13 files |
-| Phase 02 P03 | 4min | 2 tasks | 14 files |
-| Phase 03-audio P01 | 3min | 2 tasks | 9 files |
-| Phase 03-audio P02 | 3min | 2 tasks | 6 files |
-| Phase 04-stt P01 | 5min | 2 tasks | 9 files |
-| Phase 04-stt P02 | 5min | 2 tasks | 6 files |
-| Phase 05 P01 | 4min | 2 tasks | 8 files |
-| Phase 05-minutes P02 | 3min | 2 tasks | 6 files |
-| Phase 06 P01 | 5min | 2 tasks | 10 files |
-| Phase 06 P03 | 3min | 2 tasks | 5 files |
-| Phase 06 P02 | 4min | 2 tasks | 6 files |
-| Phase 07 P01 | 3min | 2 tasks | 2 files |
-| Phase 07 P02 | 3min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -74,41 +62,10 @@ Last activity: 2026-03-25 — Milestone v2.0 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [Roadmap] Android 네이티브 (Kotlin) 확정 — Galaxy AI API 접근 및 시스템 레벨 BLE/파일 접근 필요
-- [Roadmap] Phase 1을 PoC로 설정 — 3개 핵심 외부 의존성 모두 공식 API 없음, 빌드 전 검증 필수
-- [Roadmap] NotebookLM 연동 방식 미확정 — Phase 1 PoC에서 MCP vs Gemini API 직접 호출 결정 예정
-- [Phase 01]: Galaxy AI 서드파티 접근 사실상 불가 - Whisper 1차, ML Kit 2차 채택
-- [Phase 01]: Gemini API 직접 호출을 회의록 생성 1차 채택 경로로 결정 (모바일 독립, 공식 API)
-- [Phase 01]: NotebookLM MCP는 2차 폴백 (PC 의존, 비공식 경로)
-- [Phase 01-poc]: FileObserver 경로 폐기: Scoped Storage(API 30+)로 타 앱 파일 감시 불가, Plaud SDK 1차 채택으로 전환
-- [Phase 01-poc]: POC-01 Go 판정: SDK + Cloud API 2개 경로 확보, Cloud API는 폴백
-- [Phase 01-poc]: 전체 Go 판정: 3개 의존성 모두 최소 1개 경로에서 Go, 최종 파이프라인 Plaud SDK > Whisper > Gemini API 확정
-- [Phase 02]: Gradle 9.3.1 + AGP 9.1.0 + KSP로 최신 안정 빌드 환경 구성
-- [Phase 02]: MeetingEntity에 Long(epoch millis) 저장, PipelineStatus는 String(enum name)으로 DB에 저장하여 마이그레이션 유연성 확보
-- [Phase 02]: material-icons-extended 의존성 추가: Description, List 등 확장 아이콘 사용 필요
-- [Phase 02]: Dynamic Color 기본 활성화: minSdk 31이므로 항상 지원 가능
-- [Phase 03-audio]: NiceBuildSdkWrapper 스텁 패턴 도입: AAR 미배치 시에도 컴파일 가능, SDK 실패 시 Cloud API 폴백 자동 전환
-- [Phase 03-audio]: HiltWorkerFactory + Configuration.Provider 패턴으로 @HiltWorker Worker에 의존성 주입
-- [Phase 03-audio]: WorkManager 기본 초기화 비활성화, 커스텀 Configuration.Provider로 교체
-- [Phase 04-stt]: SttModule 빈 모듈 유지: @Inject constructor + @Singleton으로 Hilt 자동 생성
-- [Phase 04-stt]: AudioConverter 선형 보간법 리샘플링: MediaCodec 디코딩 후 16kHz 변환
-- [Phase 04-stt]: Worker 이중 입력 지원: meetingId(우선) + audioFilePath(폴백) 기존 호환성 유지
-- [Phase 04-stt]: SuggestionChip 상태 표시 패턴: tertiary/primary/error 색상 구분으로 파이프라인 상태 시각화
-- [Phase 04-stt]: 파일 직접 읽기/쓰기로 전사 텍스트 관리: 기존 transcriptPath 파일 시스템 패턴 유지
-- [Phase 05]: Google AI Client SDK(generativeai) 사용 — Firebase 없이 API 키만으로 Gemini API 직접 호출
-- [Phase 05]: gemini-2.5-flash 모델 선택 — POC-04에서 한국어 회의록 생성 품질 검증 완료
-- [Phase 05]: MinutesRepositoryImpl 단일 경로 구현 — 향후 NotebookLM MCP 폴백 확장 가능 구조
-- [Phase 05-minutes]: Markdown을 플레인텍스트로 표시: Phase 7에서 렌더러 업그레이드 예정
-- [Phase 06]: DataStore preferencesDataStore 확장 프로퍼티를 파일 최상위에 선언하여 Hilt Module에서 제공
-- [Phase 06]: GeminiEngine에 기본값 파라미터(format = STRUCTURED)로 기존 호출 호환성 유지
-- [Phase 06]: PipelineNotificationHelper를 object 싱글톤으로 구현하여 Worker/Service에서 직접 호출
-- [Phase 06]: MenuAnchorType.PrimaryNotEditable: Compose M3 ExposedDropdownMenuBox readOnly 앵커 타입
-- [Phase 06]: collectAsStateWithLifecycle: Settings/Dashboard에서 lifecycle-aware State 수집 패턴 적용
-- [Phase 06]: Worker에서 DataStore 직접 접근 대신 inputData로 설정값 전달 (anti-pattern 방지)
-- [Phase 06]: notifyTranscriptionComplete에 minutesFormat 파라미터 추가하여 알림 액션에 형식 정보 포함
-- [Phase 07]: 외부 Markdown 라이브러리 미사용, AnnotatedString으로 직접 구현
-- [Phase 07]: OutlinedTextField로 검색바 구현: Material 3 SearchBar가 ExperimentalMaterial3Api이므로 안정적인 OutlinedTextField 채택
-- [Phase 07]: 제목 LIKE 검색만 지원: recordedAt epoch millis이므로 날짜 검색은 title 포함 시에만 매칭
+- [v2.0 계획]: 확실성 높은 기능 우선 배치, Plaud BLE 디버깅 최후 배치
+- [v2.0 계획]: 삼성 녹음기 자동 감지는 48시간 타임박스 스파이크로 Go/No-Go 판정
+- [v2.0 계획]: NotebookLM은 반자동화(공유 + Custom Tabs)로 범위 한정, 2일 타임박스
+- [v2.0 계획]: GeminiEngine 인증 추상화를 Phase 8에서 선행하여 Phase 12 OAuth 안전 추가
 
 ### Pending Todos
 
@@ -116,12 +73,12 @@ None yet.
 
 ### Blockers/Concerns
 
-- [Phase 1 선행] Plaud BLE 프로토콜 암호화 여부 미확인 — 암호화 시 파일 시스템 감시(Plan B)로 전환 필요
-- [Phase 1 선행] Samsung Galaxy AI 전사 API 존재 여부 미확인 — 불가 시 ML Kit / Whisper 폴백
-- [Phase 1 선행] NotebookLM MCP 서버 안정성 미확인 — MVP는 Gemini API 직접 호출 권장
+- [Phase 11]: 삼성 녹음기 전사 파일 Scoped Storage 접근 불가 가능성 (실기기 검증 필수)
+- [Phase 12]: Gemini REST API OAuth 스코프 미확인 (실기기 테스트 필수)
+- [Phase 10]: NotebookLM 공식 REST API 부재 — 반자동화로 범위 한정
 
 ## Session Continuity
 
-Last session: 2026-03-24T13:53:04.817Z
-Stopped at: Completed 07-02-PLAN.md
+Last session: 2026-03-25
+Stopped at: v2.0 로드맵 생성 완료, Phase 8 계획 대기
 Resume file: None

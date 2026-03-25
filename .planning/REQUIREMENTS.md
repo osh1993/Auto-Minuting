@@ -65,23 +65,23 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FILE-01 | — | Pending |
-| SREC-01 | — | Pending |
-| SREC-02 | — | Pending |
-| NLMK-01 | — | Pending |
-| NLMK-02 | — | Pending |
-| NLMK-03 | — | Pending |
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| PLUD-01 | — | Pending |
+| FILE-01 | Phase 8 | Pending |
+| AUTH-01 | Phase 8 | Pending |
+| SREC-01 | Phase 9 | Pending |
+| NLMK-01 | Phase 10 | Pending |
+| NLMK-02 | Phase 10 | Pending |
+| NLMK-03 | Phase 10 | Pending |
+| SREC-02 | Phase 11 | Pending |
+| AUTH-02 | Phase 12 | Pending |
+| PLUD-01 | Phase 13 | Pending |
 
 **Coverage:**
 
 - v2.0 requirements: 9 total
-- Mapped to phases: 0
-- Unmapped: 9
+- Mapped to phases: 9
+- Unmapped: 0
 
 ---
 
 *Requirements defined: 2026-03-25*
-*Last updated: 2026-03-25 after initial definition*
+*Last updated: 2026-03-25 after roadmap creation*
