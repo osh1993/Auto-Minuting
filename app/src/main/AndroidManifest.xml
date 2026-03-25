@@ -40,6 +40,18 @@
             </intent-filter>
         </activity>
 
+        <!-- 삼성 녹음앱 등 외부 앱에서 text/plain 공유 수신 -->
+        <activity
+            android:name=".presentation.share.ShareReceiverActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
         <!-- WorkManager 기본 초기화 비활성화 (Application에서 HiltWorkerFactory로 커스텀 초기화) -->
         <provider
             android:name="androidx.startup.InitializationProvider"
