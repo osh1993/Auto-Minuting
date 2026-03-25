@@ -106,6 +106,12 @@ dependencies {
     // AI (Gemini) -- 회의록 생성
     implementation(libs.generativeai)
 
+    // Google 인증 (OAuth) -- Phase 12
+    implementation(libs.credentials)
+    implementation(libs.credentials.play.services)
+    implementation(libs.googleid)
+    implementation(libs.play.services.auth)
+
     // 보안 (암호화 저장소)
     implementation(libs.security.crypto)
 

@@ -39,6 +39,11 @@ securityCrypto = "1.0.0"
 # 브라우저 (Custom Tabs)
 browser = "1.9.0"
 
+# Google 인증 (OAuth)
+credentialManager = "1.5.0"
+googleid = "1.1.1"
+playServicesAuth = "21.5.1"
+
 # AndroidX 코어
 activityCompose = "1.10.1"
 lifecycleRuntimeCompose = "2.9.0"
@@ -100,6 +105,12 @@ security-crypto = { group = "androidx.security", name = "security-crypto", versi
 
 # 브라우저 (Custom Tabs)
 browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
+
+# Google 인증 (OAuth)
+credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentialManager" }
+credentials-play-services = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentialManager" }
+googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
