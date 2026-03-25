@@ -2,6 +2,7 @@ package com.autominuting.data.minutes
 
 import android.util.Log
 import com.autominuting.BuildConfig
+import com.autominuting.data.security.SecureApiKeyRepository
 import com.autominuting.domain.model.MinutesFormat
 import com.google.ai.client.generativeai.GenerativeModel
 import javax.inject.Inject
@@ -14,7 +15,9 @@ import javax.inject.Singleton
  * 모델: gemini-2.5-flash (POC-04에서 검증된 모델)
  */
 @Singleton
-class GeminiEngine @Inject constructor() {
+class GeminiEngine @Inject constructor(
+    private val secureApiKeyRepository: SecureApiKeyRepository
+) {
 
     companion object {
         private const val TAG = "GeminiEngine"
@@ -106,8 +109,9 @@ class GeminiEngine @Inject constructor() {
         transcriptText: String,
         format: MinutesFormat = MinutesFormat.STRUCTURED
     ): Result<String> {
-        // API 키 유효성 검사
-        val apiKey = BuildConfig.GEMINI_API_KEY
+        // 사용자 설정 API 키 우선, 없으면 BuildConfig 폴백
+        val apiKey = secureApiKeyRepository.getGeminiApiKey()
+            ?: BuildConfig.GEMINI_API_KEY
         if (apiKey.isBlank()) {
             Log.e(TAG, "Gemini API 키가 설정되지 않았습니다")
             return Result.failure(
