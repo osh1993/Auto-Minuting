@@ -29,7 +29,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 - [ ] **Phase 8: 기반 강화** - 파일 삭제 + Gemini API 키 설정 UI + DB 마이그레이션 + 인증 추상화
 - [ ] **Phase 9: 삼성 공유 수신** - 삼성 녹음앱 공유 Intent로 전사 텍스트를 파이프라인에 진입
 - [x] **Phase 10: NotebookLM 반자동 연동** - 공유 Intent + Custom Tabs + MCP 검토 (2일 타임박스) (completed 2026-03-25)
-- [x] **Phase 11: 삼성 자동 감지 스파이크** - ContentObserver/FileObserver 실기기 검증 (48시간 타임박스) (completed 2026-03-25)
+- [x] **Phase 11: 삼성 자동 감지 스파이크** - ContentObserver/FileObserver 실기기 검증 (48시간 타임박스) (completed 2026-03-25)
 - [ ] **Phase 12: Google OAuth 인증** - Credential Manager로 API 키 없이 Gemini 사용 경로 추가
 - [ ] **Phase 13: Plaud BLE 실기기 디버깅** - BLE 연결 안정화 및 오디오 파일 수신 E2E 동작 확인
 
@@ -97,6 +97,11 @@ Plans:
   1. 사용자가 설정 화면에서 Google 계정으로 로그인할 수 있다
   2. OAuth 인증 시 API 키 없이 Gemini 회의록 생성이 동작한다
   3. API 키 모드와 OAuth 모드가 공존하며 사용자가 선택할 수 있다
+**Plans**: 3 plans
+Plans:
+- [ ] 12-01-PLAN.md — MinutesEngine 인터페이스 도입 + GeminiEngine 리팩토링 + Gemini REST API 모델 + 빌드 의존성 추가
+- [ ] 12-02-PLAN.md — GoogleAuthRepository + GeminiOAuthEngine + AuthModule + 설정 화면 Google 로그인 UI
+- [ ] 12-03-PLAN.md — Google Cloud Console 설정 확인 + 실기기 E2E 검증 (Google 로그인 + OAuth Gemini 호출)
 **UI hint**: yes
 
 ### Phase 13: Plaud BLE 실기기 디버깅
@@ -126,5 +131,5 @@ Phases execute in numeric order: 8 -> 9 -> 10 -> 11 -> 12 -> 13
 | 9. 삼성 공유 수신 | v2.0 | 0/1 | Not started | - |
 | 10. NotebookLM 반자동 연동 | v2.0 | 0/2 | Complete    | 2026-03-25 |
 | 11. 삼성 자동 감지 스파이크 | v2.0 | 0/2 | Complete    | 2026-03-25 |
-| 12. Google OAuth 인증 | v2.0 | 0/? | Not started | - |
+| 12. Google OAuth 인증 | v2.0 | 0/3 | Not started | - |
 | 13. Plaud BLE 실기기 디버깅 | v2.0 | 0/? | Not started | - |
