@@ -17,14 +17,14 @@
 - **D-01:** 별도 ShareReceiverActivity를 생성하여 ACTION_SEND Intent를 수신한다 (MainActivity와 분리)
 - **D-02:** AndroidManifest에 intent-filter 등록: action=SEND, category=DEFAULT, mimeType=text/plain
 - **D-03:** Intent 수신 즉시 파이프라인 자동 시작 — 사용자 확인 대화상자 없음 (원클릭 컨셉)
-- **D-04:** 스낵바로 "회의록 생성 중..." 표시 후 Activity 즉시 종료. 진행/완료는 알림으로 표시
+- **D-04:** Toast로 "회의록 생성 중..." 표시 후 Activity 즉시 종료 (투명 Activity에서 Snackbar 표시 불가). 진행/완료는 알림으로 표시
 
 ### 회의록 형식
 - **D-05:** 설정 화면의 기본 회의록 형식(구조화/요약/액션아이템) 자동 적용 — 형식 선택 대화상자 없음
 
 ### 데이터 모델
 - **D-06:** MeetingEntity.source = "SAMSUNG_SHARE"로 저장 (Phase 8 D-12에서 source 필드 추가 완료)
-- **D-07:** 공유 수신 회의록은 audioFilePath = null, transcriptPath에 공유 텍스트 저장
+- **D-07:** 공유 수신 회의록은 audioFilePath = "" (Room non-null 제약), transcriptPath에 공유 텍스트 저장
 
 ### Claude's Discretion
 - 삼성 녹음앱이 보내는 공유 데이터의 정확한 형식 파싱 (text/plain 본문에서 제목/날짜 추출 방식)
