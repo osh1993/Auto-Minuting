@@ -13,6 +13,7 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 **Shipped: v1.0 MVP** (2026-03-24)
 **Phase 8 완료** (2026-03-25) — 기반 강화
 **Phase 9 완료** (2026-03-26) — 삼성 공유 수신
+**Phase 10 완료** (2026-03-26) — NotebookLM 반자동 연동
 
 - 58개 Kotlin 파일, 5,500+ LOC
 - Tech stack: Kotlin 2.3.20, Jetpack Compose (BOM 2026.03), Hilt 2.56, Room 2.8.4, WorkManager
@@ -20,6 +21,7 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 - UI: Material 3 Dynamic Color, Bottom Navigation 4탭, Markdown 뷰어, 아카이브 검색
 - Phase 8: 회의 삭제(DB+파일 정합성), Gemini API 키 설정 UI(암호화 저장), Room DB v2 마이그레이션, 인증 추상화
 - Phase 9: 삼성 녹음앱 공유 Intent 수신 → Gemini 회의록 자동 생성, 출처 뱃지 표시
+- Phase 10: NotebookLM 공유 버튼 + Custom Tabs 폴백 + MCP 검토 문서
 
 ## Requirements
 
