@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -64,6 +65,7 @@ import com.autominuting.util.NotebookLmHelper
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    onNavigateToTemplates: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val selectedFormat by viewModel.minutesFormat.collectAsStateWithLifecycle()
@@ -238,6 +240,35 @@ fun SettingsScreen(
             } else {
                 // --- API 키 섹션 ---
                 ApiKeySection(viewModel = viewModel)
+            }
+
+            // --- 프롬프트 템플릿 섹션 ---
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "프롬프트 템플릿",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = "회의록 생성에 사용할 프롬프트를 관리합니다",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedButton(
+                onClick = onNavigateToTemplates
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("프롬프트 템플릿 관리")
             }
 
             // --- NotebookLM 섹션 ---

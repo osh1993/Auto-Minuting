@@ -43,6 +43,13 @@ sealed class Screen(
         fun createRoute(meetingId: Long) = "transcripts/$meetingId/edit"
     }
 
+    /** 프롬프트 템플릿 - 설정 하위 화면 (Bottom Navigation에 표시되지 않음) */
+    data object PromptTemplates : Screen(
+        "settings/templates",
+        "프롬프트 템플릿",
+        Icons.Default.Edit
+    )
+
     /** 회의록 상세 - 회의록 내용 읽기 화면 (Bottom Navigation에 표시되지 않음) */
     data object MinutesDetail : Screen(
         "minutes/{meetingId}",
