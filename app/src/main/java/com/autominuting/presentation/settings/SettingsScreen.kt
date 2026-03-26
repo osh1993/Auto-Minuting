@@ -33,6 +33,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -375,6 +376,8 @@ private fun OAuthClientIdSection(viewModel: SettingsViewModel) {
     var clientIdInput by remember { mutableStateOf("") }
     var isVisible by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+
     Text(
         text = "Google OAuth Web Client ID",
         style = MaterialTheme.typography.titleSmall
@@ -384,6 +387,18 @@ private fun OAuthClientIdSection(viewModel: SettingsViewModel) {
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
+    TextButton(
+        onClick = {
+            val intent = android.content.Intent(
+                android.content.Intent.ACTION_VIEW,
+                android.net.Uri.parse("https://console.cloud.google.com/apis/credentials")
+            )
+            context.startActivity(intent)
+        },
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+    ) {
+        Text("Client ID 발급받기 →", style = MaterialTheme.typography.bodySmall)
+    }
 
     Spacer(modifier = Modifier.height(8.dp))
 
