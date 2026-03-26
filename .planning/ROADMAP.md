@@ -42,7 +42,7 @@ Full details: `.planning/milestones/v2.0-ROADMAP.md`
 **Milestone Goal:** 실기기 테스트 피드백 반영, Plaud 연결 프로토콜 분석, 회의록/전사 관리 UX 개선
 
 - [x] **Phase 14: Plaud 연결 프로토콜 분석** (2/2 plans) - No-Go 판정: E2EE + 서버 인증으로 SDK 의존 유지 — completed 2026-03-26
-- [x] **Phase 15: 수동 회의록 생성 + 프롬프트 템플릿** (2 plans) - 전사 파일 기반 수동 회의록 생성과 프롬프트 템플릿 관리 (completed 2026-03-26)
+- [x] **Phase 15: 수동 회의록 생성 + 프롬프트 템플릿** (2 plans) - 전사 파일 기반 수동 회의록 생성과 프롬프트 템플릿 관리 (completed 2026-03-26)
 - [x] **Phase 16: 파일 삭제 개선** - 회의록 다중 삭제와 전사 파일 별도 삭제 기능 (completed 2026-03-26)
 - [ ] **Phase 17: UI/UX 정리** - 앱 아이콘 교체, UI 레이아웃 개선, spike 코드 제거
 - [ ] **Phase 18: OAuth 인증 수정** - Google OAuth Web Client ID 설정 오류 해결
@@ -86,7 +86,7 @@ Plans:
   3. 사용자가 전사 파일을 별도로 선택하여 삭제할 수 있다
 **Plans**: 1 plan
 Plans:
-- [ ] 16-01-PLAN.md — 회의록 다중 삭제(전사 보존) + 전사 파일 별도 삭제
+- [x] 16-01-PLAN.md — 회의록 다중 삭제(전사 보존) + 전사 파일 별도 삭제
 **UI hint**: yes
 
 ### Phase 17: UI/UX 정리
@@ -99,7 +99,7 @@ Plans:
   3. spike 패키지 및 관련 코드가 프로젝트에서 완전히 제거되어 빌드에 포함되지 않는다
 **Plans**: 1 plan
 Plans:
-- [ ] 16-01-PLAN.md � 회의록 다중 삭제(전사 보존) + 전사 파일 별도 삭제
+- [ ] 17-01-PLAN.md — 앱 아이콘 교체 + NotebookLM 버튼 이동 + spike 코드 제거
 **UI hint**: yes
 
 ### Phase 18: OAuth 인증 수정
@@ -111,7 +111,7 @@ Plans:
   2. 로그인 완료 후 Gemini API 호출이 OAuth 토큰으로 성공한다
 **Plans**: 1 plan
 Plans:
-- [ ] 16-01-PLAN.md � 회의록 다중 삭제(전사 보존) + 전사 파일 별도 삭제
+- [ ] 18-01-PLAN.md — Google OAuth Web Client ID 설정 수정
 
 ## Progress
 
@@ -124,6 +124,6 @@ Phases execute in numeric order: 14 → 15 → 16 → 17 → 18
 | 8-13 | v2.0 | 11/13 | Complete | 2026-03-26 |
 | 14. Plaud 연결 프로토콜 분석 | v2.1 | 2/2 | Complete    | 2026-03-26 |
 | 15. 수동 회의록 생성 + 프롬프트 템플릿 | v2.1 | 2/2 | Complete    | 2026-03-26 |
-| 16. 파일 삭제 개선 | v2.1 | 0/? | Complete    | 2026-03-26 |
-| 17. UI/UX 정리 | v2.1 | 0/? | Not started | - |
-| 18. OAuth 인증 수정 | v2.1 | 0/? | Not started | - |
+| 16. 파일 삭제 개선 | v2.1 | 1/1 | Complete    | 2026-03-26 |
+| 17. UI/UX 정리 | v2.1 | 0/1 | Not started | - |
+| 18. OAuth 인증 수정 | v2.1 | 0/1 | Not started | - |
