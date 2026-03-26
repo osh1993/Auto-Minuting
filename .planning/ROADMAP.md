@@ -59,7 +59,7 @@ Full details: `.planning/milestones/v2.0-ROADMAP.md`
   3. 분석 결과를 바탕으로 자체 구현 가능 여부에 대한 Go/No-Go 판정이 내려진다
 **Plans**: 2 plans
 Plans:
-- [ ] 14-01-PLAN.md — SDK AAR + Plaud APK 디컴파일 정적 분석
+- [x] 14-01-PLAN.md — SDK AAR + Plaud APK 디컴파일 정적 분석
 - [ ] 14-02-PLAN.md — BLE GATT 실기기 캡처 + Go/No-Go 판정
 
 ### Phase 15: 수동 회의록 생성 + 프롬프트 템플릿
@@ -114,7 +114,7 @@ Phases execute in numeric order: 14 → 15 → 16 → 17 → 18
 |-------|-----------|----------------|--------|-----------|
 | 1-7 | v1.0 | 18/18 | Complete | 2026-03-24 |
 | 8-13 | v2.0 | 11/13 | Complete | 2026-03-26 |
-| 14. Plaud 연결 프로토콜 분석 | v2.1 | 0/2 | Planning | - |
+| 14. Plaud 연결 프로토콜 분석 | v2.1 | 1/2 | In Progress|  |
 | 15. 수동 회의록 생성 + 프롬프트 템플릿 | v2.1 | 0/? | Not started | - |
 | 16. 파일 삭제 개선 | v2.1 | 0/? | Not started | - |
 | 17. UI/UX 정리 | v2.1 | 0/? | Not started | - |
