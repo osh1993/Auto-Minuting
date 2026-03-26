@@ -16,7 +16,6 @@
     <!-- Foreground Service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <!-- 배터리 최적화 무시 요청 -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -106,18 +105,6 @@
         <receiver
             android:name=".receiver.PipelineActionReceiver"
             android:exported="false" />
-
-        <!-- 삼성 녹음앱 감지 스파이크 Foreground Service (specialUse: 파일 모니터링) -->
-        <service
-            android:name=".spike.SpikeService"
-            android:foregroundServiceType="specialUse"
-            android:exported="false" />
-
-        <!-- 삼성 녹음앱 감지 스파이크 로그 UI -->
-        <activity
-            android:name=".spike.SpikeLogActivity"
-            android:exported="false"
-            android:theme="@style/Theme.AutoMinuting" />
 
     </application>
 
