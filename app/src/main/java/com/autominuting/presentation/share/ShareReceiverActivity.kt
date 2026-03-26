@@ -40,20 +40,69 @@ class ShareReceiverActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ACTION_SEND + text/plain 검증
-        if (intent?.action != Intent.ACTION_SEND || intent?.type != "text/plain") {
-            Log.w(TAG, "지원하지 않는 intent: action=${intent?.action}, type=${intent?.type}")
+        // Intent 디버그 로깅
+        Log.d(TAG, "=== Share Intent 수신 ===")
+        Log.d(TAG, "action=${intent?.action}, type=${intent?.type}")
+        Log.d(TAG, "EXTRA_TEXT=${intent?.getStringExtra(Intent.EXTRA_TEXT)?.take(100)}")
+        Log.d(TAG, "EXTRA_STREAM=${intent?.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM)}")
+        Log.d(TAG, "EXTRA_SUBJECT=${intent?.getStringExtra(Intent.EXTRA_SUBJECT)}")
+        Log.d(TAG, "extras=${intent?.extras?.keySet()}")
+
+        // ACTION_SEND 또는 ACTION_SEND_MULTIPLE 검증
+        if (intent?.action != Intent.ACTION_SEND && intent?.action != Intent.ACTION_SEND_MULTIPLE) {
+            Log.w(TAG, "지원하지 않는 action: ${intent?.action}")
+            Toast.makeText(this, "지원하지 않는 공유 형식입니다", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        // 공유 텍스트 추출
-        val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
+        // 공유 텍스트 추출 (여러 경로 시도)
+        var sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
+
+        // EXTRA_TEXT가 없으면 EXTRA_STREAM (단일 파일 URI)에서 텍스트 읽기
+        if (sharedText.isNullOrBlank()) {
+            val streamUri = intent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM)
+            if (streamUri != null) {
+                Log.d(TAG, "EXTRA_STREAM(단일)에서 텍스트 읽기 시도: $streamUri")
+                sharedText = try {
+                    readTextAutoDetectEncoding(streamUri)
+                } catch (e: Exception) {
+                    Log.e(TAG, "EXTRA_STREAM 읽기 실패", e)
+                    null
+                }
+            }
+        }
+
+        // SEND_MULTIPLE: 여러 파일 URI에서 텍스트 읽기
+        if (sharedText.isNullOrBlank() && intent?.action == Intent.ACTION_SEND_MULTIPLE) {
+            @Suppress("DEPRECATION")
+            val streamUris = intent.getParcelableArrayListExtra<android.net.Uri>(Intent.EXTRA_STREAM)
+            Log.d(TAG, "EXTRA_STREAM(다중): ${streamUris?.size}개 URI")
+            if (!streamUris.isNullOrEmpty()) {
+                val texts = streamUris.mapNotNull { uri ->
+                    try {
+                        Log.d(TAG, "  URI 읽기: $uri (type=${contentResolver.getType(uri)})")
+                        readTextAutoDetectEncoding(uri)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "  URI 읽기 실패: $uri", e)
+                        null
+                    }
+                }
+                if (texts.isNotEmpty()) {
+                    sharedText = texts.joinToString("\n\n")
+                    Log.d(TAG, "다중 URI에서 텍스트 합침: ${texts.size}개, 총 ${sharedText?.length}자")
+                }
+            }
+        }
+
         if (sharedText.isNullOrBlank() || sharedText.length < 10) {
-            Toast.makeText(this, "공유된 텍스트가 너무 짧습니다", Toast.LENGTH_SHORT).show()
+            Log.w(TAG, "텍스트 없음 또는 너무 짧음: length=${sharedText?.length}")
+            Toast.makeText(this, "공유된 텍스트가 없거나 너무 짧습니다", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
+
+        Log.d(TAG, "공유 텍스트 확보: ${sharedText.length}자")
 
         // 제목 추출: 첫 줄 사용, 30자 초과 시 자르기
         val title = extractTitle(sharedText)
@@ -149,6 +198,54 @@ class ShareReceiverActivity : ComponentActivity() {
         } else {
             firstLine
         }
+    }
+
+    /**
+     * URI에서 텍스트를 읽되, BOM 기반으로 인코딩을 자동 감지한다.
+     * 삼성 녹음앱은 UTF-16 LE로 txt 파일을 저장한다.
+     */
+    private fun readTextAutoDetectEncoding(uri: android.net.Uri): String? {
+        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
+
+        // BOM 기반 인코딩 감지
+        val charset = when {
+            bytes.size >= 2 && bytes[0] == 0xFF.toByte() && bytes[1] == 0xFE.toByte() -> {
+                Log.d(TAG, "인코딩 감지: UTF-16 LE (BOM)")
+                Charsets.UTF_16LE
+            }
+            bytes.size >= 2 && bytes[0] == 0xFE.toByte() && bytes[1] == 0xFF.toByte() -> {
+                Log.d(TAG, "인코딩 감지: UTF-16 BE (BOM)")
+                Charsets.UTF_16BE
+            }
+            bytes.size >= 3 && bytes[0] == 0xEF.toByte() && bytes[1] == 0xBB.toByte() && bytes[2] == 0xBF.toByte() -> {
+                Log.d(TAG, "인코딩 감지: UTF-8 (BOM)")
+                Charsets.UTF_8
+            }
+            else -> {
+                // BOM 없음 — 널 바이트 패턴으로 UTF-16 추정
+                val hasNullBytes = bytes.size >= 4 &&
+                    (bytes[1] == 0x00.toByte() || bytes[0] == 0x00.toByte())
+                if (hasNullBytes) {
+                    Log.d(TAG, "인코딩 추정: UTF-16 LE (널 바이트 패턴)")
+                    Charsets.UTF_16LE
+                } else {
+                    Log.d(TAG, "인코딩 기본: UTF-8")
+                    Charsets.UTF_8
+                }
+            }
+        }
+
+        // BOM 제거 후 디코딩
+        val offset = when {
+            charset == Charsets.UTF_16LE && bytes.size >= 2 && bytes[0] == 0xFF.toByte() -> 2
+            charset == Charsets.UTF_16BE && bytes.size >= 2 && bytes[0] == 0xFE.toByte() -> 2
+            charset == Charsets.UTF_8 && bytes.size >= 3 && bytes[0] == 0xEF.toByte() -> 3
+            else -> 0
+        }
+
+        val text = String(bytes, offset, bytes.size - offset, charset)
+        Log.d(TAG, "디코딩 완료: ${text.length}자 (charset=$charset, rawBytes=${bytes.size})")
+        return text
     }
 
     companion object {
