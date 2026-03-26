@@ -2,14 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 안정화 + UX 개선
-status: ready_to_plan
-stopped_at: Roadmap created
-last_updated: "2026-03-26"
+status: planning
+stopped_at: Phase 14 context gathered
+last_updated: "2026-03-26T04:45:43.526Z"
+last_activity: 2026-03-26 — v2.1 로드맵 생성
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -33,11 +35,13 @@ Progress: [░░░░░░░░░░] 0%
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 29 (v1.0: 18, v2.0: 11)
 - Average duration: ~3.5 min/plan
 - Total execution time: ~100 min
 
 **Recent Trend:**
+
 - v2.0 마일스톤 완료, v2.1 시작 시점
 - Trend: Stable (~3.5 min/plan)
 
@@ -65,6 +69,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26
-Stopped at: v2.1 로드맵 생성 완료
-Resume file: None
+Last session: 2026-03-26T04:45:43.523Z
+Stopped at: Phase 14 context gathered
+Resume file: .planning/phases/14-plaud-protocol/14-CONTEXT.md
