@@ -93,7 +93,7 @@ class MeetingRepositoryImpl @Inject constructor(
             try { File(path).delete() } catch (_: Exception) { }
         }
 
-        // 4. 전사/회의록 경로 초기화 + 상태를 AUDIO_SAVED로 되돌림
+        // 4. 전사/회의록 경로 초기화 + 상태를 AUDIO_RECEIVED로 되돌림
         meetingDao.clearTranscriptPath(id, Instant.now().toEpochMilli())
     }
 }
