@@ -15,6 +15,7 @@ import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.domain.repository.MeetingRepository
 import com.autominuting.service.PipelineNotificationHelper
 import com.autominuting.worker.MinutesGenerationWorker
+import com.autominuting.worker.TranscriptionTriggerWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.io.File
@@ -22,11 +23,13 @@ import java.time.Instant
 import javax.inject.Inject
 
 /**
- * 외부 앱(삼성 녹음앱 등)에서 ACTION_SEND intent로 공유된 텍스트를 수신하여
- * STT 단계를 건너뛰고 회의록 생성 파이프라인에 자동 진입시키는 Activity.
+ * 외부 앱(삼성 녹음앱 등)에서 ACTION_SEND intent로 공유된 콘텐츠를 수신하는 Activity.
  *
- * UI 없이 투명하게 동작하며, 공유 텍스트를 파일로 저장하고
- * MeetingEntity(source=SAMSUNG_SHARE)를 생성한 뒤 MinutesGenerationWorker를 enqueue한다.
+ * 지원하는 공유 유형:
+ * - 텍스트(text): 전사 텍스트로 간주하고 회의록 생성 파이프라인에 진입
+ * - 음성 파일(audio): STT 전사 후 회의록 생성 파이프라인에 진입
+ *
+ * UI 없이 투명하게 동작하며, MeetingEntity(source=SAMSUNG_SHARE)를 생성한다.
  */
 @AndroidEntryPoint
 class ShareReceiverActivity : ComponentActivity() {
@@ -56,26 +59,49 @@ class ShareReceiverActivity : ComponentActivity() {
             return
         }
 
-        // 공유 텍스트 추출 (여러 경로 시도)
+        // 음성 파일(audio) 공유 확인 — EXTRA_TEXT가 없고 EXTRA_STREAM이 audio MIME인 경우
+        @Suppress("DEPRECATION")
+        val streamUri = intent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM)
+        val mimeType = streamUri?.let { contentResolver.getType(it) }
+        val isAudioShare = intent.getStringExtra(Intent.EXTRA_TEXT).isNullOrBlank()
+            && streamUri != null
+            && mimeType?.startsWith("audio/") == true
+
+        if (isAudioShare) {
+            Log.d(TAG, "음성 파일 공유 감지: uri=$streamUri, mimeType=$mimeType")
+            lifecycleScope.launch {
+                try {
+                    processSharedAudio(streamUri!!)
+                } catch (e: Exception) {
+                    Log.e(TAG, "음성 파일 처리 실패", e)
+                    Toast.makeText(
+                        this@ShareReceiverActivity,
+                        "음성 파일 처리 중 오류가 발생했습니다",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } finally {
+                    finish()
+                }
+            }
+            return
+        }
+
+        // 텍스트 공유 처리 (기존 경로)
         var sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
 
         // EXTRA_TEXT가 없으면 EXTRA_STREAM (단일 파일 URI)에서 텍스트 읽기
-        if (sharedText.isNullOrBlank()) {
-            val streamUri = intent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM)
-            if (streamUri != null) {
-                Log.d(TAG, "EXTRA_STREAM(단일)에서 텍스트 읽기 시도: $streamUri")
-                sharedText = try {
-                    readTextAutoDetectEncoding(streamUri)
-                } catch (e: Exception) {
-                    Log.e(TAG, "EXTRA_STREAM 읽기 실패", e)
-                    null
-                }
+        if (sharedText.isNullOrBlank() && streamUri != null) {
+            Log.d(TAG, "EXTRA_STREAM(단일)에서 텍스트 읽기 시도: $streamUri")
+            sharedText = try {
+                readTextAutoDetectEncoding(streamUri)
+            } catch (e: Exception) {
+                Log.e(TAG, "EXTRA_STREAM 읽기 실패", e)
+                null
             }
         }
 
         // SEND_MULTIPLE: 여러 파일 URI에서 텍스트 읽기
         if (sharedText.isNullOrBlank() && intent?.action == Intent.ACTION_SEND_MULTIPLE) {
-            @Suppress("DEPRECATION")
             val streamUris = intent.getParcelableArrayListExtra<android.net.Uri>(Intent.EXTRA_STREAM)
             Log.d(TAG, "EXTRA_STREAM(다중): ${streamUris?.size}개 URI")
             if (!streamUris.isNullOrEmpty()) {
@@ -188,6 +214,83 @@ class ShareReceiverActivity : ComponentActivity() {
             Toast.makeText(
                 this@ShareReceiverActivity,
                 "전사 데이터가 저장되었습니다. 수동으로 회의록을 생성할 수 있습니다.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    /**
+     * 공유된 음성 파일을 로컬에 저장하고 STT 전사 파이프라인에 진입시킨다.
+     *
+     * @param audioUri 공유된 음성 파일의 content:// URI
+     */
+    private suspend fun processSharedAudio(audioUri: android.net.Uri) {
+        val now = System.currentTimeMillis()
+
+        // 1. ContentResolver로 음성 파일을 앱 내부 저장소에 복사
+        val audioDir = File(filesDir, "audio")
+        audioDir.mkdirs()
+
+        // 확장자 추출 (MIME 타입 기반)
+        val mimeType = contentResolver.getType(audioUri) ?: "audio/mp4"
+        val extension = when {
+            mimeType.contains("m4a") || mimeType.contains("mp4") -> "m4a"
+            mimeType.contains("wav") -> "wav"
+            mimeType.contains("mp3") || mimeType.contains("mpeg") -> "mp3"
+            mimeType.contains("ogg") -> "ogg"
+            mimeType.contains("flac") -> "flac"
+            else -> "m4a" // 삼성 녹음앱 기본 포맷
+        }
+        val audioFile = File(audioDir, "share_${now}.$extension")
+
+        contentResolver.openInputStream(audioUri)?.use { input ->
+            audioFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        } ?: run {
+            Log.e(TAG, "음성 파일 URI를 열 수 없습니다: $audioUri")
+            Toast.makeText(this, "음성 파일을 읽을 수 없습니다", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        Log.d(TAG, "음성 파일 저장 완료: ${audioFile.absolutePath} (${audioFile.length()} bytes)")
+
+        // 2. MeetingEntity 생성 (AUDIO_RECEIVED 상태로 DB 저장)
+        val meeting = Meeting(
+            title = "음성 공유 회의",
+            recordedAt = Instant.ofEpochMilli(now),
+            audioFilePath = audioFile.absolutePath,
+            pipelineStatus = PipelineStatus.AUDIO_RECEIVED,
+            source = "SAMSUNG_SHARE",
+            createdAt = Instant.ofEpochMilli(now),
+            updatedAt = Instant.ofEpochMilli(now)
+        )
+        val meetingId = meetingRepository.insertMeeting(meeting)
+
+        Log.d(TAG, "음성 공유 MeetingEntity 생성: meetingId=$meetingId")
+
+        // 3. TranscriptionTriggerWorker enqueue (기존 STT 파이프라인 활용)
+        try {
+            val workRequest = OneTimeWorkRequestBuilder<TranscriptionTriggerWorker>()
+                .setInputData(
+                    workDataOf(
+                        TranscriptionTriggerWorker.KEY_AUDIO_FILE_PATH to audioFile.absolutePath,
+                        TranscriptionTriggerWorker.KEY_MEETING_ID to meetingId
+                    )
+                )
+                .build()
+            WorkManager.getInstance(this@ShareReceiverActivity).enqueue(workRequest)
+
+            Log.d(TAG, "전사 파이프라인 진입: meetingId=$meetingId, audioPath=${audioFile.absolutePath}")
+
+            PipelineNotificationHelper.updateProgress(this@ShareReceiverActivity, "음성 파일 전사 중...")
+            Toast.makeText(this@ShareReceiverActivity, "음성 파일 전사 중...", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            // Worker enqueue 실패 시에도 오디오 파일과 MeetingEntity는 보존됨
+            Log.e(TAG, "전사 Worker enqueue 실패 (오디오 파일은 보존됨)", e)
+            Toast.makeText(
+                this@ShareReceiverActivity,
+                "음성 파일이 저장되었습니다. 수동으로 전사를 시작할 수 있습니다.",
                 Toast.LENGTH_LONG
             ).show()
         }
