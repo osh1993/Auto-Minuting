@@ -1,8 +1,8 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: 실동작 파이프라인 + 기능 확장
-status: Milestone complete
+milestone: v2.1
+milestone_name: 안정화 + UX 개선
+status: planning
 stopped_at: Phase 10 context gathered
 last_updated: "2026-03-25T22:14:50.431Z"
 progress:

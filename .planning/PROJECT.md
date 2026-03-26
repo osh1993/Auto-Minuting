@@ -44,7 +44,7 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 
 ### Active
 
-(v2.0 마일스톤 — 아래 Current Milestone 참조)
+(v2.1 마일스톤 — 아래 Current Milestone 참조)
 
 ### Out of Scope
 
@@ -81,18 +81,20 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 | AnnotatedString Markdown 렌더링 | 외부 라이브러리 없이 직접 구현 | ✓ v1.0 |
 | Room LIKE 검색 | v1 데이터 규모에 FTS 불필요 | ✓ v1.0 |
 
-## Current Milestone: v2.0 실동작 파이프라인 + 기능 확장
+## Current Milestone: v2.1 안정화 + UX 개선
 
-**Goal:** 삼성 녹음기 전사 연동 검토, NotebookLM 통합, 파일 관리, Gemini 인증 개선 후, 마지막으로 Plaud BLE 실연결을 수정하여 실제 동작하는 앱으로 완성
+**Goal:** 실기기 테스트 피드백 반영, Plaud 연결 프로토콜 분석, 회의록/전사 관리 UX 개선
 
 **Target features:**
-- 삼성 녹음기 온보드 AI 전사 완료 이벤트 자동 감지 가능성 검토 (불가 시 공유 방식 폴백)
-- NotebookLM 연동 — 앱에서 직접 접속 or 공유 기능으로 전사 텍스트 전달, 클라이언트 기능 내장 가능성 검토
-- 전사파일/회의록 삭제 기능
-- Gemini API 키 설정 UI 구현
-- Gemini OAuth 인증 방식 추가
-- 삼성 녹음기 전사 이벤트 수신 기술 검토 (ContentObserver, Accessibility 등)
-- Plaud SDK BLE 연결 디버깅 및 실제 파일 수신 동작 확인 (마지막 수행)
+- Plaud 녹음기 연결 프로토콜 리버스 엔지니어링 (BLE가 아닌 연결 방식 추적)
+- 수동 회의록 생성 — 전사 파일 기반 생성 버튼 + 프롬프트 템플릿 선택/수기 입력
+- 프롬프트 템플릿 관리 (추가/삭제/편집)
+- 회의록 다중 선택 삭제 (전사 파일 보존)
+- 전사 파일 별도 삭제 기능
+- 앱 아이콘 리디자인
+- 테스트 도구(spike) 코드 삭제
+- NotebookLM 열기 버튼 메인 화면 이동
+- Google OAuth Web Client ID 설정 문제 해결
 
 ## Evolution
 
@@ -115,4 +117,4 @@ This document evolves at phase transitions and milestone boundaries.
 **v1.0 Roadmap archived to:** `.planning/milestones/v1.0-ROADMAP.md`
 
 ---
-*Last updated: 2026-03-25 after v2.0 milestone started*
+*Last updated: 2026-03-26 after v2.1 milestone started*
