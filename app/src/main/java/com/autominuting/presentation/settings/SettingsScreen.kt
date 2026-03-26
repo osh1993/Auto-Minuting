@@ -62,6 +62,7 @@ import com.autominuting.domain.model.MinutesFormat
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    onNavigateToTemplates: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val selectedFormat by viewModel.minutesFormat.collectAsStateWithLifecycle()
@@ -84,6 +85,16 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
+            // 프롬프트 템플릿 관리
+            OutlinedButton(
+                onClick = onNavigateToTemplates,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("프롬프트 템플릿 관리")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // 회의록 형식 섹션
             Text(
                 text = "회의록 형식",
