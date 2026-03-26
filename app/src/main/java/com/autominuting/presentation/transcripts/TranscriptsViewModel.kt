@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -33,6 +34,13 @@ class TranscriptsViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
         )
+
+    /** 전사 파일(+ 연관 회의록)을 삭제한다. */
+    fun deleteTranscript(id: Long) {
+        viewModelScope.launch {
+            meetingRepository.deleteTranscript(id)
+        }
+    }
 
     companion object {
         /** 전사 목록에 표시할 파이프라인 상태 목록 */

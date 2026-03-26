@@ -1,6 +1,7 @@
 package com.autominuting.presentation.transcripts
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,15 +13,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -44,6 +50,7 @@ fun TranscriptsScreen(
     onEditClick: (Long) -> Unit = {}
 ) {
     val meetings by viewModel.meetings.collectAsState()
+    var meetingToDelete by remember { mutableStateOf<Meeting?>(null) }
 
     if (meetings.isEmpty()) {
         // 빈 목록 안내
@@ -72,10 +79,33 @@ fun TranscriptsScreen(
                         if (meeting.pipelineStatus.isEditable()) {
                             onEditClick(meeting.id)
                         }
+                    },
+                    onDeleteRequest = { id ->
+                        meetingToDelete = meetings.find { it.id == id }
                     }
                 )
             }
         }
+    }
+
+    // 전사 삭제 확인 대화상자
+    meetingToDelete?.let { meeting ->
+        AlertDialog(
+            onDismissRequest = { meetingToDelete = null },
+            title = { Text("전사 파일 삭제") },
+            text = { Text("\"${meeting.title}\"의 전사 파일을 삭제할까요?\n연관된 회의록도 함께 삭제됩니다.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteTranscript(meeting.id)
+                    meetingToDelete = null
+                }) {
+                    Text("삭제", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { meetingToDelete = null }) { Text("취소") }
+            }
+        )
     }
 }
 
@@ -83,19 +113,21 @@ fun TranscriptsScreen(
  * 개별 전사 회의 항목 카드.
  * 회의 제목, 녹음 시각, 파이프라인 상태를 표시한다.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TranscriptMeetingCard(
     meeting: Meeting,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDeleteRequest: (Long) -> Unit
 ) {
     val isEditable = meeting.pipelineStatus.isEditable()
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .then(
-                if (isEditable) Modifier.clickable(onClick = onClick)
-                else Modifier
+            .combinedClickable(
+                onClick = { if (isEditable) onClick() },
+                onLongClick = { onDeleteRequest(meeting.id) }
             ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
