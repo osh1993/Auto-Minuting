@@ -36,9 +36,14 @@ Full details: `.planning/milestones/v2.0-ROADMAP.md`
 
 </details>
 
+### v2.1 안정화 (Phases 14-17)
+
+- [x] Phase 17: UI 정리 (1/1 plans) — completed 2026-03-26
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1-7 | v1.0 | 18/18 | Complete | 2026-03-24 |
 | 8-13 | v2.0 | 11/13 | Complete | 2026-03-26 |
+| 17 | v2.1 | 1/1 | Complete | 2026-03-26 |
