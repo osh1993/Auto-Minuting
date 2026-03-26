@@ -52,21 +52,21 @@ Deferred to future release.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PLUD-02 | TBD | Pending |
-| MINS-01 | TBD | Pending |
-| MINS-02 | TBD | Pending |
-| FILE-02 | TBD | Pending |
-| FILE-03 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
-| AUTH-03 | TBD | Pending |
+| PLUD-02 | Phase 14 | Pending |
+| MINS-01 | Phase 15 | Pending |
+| MINS-02 | Phase 15 | Pending |
+| FILE-02 | Phase 16 | Pending |
+| FILE-03 | Phase 16 | Pending |
+| UI-01 | Phase 17 | Pending |
+| UI-02 | Phase 17 | Pending |
+| UI-03 | Phase 17 | Pending |
+| AUTH-03 | Phase 18 | Pending |
 
 **Coverage:**
 
 - v2.1 requirements: 9 total
-- Mapped to phases: 0
-- Unmapped: 9
+- Mapped to phases: 9
+- Unmapped: 0
 
 ---
 
