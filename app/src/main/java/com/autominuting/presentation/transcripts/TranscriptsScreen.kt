@@ -1,6 +1,7 @@
 package com.autominuting.presentation.transcripts
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,24 +11,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.NoteAdd
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,7 +40,6 @@ import java.time.format.DateTimeFormatter
  * 전사 목록 화면.
  * 전사가 진행 중이거나 완료된 회의 목록을 Card 형태로 표시한다.
  * 전사 완료된 항목을 탭하면 편집 화면으로 이동한다.
- * 전사 완료/완료 상태에서 "회의록 생성" 버튼을 눌러 수동 생성을 시작할 수 있다.
  *
  * @param viewModel 전사 목록 상태를 관리하는 ViewModel
  * @param onEditClick 전사 편집 화면으로 이동하는 콜백 (meetingId 전달)
@@ -57,84 +50,61 @@ fun TranscriptsScreen(
     onEditClick: (Long) -> Unit = {}
 ) {
     val meetings by viewModel.meetings.collectAsState()
-    val templates by viewModel.templates.collectAsState()
-    val isManualGenerating by viewModel.isManualGenerating.collectAsState()
+    var meetingToDelete by remember { mutableStateOf<Meeting?>(null) }
 
-    // 수동 회의록 생성 다이얼로그 대상 회의
-    var showManualDialog by remember { mutableStateOf<Meeting?>(null) }
-
-    // Snackbar 상태
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    // 수동 생성 결과 수집
-    LaunchedEffect(Unit) {
-        viewModel.manualGenerationResult.collect { result ->
-            when (result) {
-                is ManualGenerationResult.Success -> {
-                    showManualDialog = null
-                    snackbarHostState.showSnackbar("회의록이 생성되었습니다")
-                }
-                is ManualGenerationResult.Error -> {
-                    snackbarHostState.showSnackbar("회의록 생성 실패: ${result.message}")
-                }
-            }
+    if (meetings.isEmpty()) {
+        // 빈 목록 안내
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "전사된 항목이 없습니다",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
-    }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (meetings.isEmpty()) {
-            // 빈 목록 안내
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "전사된 항목이 없습니다",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+    } else {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(meetings, key = { it.id }) { meeting ->
+                TranscriptMeetingCard(
+                    meeting = meeting,
+                    onClick = {
+                        // TRANSCRIBED 이상 상태에서만 편집 화면으로 이동
+                        if (meeting.pipelineStatus.isEditable()) {
+                            onEditClick(meeting.id)
+                        }
+                    },
+                    onDeleteRequest = { id ->
+                        meetingToDelete = meetings.find { it.id == id }
+                    }
                 )
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(meetings, key = { it.id }) { meeting ->
-                    TranscriptMeetingCard(
-                        meeting = meeting,
-                        onClick = {
-                            // TRANSCRIBED 이상 상태에서만 편집 화면으로 이동
-                            if (meeting.pipelineStatus.isEditable()) {
-                                onEditClick(meeting.id)
-                            }
-                        },
-                        onGenerateMinutes = {
-                            showManualDialog = meeting
-                        }
-                    )
-                }
-            }
         }
-
-        // Snackbar 호스트
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
     }
 
-    // 수동 회의록 생성 다이얼로그
-    showManualDialog?.let { meeting ->
-        ManualMinutesDialog(
-            meetingTitle = meeting.title,
-            templates = templates,
-            isGenerating = isManualGenerating,
-            onGenerate = { templateId, customPrompt ->
-                viewModel.generateManualMinutes(meeting.id, templateId, customPrompt)
+    // 전사 삭제 확인 대화상자
+    meetingToDelete?.let { meeting ->
+        AlertDialog(
+            onDismissRequest = { meetingToDelete = null },
+            title = { Text("전사 파일 삭제") },
+            text = { Text("\"${meeting.title}\"의 전사 파일을 삭제할까요?\n연관된 회의록도 함께 삭제됩니다.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteTranscript(meeting.id)
+                    meetingToDelete = null
+                }) {
+                    Text("삭제", color = MaterialTheme.colorScheme.error)
+                }
             },
-            onDismiss = { showManualDialog = null }
+            dismissButton = {
+                TextButton(onClick = { meetingToDelete = null }) { Text("취소") }
+            }
         )
     }
 }
@@ -142,65 +112,34 @@ fun TranscriptsScreen(
 /**
  * 개별 전사 회의 항목 카드.
  * 회의 제목, 녹음 시각, 파이프라인 상태를 표시한다.
- * 전사 완료/완료 상태에서 "회의록 생성" 버튼을 표시한다.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TranscriptMeetingCard(
     meeting: Meeting,
     onClick: () -> Unit,
-    onGenerateMinutes: () -> Unit
+    onDeleteRequest: (Long) -> Unit
 ) {
     val isEditable = meeting.pipelineStatus.isEditable()
-    // 회의록 생성 가능 상태: 전사 완료 또는 이미 완료된 경우 (재생성)
-    val canGenerateMinutes = meeting.pipelineStatus in setOf(
-        PipelineStatus.TRANSCRIBED,
-        PipelineStatus.COMPLETED,
-        PipelineStatus.FAILED
-    )
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .then(
-                if (isEditable) Modifier.clickable(onClick = onClick)
-                else Modifier
+            .combinedClickable(
+                onClick = { if (isEditable) onClick() },
+                onLongClick = { onDeleteRequest(meeting.id) }
             ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // 회의 제목 + 회의록 생성 버튼
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = meeting.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
-
-                // 회의록 생성/재생성 버튼
-                if (canGenerateMinutes) {
-                    IconButton(
-                        onClick = onGenerateMinutes,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.NoteAdd,
-                            contentDescription = if (meeting.pipelineStatus == PipelineStatus.COMPLETED) {
-                                "회의록 재생성"
-                            } else {
-                                "회의록 생성"
-                            },
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
+            // 회의 제목
+            Text(
+                text = meeting.title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
 
             Spacer(modifier = Modifier.height(4.dp))
 

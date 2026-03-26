@@ -62,10 +62,17 @@ class MinutesViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    /** 회의를 삭제한다 (DB + 연관 파일). */
+    /** 회의록만 삭제한다 (전사 파일 보존). */
     fun deleteMeeting(id: Long) {
         viewModelScope.launch {
-            meetingRepository.deleteMeeting(id)
+            meetingRepository.deleteMinutesOnly(id)
+        }
+    }
+
+    /** 선택된 회의록을 일괄 삭제한다 (전사 파일 보존). */
+    fun deleteSelectedMinutes(ids: Set<Long>) {
+        viewModelScope.launch {
+            ids.forEach { meetingRepository.deleteMinutesOnly(it) }
         }
     }
 

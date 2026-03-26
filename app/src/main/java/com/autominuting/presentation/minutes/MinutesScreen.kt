@@ -1,5 +1,6 @@
 package com.autominuting.presentation.minutes
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,11 +16,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +31,8 @@ import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -51,6 +56,7 @@ import java.time.format.DateTimeFormatter
  * @param onMinutesClick 회의록 상세 화면으로 이동하는 콜백 (meetingId 전달)
  * @param viewModel 회의록 목록 상태를 관리하는 ViewModel
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MinutesScreen(
     onMinutesClick: (Long) -> Unit = {},
@@ -59,36 +65,69 @@ fun MinutesScreen(
     val meetings by viewModel.meetings.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     var meetingToDelete by remember { mutableStateOf<Meeting?>(null) }
+    var selectedIds by remember { mutableStateOf(emptySet<Long>()) }
+    val isSelectionMode = selectedIds.isNotEmpty()
+    var showBatchDeleteDialog by remember { mutableStateOf(false) }
+
+    // 선택 모드에서 뒤로가기 시 선택 해제
+    BackHandler(enabled = isSelectionMode) {
+        selectedIds = emptySet()
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // 검색바
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = viewModel::onSearchQueryChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            placeholder = {
-                Text(text = "회의록 검색...")
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "검색"
-                )
-            },
-            trailingIcon = {
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
+        // 선택 모드 TopBar
+        if (isSelectionMode) {
+            TopAppBar(
+                title = { Text("${selectedIds.size}개 선택됨") },
+                navigationIcon = {
+                    IconButton(onClick = { selectedIds = emptySet() }) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "검색어 지우기"
+                            contentDescription = "선택 취소"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showBatchDeleteDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "선택 삭제"
                         )
                     }
                 }
-            },
-            singleLine = true
-        )
+            )
+        }
+
+        // 검색바 (선택 모드가 아닐 때만 표시)
+        if (!isSelectionMode) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = viewModel::onSearchQueryChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                placeholder = {
+                    Text(text = "회의록 검색...")
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "검색"
+                    )
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "검색어 지우기"
+                            )
+                        }
+                    }
+                },
+                singleLine = true
+            )
+        }
 
         if (meetings.isEmpty()) {
             // 빈 목록 안내: 검색 결과 없음 vs 전체 목록 비어있음 구분
@@ -130,10 +169,27 @@ fun MinutesScreen(
                 items(meetings, key = { it.id }) { meeting ->
                     MinutesMeetingCard(
                         meeting = meeting,
+                        isSelectionMode = isSelectionMode,
+                        isSelected = meeting.id in selectedIds,
                         onClick = {
-                            // COMPLETED 상태에서만 상세 화면으로 이동
-                            if (meeting.pipelineStatus == PipelineStatus.COMPLETED && meeting.minutesPath != null) {
-                                onMinutesClick(meeting.id)
+                            if (isSelectionMode) {
+                                // 선택 모드: toggle 선택
+                                selectedIds = if (meeting.id in selectedIds) {
+                                    selectedIds - meeting.id
+                                } else {
+                                    selectedIds + meeting.id
+                                }
+                            } else {
+                                // 일반 모드: COMPLETED 상태에서만 상세 화면으로 이동
+                                if (meeting.pipelineStatus == PipelineStatus.COMPLETED && meeting.minutesPath != null) {
+                                    onMinutesClick(meeting.id)
+                                }
+                            }
+                        },
+                        onLongClick = {
+                            if (!isSelectionMode) {
+                                // 선택 모드 진입
+                                selectedIds = setOf(meeting.id)
                             }
                         },
                         onDeleteRequest = { id ->
@@ -144,7 +200,7 @@ fun MinutesScreen(
             }
         }
 
-        // 삭제 확인 대화상자
+        // 단건 삭제 확인 대화상자
         meetingToDelete?.let { meeting ->
             DeleteConfirmationDialog(
                 meetingTitle = meeting.title,
@@ -153,6 +209,27 @@ fun MinutesScreen(
                     meetingToDelete = null
                 },
                 onDismiss = { meetingToDelete = null }
+            )
+        }
+
+        // 일괄 삭제 확인 대화상자
+        if (showBatchDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showBatchDeleteDialog = false },
+                title = { Text("회의록 일괄 삭제") },
+                text = { Text("${selectedIds.size}개의 회의록을 삭제할까요?\n전사 파일은 보존됩니다.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.deleteSelectedMinutes(selectedIds)
+                        selectedIds = emptySet()
+                        showBatchDeleteDialog = false
+                    }) {
+                        Text("삭제", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showBatchDeleteDialog = false }) { Text("취소") }
+                }
             )
         }
     }
@@ -166,65 +243,90 @@ fun MinutesScreen(
 @Composable
 private fun MinutesMeetingCard(
     meeting: Meeting,
+    isSelectionMode: Boolean,
+    isSelected: Boolean,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
     onDeleteRequest: (Long) -> Unit
 ) {
-    val isClickable = meeting.pipelineStatus == PipelineStatus.COMPLETED && meeting.minutesPath != null
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
-                onClick = { if (isClickable) onClick() },
-                onLongClick = { onDeleteRequest(meeting.id) }
+                onClick = onClick,
+                onLongClick = {
+                    if (isSelectionMode) {
+                        // 이미 선택 모드: 아무 동작 없음
+                    } else {
+                        onLongClick()
+                    }
+                }
             ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // 회의 제목
-            Text(
-                text = meeting.title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = if (isSelected) {
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
             )
-
-            // 출처 뱃지 (삼성 공유)
-            if (meeting.source == "SAMSUNG_SHARE") {
-                Spacer(modifier = Modifier.height(4.dp))
-                SuggestionChip(
-                    onClick = {},
-                    label = {
-                        Text(
-                            text = "삼성 공유",
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    },
-                    colors = SuggestionChipDefaults.suggestionChipColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        labelColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
+        } else {
+            CardDefaults.cardColors()
+        }
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 선택 모드에서 체크박스 표시
+            if (isSelectionMode) {
+                Checkbox(
+                    checked = isSelected,
+                    onCheckedChange = { onClick() }
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // 녹음 시각 + 파이프라인 상태 칩
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
+                // 회의 제목
                 Text(
-                    text = meeting.recordedAt.atZone(ZoneId.systemDefault())
-                        .format(DATE_TIME_FORMATTER),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = meeting.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
-                // 파이프라인 상태 칩
-                MinutesPipelineStatusChip(status = meeting.pipelineStatus)
+                // 출처 뱃지 (삼성 공유)
+                if (meeting.source == "SAMSUNG_SHARE") {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    SuggestionChip(
+                        onClick = {},
+                        label = {
+                            Text(
+                                text = "삼성 공유",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        },
+                        colors = SuggestionChipDefaults.suggestionChipColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            labelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // 녹음 시각 + 파이프라인 상태 칩
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = meeting.recordedAt.atZone(ZoneId.systemDefault())
+                            .format(DATE_TIME_FORMATTER),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    // 파이프라인 상태 칩
+                    MinutesPipelineStatusChip(status = meeting.pipelineStatus)
+                }
             }
         }
     }
@@ -292,7 +394,7 @@ private fun DeleteConfirmationDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("회의록 삭제") },
-        text = { Text("\"$meetingTitle\" 회의록을 삭제할까요?\n관련된 오디오, 전사, 회의록 파일이 모두 삭제됩니다.") },
+        text = { Text("\"$meetingTitle\" 회의록을 삭제할까요?\n전사 파일은 보존됩니다.") },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text("삭제", color = MaterialTheme.colorScheme.error)

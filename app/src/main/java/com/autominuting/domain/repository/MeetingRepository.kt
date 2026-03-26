@@ -34,4 +34,10 @@ interface MeetingRepository {
 
     /** 회의를 삭제한다. */
     suspend fun deleteMeeting(id: Long)
+
+    /** 회의록 파일만 삭제하고 전사 파일을 보존한다. */
+    suspend fun deleteMinutesOnly(id: Long)
+
+    /** 전사 파일(+ 연관 회의록 파일)을 삭제한다. */
+    suspend fun deleteTranscript(id: Long)
 }
