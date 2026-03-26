@@ -41,8 +41,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.ui.platform.LocalContext
 import com.autominuting.data.audio.BleConnectionState
 import com.autominuting.domain.model.PipelineStatus
+import com.autominuting.util.NotebookLmHelper
 
 /**
  * 대시보드 화면.
@@ -60,6 +63,7 @@ fun DashboardScreen(
     val isTestingGemini by viewModel.isTestingGemini.collectAsStateWithLifecycle()
     val bleState by viewModel.bleConnectionState.collectAsStateWithLifecycle()
     val bleLogEntries by viewModel.bleLogEntries.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     // BLE 런타임 권한 요청 런처 (BLUETOOTH_CONNECT, BLUETOOTH_SCAN 필수)
     val blePermissionLauncher = rememberLauncherForActivityResult(
@@ -217,7 +221,43 @@ fun DashboardScreen(
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // NotebookLM 바로가기
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "NotebookLM",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "AI 기반 회의록 분석을 활용할 수 있습니다",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { NotebookLmHelper.openNotebookLmWeb(context) }
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("NotebookLM 열기")
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // 테스트 도구 섹션
         Card(

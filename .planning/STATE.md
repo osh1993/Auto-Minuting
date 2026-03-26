@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: 안정화 + UX 개선
-status: Ready to plan
-stopped_at: Completed 15-02-PLAN.md
-last_updated: "2026-03-26T08:18:54.096Z"
+milestone: v2.0
+milestone_name: 실동작 파이프라인 + 기능 확장
+status: Milestone complete
+stopped_at: Phase 10 context gathered
+last_updated: "2026-03-25T22:14:50.431Z"
 progress:
-  total_phases: 5
-  completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  total_phases: 6
+  completed_phases: 4
+  total_plans: 13
+  completed_plans: 11
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Position
 
 Phase: 17
-Plan: Not started
+Plan: 01 (complete)
 
 ## Performance Metrics
 
@@ -55,8 +55,6 @@ Plan: Not started
 | Phase 08 P01 | 3min | 2 tasks | 10 files |
 | Phase 08 P02 | 3min | 2 tasks | 4 files |
 | Phase 09 P01 | 3min | 2 tasks | 3 files |
-| Phase 15 P01 | 5min | 2 tasks | 13 files |
-| Phase 15 P02 | 4min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -73,10 +71,7 @@ Recent decisions affecting current work:
 - [Phase 08]: 파일 삭제 실패 시에도 DB 삭제 진행 (고아 파일 > 고아 레코드 원칙)
 - [Phase 08]: 별도 Hilt Module 없이 @Inject constructor로 SecureApiKeyRepository 자동 주입
 - [Phase 09]: timestamp 기반 임시 파일명 후 meetingId로 rename하는 2단계 파일 저장 전략
-- [Phase 15]: isBuiltIn 템플릿은 DAO SQL WHERE 조건으로 삭제 차단
-- [Phase 15]: 기본 템플릿 3종은 dao.count() == 0일 때만 자동 생성
-- [Phase 15]: customPrompt default null로 기존 자동 파이프라인 호환성 유지
-- [Phase 15]: 수동 생성은 Worker 없이 ViewModel에서 직접 MinutesRepository 호출
+- [Phase 17]: FOREGROUND_SERVICE_SPECIAL_USE 퍼미션도 spike와 함께 제거 (spike 전용이었음)
 
 ### Pending Todos
 
@@ -90,5 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T08:03:56Z
-Stopped at: Completed 15-02-PLAN.md
+Last session: 2026-03-26T08:29:47Z
+Stopped at: Completed 17-01-PLAN.md
+Resume file: .planning/phases/17-ui-cleanup/17-01-SUMMARY.md
