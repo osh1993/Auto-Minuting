@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -52,7 +51,6 @@ import com.autominuting.data.auth.AuthMode
 import com.autominuting.data.auth.AuthState
 import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.MinutesFormat
-import com.autominuting.util.NotebookLmHelper
 
 /**
  * 설정 화면.
@@ -240,34 +238,6 @@ fun SettingsScreen(
                 ApiKeySection(viewModel = viewModel)
             }
 
-            // --- NotebookLM 섹션 ---
-            Spacer(modifier = Modifier.height(24.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "NotebookLM",
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = "NotebookLM에서 AI 기반 회의록 분석을 활용할 수 있습니다",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedButton(
-                onClick = { NotebookLmHelper.openNotebookLmWeb(context) }
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("NotebookLM 열기")
-            }
         }
     }
 }
