@@ -9,7 +9,7 @@ Requirements for v2.1 milestone. Each maps to roadmap phases.
 
 ### Plaud 연결 분석
 
-- [ ] **PLUD-02**: Plaud 앱의 녹음기 연결 프로토콜을 리버스 엔지니어링하여 연결 방식(BLE/Wi-Fi/기타)을 파악한다
+- [x] **PLUD-02**: Plaud 앱의 녹음기 연결 프로토콜을 리버스 엔지니어링하여 연결 방식(BLE/Wi-Fi/기타)을 파악한다 *(No-Go 판정: E2EE + 서버 인증으로 SDK 의존 유지)*
 
 ### 회의록 생성 (Minutes)
 
@@ -52,7 +52,7 @@ Deferred to future release.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PLUD-02 | Phase 14 | Pending |
+| PLUD-02 | Phase 14 | Complete (No-Go) |
 | MINS-01 | Phase 15 | Pending |
 | MINS-02 | Phase 15 | Pending |
 | FILE-02 | Phase 16 | Pending |
