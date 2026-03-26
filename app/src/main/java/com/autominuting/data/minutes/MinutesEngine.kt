@@ -17,11 +17,13 @@ interface MinutesEngine {
      *
      * @param transcriptText 전사된 회의 텍스트
      * @param format 회의록 출력 형식 (기본값: STRUCTURED)
+     * @param customPrompt 사용자 정의 프롬프트 (non-null이면 format 무시)
      * @return 성공 시 Markdown 형식의 회의록, 실패 시 예외를 포함한 Result
      */
     suspend fun generate(
         transcriptText: String,
-        format: MinutesFormat = MinutesFormat.STRUCTURED
+        format: MinutesFormat = MinutesFormat.STRUCTURED,
+        customPrompt: String? = null
     ): Result<String>
 
     /** 엔진 이름을 반환한다 (로깅용). */

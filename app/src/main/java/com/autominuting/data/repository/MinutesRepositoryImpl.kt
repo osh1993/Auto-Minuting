@@ -48,7 +48,8 @@ class MinutesRepositoryImpl @Inject constructor(
      */
     override suspend fun generateMinutes(
         transcriptText: String,
-        format: MinutesFormat
+        format: MinutesFormat,
+        customPrompt: String?
     ): Result<String> =
         withContext(Dispatchers.IO) {
             _isGenerating.value = true
@@ -58,7 +59,7 @@ class MinutesRepositoryImpl @Inject constructor(
                 // 1차: Gemini 엔진 시도
                 val result = try {
                     Log.d(TAG, "1차 경로: ${minutesEngine.engineName()} 시도")
-                    minutesEngine.generate(transcriptText, format)
+                    minutesEngine.generate(transcriptText, format, customPrompt)
                 } catch (e: Exception) {
                     Log.w(TAG, "Gemini 회의록 생성 예외: ${e.message}")
                     Result.failure(e)

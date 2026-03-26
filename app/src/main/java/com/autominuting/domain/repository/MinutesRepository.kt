@@ -18,7 +18,8 @@ interface MinutesRepository {
      */
     suspend fun generateMinutes(
         transcriptText: String,
-        format: MinutesFormat = MinutesFormat.STRUCTURED
+        format: MinutesFormat = MinutesFormat.STRUCTURED,
+        customPrompt: String? = null
     ): Result<String>
 
     /** 현재 회의록 생성이 진행 중인지 여부를 관찰한다. */

@@ -35,7 +35,8 @@ class GeminiOAuthEngine @Inject constructor(
      */
     override suspend fun generate(
         transcriptText: String,
-        format: MinutesFormat
+        format: MinutesFormat,
+        customPrompt: String?
     ): Result<String> {
         if (!isAvailable()) {
             return Result.failure(
@@ -46,11 +47,15 @@ class GeminiOAuthEngine @Inject constructor(
         return try {
             Log.d(TAG, "Gemini OAuth API 호출 시작: 전사 텍스트 ${transcriptText.length}자")
 
-            val prompt = when (format) {
-                MinutesFormat.STRUCTURED -> MinutesPrompts.STRUCTURED
-                MinutesFormat.SUMMARY -> MinutesPrompts.SUMMARY
-                MinutesFormat.ACTION_ITEMS -> MinutesPrompts.ACTION_ITEMS
-            } + transcriptText
+            val prompt = if (customPrompt != null) {
+                customPrompt + "\n\n---\n\n## 회의 전사 텍스트\n\n" + transcriptText
+            } else {
+                when (format) {
+                    MinutesFormat.STRUCTURED -> MinutesPrompts.STRUCTURED
+                    MinutesFormat.SUMMARY -> MinutesPrompts.SUMMARY
+                    MinutesFormat.ACTION_ITEMS -> MinutesPrompts.ACTION_ITEMS
+                } + transcriptText
+            }
 
             val request = GenerateContentRequest(
                 contents = listOf(

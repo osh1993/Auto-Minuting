@@ -108,7 +108,8 @@ class GeminiEngine @Inject constructor(
      */
     override suspend fun generate(
         transcriptText: String,
-        format: MinutesFormat
+        format: MinutesFormat,
+        customPrompt: String?
     ): Result<String> {
         // 사용자 설정 API 키 우선, 없으면 BuildConfig 폴백
         val apiKey = secureApiKeyRepository.getGeminiApiKey()
@@ -128,11 +129,15 @@ class GeminiEngine @Inject constructor(
                 apiKey = apiKey
             )
 
-            val prompt = when (format) {
-                MinutesFormat.STRUCTURED -> STRUCTURED_PROMPT
-                MinutesFormat.SUMMARY -> SUMMARY_PROMPT
-                MinutesFormat.ACTION_ITEMS -> ACTION_ITEMS_PROMPT
-            } + transcriptText
+            val prompt = if (customPrompt != null) {
+                customPrompt + "\n\n---\n\n## 회의 전사 텍스트\n\n" + transcriptText
+            } else {
+                when (format) {
+                    MinutesFormat.STRUCTURED -> STRUCTURED_PROMPT
+                    MinutesFormat.SUMMARY -> SUMMARY_PROMPT
+                    MinutesFormat.ACTION_ITEMS -> ACTION_ITEMS_PROMPT
+                } + transcriptText
+            }
             val response = model.generateContent(prompt)
             val minutesText = response.text
 

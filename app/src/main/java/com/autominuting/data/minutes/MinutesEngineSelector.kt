@@ -31,11 +31,12 @@ class MinutesEngineSelector @Inject constructor(
      */
     override suspend fun generate(
         transcriptText: String,
-        format: MinutesFormat
+        format: MinutesFormat,
+        customPrompt: String?
     ): Result<String> {
         val engine = selectEngine()
         Log.d(TAG, "선택된 엔진: ${engine.engineName()}")
-        return engine.generate(transcriptText, format)
+        return engine.generate(transcriptText, format, customPrompt)
     }
 
     override fun engineName(): String = "MinutesEngineSelector"
