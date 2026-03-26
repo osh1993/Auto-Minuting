@@ -227,6 +227,11 @@ fun SettingsScreen(
 
             // 인증 모드별 UI
             if (authMode == AuthMode.OAUTH) {
+                // --- OAuth Client ID 입력 섹션 ---
+                OAuthClientIdSection(viewModel = viewModel)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 // --- Google 계정 (OAuth) 섹션 ---
                 GoogleAccountSection(
                     authState = authState,
@@ -343,6 +348,102 @@ private fun GoogleAccountSection(
                 }
             }
         }
+    }
+}
+
+/**
+ * Google OAuth Web Client ID 입력 섹션.
+ * Google Cloud Console에서 발급받은 Web Client ID를 암호화 저장한다.
+ *
+ * @param viewModel 설정 ViewModel
+ */
+@Composable
+private fun OAuthClientIdSection(viewModel: SettingsViewModel) {
+    val hasOAuthClientId by viewModel.hasOAuthClientId.collectAsStateWithLifecycle()
+    val oauthClientIdSaved by viewModel.oauthClientIdSaved.collectAsStateWithLifecycle()
+    var clientIdInput by remember { mutableStateOf("") }
+    var isVisible by remember { mutableStateOf(false) }
+
+    Text(
+        text = "Google OAuth Web Client ID",
+        style = MaterialTheme.typography.titleSmall
+    )
+    Text(
+        text = "Google Cloud Console에서 발급받은 웹 클라이언트 ID를 입력하세요",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    OutlinedTextField(
+        value = clientIdInput,
+        onValueChange = {
+            clientIdInput = it
+            viewModel.resetOAuthClientIdSaved()
+        },
+        label = { Text("Web Client ID") },
+        placeholder = { Text("xxxx.apps.googleusercontent.com") },
+        visualTransformation = if (isVisible)
+            VisualTransformation.None
+        else
+            PasswordVisualTransformation(),
+        trailingIcon = {
+            IconButton(onClick = { isVisible = !isVisible }) {
+                Icon(
+                    imageVector = if (isVisible)
+                        Icons.Default.VisibilityOff
+                    else
+                        Icons.Default.Visibility,
+                    contentDescription = if (isVisible) "숨기기" else "보기"
+                )
+            }
+        },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Button(
+            onClick = {
+                viewModel.saveOAuthClientId(clientIdInput.trim())
+            },
+            enabled = clientIdInput.isNotBlank()
+        ) {
+            Text("저장")
+        }
+
+        if (hasOAuthClientId) {
+            OutlinedButton(onClick = {
+                viewModel.clearOAuthClientId()
+                clientIdInput = ""
+            }) {
+                Text("삭제")
+            }
+        }
+    }
+
+    if (oauthClientIdSaved) {
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "Client ID가 저장되었습니다",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+
+    if (hasOAuthClientId && !oauthClientIdSaved) {
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "사용자 Client ID 사용 중",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.tertiary
+        )
     }
 }
 

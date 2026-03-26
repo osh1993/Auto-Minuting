@@ -9,6 +9,7 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import com.autominuting.BuildConfig
 import com.autominuting.data.preferences.UserPreferencesRepository
+import com.autominuting.data.security.SecureApiKeyRepository
 import com.google.android.gms.auth.api.identity.AuthorizationClient
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.Identity
@@ -35,7 +36,8 @@ import javax.inject.Singleton
 @Singleton
 class GoogleAuthRepository @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val secureApiKeyRepository: SecureApiKeyRepository
 ) {
     companion object {
         private const val TAG = "GoogleAuthRepository"
@@ -82,9 +84,17 @@ class GoogleAuthRepository @Inject constructor(
         _authState.value = AuthState.Loading
 
         try {
-            val webClientId = BuildConfig.GOOGLE_OAUTH_WEB_CLIENT_ID
+            // SecureApiKeyRepository 우선 조회, 없으면 BuildConfig 폴백
+            val storedClientId = secureApiKeyRepository.getGoogleOAuthClientId()
+            val webClientId = if (!storedClientId.isNullOrBlank()) {
+                storedClientId
+            } else {
+                BuildConfig.GOOGLE_OAUTH_WEB_CLIENT_ID
+            }
             if (webClientId.isBlank()) {
-                _authState.value = AuthState.Error("Google OAuth Web Client ID가 설정되지 않았습니다")
+                _authState.value = AuthState.Error(
+                    "Google OAuth Web Client ID가 설정되지 않았습니다. 설정 화면에서 입력해주세요."
+                )
                 return
             }
 

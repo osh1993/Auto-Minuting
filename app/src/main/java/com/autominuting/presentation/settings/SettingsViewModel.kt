@@ -81,9 +81,18 @@ class SettingsViewModel @Inject constructor(
     private val _hasApiKey = MutableStateFlow(false)
     val hasApiKey: StateFlow<Boolean> = _hasApiKey.asStateFlow()
 
+    /** 저장된 OAuth Client ID 존재 여부 */
+    private val _hasOAuthClientId = MutableStateFlow(false)
+    val hasOAuthClientId: StateFlow<Boolean> = _hasOAuthClientId.asStateFlow()
+
+    /** OAuth Client ID 저장 완료 메시지 */
+    private val _oauthClientIdSaved = MutableStateFlow(false)
+    val oauthClientIdSaved: StateFlow<Boolean> = _oauthClientIdSaved.asStateFlow()
+
     init {
         // 초기 로드: 저장된 API 키 존재 여부 확인
         _hasApiKey.value = secureApiKeyRepository.getGeminiApiKey() != null
+        _hasOAuthClientId.value = !secureApiKeyRepository.getGoogleOAuthClientId().isNullOrBlank()
 
         // 저장된 Google 인증 상태 복원
         viewModelScope.launch {
@@ -193,5 +202,24 @@ class SettingsViewModel @Inject constructor(
     fun clearApiKey() {
         secureApiKeyRepository.clearGeminiApiKey()
         _hasApiKey.value = false
+    }
+
+    /** Google OAuth Web Client ID를 저장한다. */
+    fun saveOAuthClientId(clientId: String) {
+        secureApiKeyRepository.saveGoogleOAuthClientId(clientId)
+        _hasOAuthClientId.value = true
+        _oauthClientIdSaved.value = true
+    }
+
+    /** 저장된 OAuth Client ID를 삭제한다. */
+    fun clearOAuthClientId() {
+        secureApiKeyRepository.clearGoogleOAuthClientId()
+        _hasOAuthClientId.value = false
+        _oauthClientIdSaved.value = false
+    }
+
+    /** OAuth Client ID 저장 상태를 초기화한다. */
+    fun resetOAuthClientIdSaved() {
+        _oauthClientIdSaved.value = false
     }
 }
