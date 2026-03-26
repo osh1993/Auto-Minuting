@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.autominuting.data.local.AppDatabase
 import com.autominuting.data.local.dao.MeetingDao
+import com.autominuting.data.local.dao.PromptTemplateDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,7 +31,7 @@ object DatabaseModule {
         context,
         AppDatabase::class.java,
         "auto_minuting.db"
-    ).addMigrations(AppDatabase.MIGRATION_1_2)
+    ).addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
     .build()
 
     /**
@@ -38,4 +39,10 @@ object DatabaseModule {
      */
     @Provides
     fun provideMeetingDao(db: AppDatabase): MeetingDao = db.meetingDao()
+
+    /**
+     * PromptTemplateDao를 제공한다.
+     */
+    @Provides
+    fun providePromptTemplateDao(db: AppDatabase): PromptTemplateDao = db.promptTemplateDao()
 }

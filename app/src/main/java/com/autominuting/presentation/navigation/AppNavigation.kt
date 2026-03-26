@@ -21,6 +21,7 @@ import com.autominuting.presentation.dashboard.DashboardScreen
 import com.autominuting.presentation.minutes.MinutesDetailScreen
 import com.autominuting.presentation.minutes.MinutesScreen
 import com.autominuting.presentation.settings.SettingsScreen
+import com.autominuting.presentation.templates.PromptTemplateScreen
 import com.autominuting.presentation.transcripts.TranscriptEditScreen
 import com.autominuting.presentation.transcripts.TranscriptsScreen
 
@@ -101,7 +102,18 @@ fun AppNavigation() {
                     onBack = { navController.popBackStack() }
                 )
             }
-            composable(Screen.Settings.route) { SettingsScreen() }
+            composable(Screen.Settings.route) {
+                SettingsScreen(
+                    onNavigateToTemplates = {
+                        navController.navigate(Screen.PromptTemplates.route)
+                    }
+                )
+            }
+            composable(Screen.PromptTemplates.route) {
+                PromptTemplateScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

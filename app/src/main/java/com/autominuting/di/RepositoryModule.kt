@@ -5,10 +5,12 @@ import com.autominuting.data.minutes.MinutesEngineSelector
 import com.autominuting.data.repository.AudioRepositoryImpl
 import com.autominuting.data.repository.MeetingRepositoryImpl
 import com.autominuting.data.repository.MinutesRepositoryImpl
+import com.autominuting.data.repository.PromptTemplateRepositoryImpl
 import com.autominuting.data.repository.TranscriptionRepositoryImpl
 import com.autominuting.domain.repository.AudioRepository
 import com.autominuting.domain.repository.MeetingRepository
 import com.autominuting.domain.repository.MinutesRepository
+import com.autominuting.domain.repository.PromptTemplateRepository
 import com.autominuting.domain.repository.TranscriptionRepository
 import dagger.Binds
 import dagger.Module
@@ -68,4 +70,12 @@ abstract class RepositoryModule {
     abstract fun bindMinutesEngine(
         impl: MinutesEngineSelector
     ): MinutesEngine
+
+    /**
+     * PromptTemplateRepository 인터페이스를 PromptTemplateRepositoryImpl 구현체에 바인딩한다.
+     */
+    @Binds
+    abstract fun bindPromptTemplateRepository(
+        impl: PromptTemplateRepositoryImpl
+    ): PromptTemplateRepository
 }
