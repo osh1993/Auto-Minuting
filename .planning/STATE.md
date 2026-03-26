@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: 실동작 파이프라인 + 기능 확장
-status: Milestone complete
-stopped_at: Phase 10 context gathered
-last_updated: "2026-03-25T22:14:50.431Z"
+milestone: v2.1
+milestone_name: 안정화 + UX 개선
+status: Ready to plan
+stopped_at: Completed 15-02-PLAN.md
+last_updated: "2026-03-26T08:06:26.376Z"
 progress:
-  total_phases: 6
-  completed_phases: 4
-  total_plans: 13
-  completed_plans: 11
+  total_phases: 5
+  completed_phases: 2
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Position
 
-Phase: 15
-Plan: 02 complete
+Phase: 16
+Plan: Not started
 
 ## Performance Metrics
 

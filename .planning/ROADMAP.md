@@ -42,7 +42,7 @@ Full details: `.planning/milestones/v2.0-ROADMAP.md`
 **Milestone Goal:** 실기기 테스트 피드백 반영, Plaud 연결 프로토콜 분석, 회의록/전사 관리 UX 개선
 
 - [x] **Phase 14: Plaud 연결 프로토콜 분석** (2/2 plans) - No-Go 판정: E2EE + 서버 인증으로 SDK 의존 유지 — completed 2026-03-26
-- [ ] **Phase 15: 수동 회의록 생성 + 프롬프트 템플릿** (2 plans) - 전사 파일 기반 수동 회의록 생성과 프롬프트 템플릿 관리
+- [x] **Phase 15: 수동 회의록 생성 + 프롬프트 템플릿** (2 plans) - 전사 파일 기반 수동 회의록 생성과 프롬프트 템플릿 관리 (completed 2026-03-26)
 - [ ] **Phase 16: 파일 삭제 개선** - 회의록 다중 삭제와 전사 파일 별도 삭제 기능
 - [ ] **Phase 17: UI/UX 정리** - 앱 아이콘 교체, UI 레이아웃 개선, spike 코드 제거
 - [ ] **Phase 18: OAuth 인증 수정** - Google OAuth Web Client ID 설정 오류 해결
@@ -117,7 +117,7 @@ Phases execute in numeric order: 14 → 15 → 16 → 17 → 18
 | 1-7 | v1.0 | 18/18 | Complete | 2026-03-24 |
 | 8-13 | v2.0 | 11/13 | Complete | 2026-03-26 |
 | 14. Plaud 연결 프로토콜 분석 | v2.1 | 2/2 | Complete    | 2026-03-26 |
-| 15. 수동 회의록 생성 + 프롬프트 템플릿 | v2.1 | 2/2 | Complete | 2026-03-26 |
+| 15. 수동 회의록 생성 + 프롬프트 템플릿 | v2.1 | 2/2 | Complete    | 2026-03-26 |
 | 16. 파일 삭제 개선 | v2.1 | 0/? | Not started | - |
 | 17. UI/UX 정리 | v2.1 | 0/? | Not started | - |
 | 18. OAuth 인증 수정 | v2.1 | 0/? | Not started | - |
