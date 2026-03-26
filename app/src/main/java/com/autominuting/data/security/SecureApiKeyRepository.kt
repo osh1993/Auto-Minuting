@@ -21,6 +21,7 @@ class SecureApiKeyRepository @Inject constructor(
         private const val TAG = "SecureApiKeyRepository"
         private const val PREFS_FILE = "secure_api_keys"
         private const val KEY_GEMINI_API = "gemini_api_key"
+        private const val KEY_GOOGLE_OAUTH_CLIENT_ID = "google_oauth_client_id"
     }
 
     @Suppress("DEPRECATION")
@@ -53,6 +54,21 @@ class SecureApiKeyRepository @Inject constructor(
     /** 저장된 Gemini API 키를 삭제한다. */
     fun clearGeminiApiKey() {
         encryptedPrefs?.edit()?.remove(KEY_GEMINI_API)?.apply()
+    }
+
+    /** 저장된 Google OAuth Web Client ID를 반환한다. 없거나 초기화 실패 시 null. */
+    fun getGoogleOAuthClientId(): String? =
+        encryptedPrefs?.getString(KEY_GOOGLE_OAUTH_CLIENT_ID, null)
+
+    /** Google OAuth Web Client ID를 암호화하여 저장한다. */
+    fun saveGoogleOAuthClientId(clientId: String) {
+        encryptedPrefs?.edit()?.putString(KEY_GOOGLE_OAUTH_CLIENT_ID, clientId)?.apply()
+            ?: Log.w(TAG, "OAuth Client ID 저장 실패: EncryptedSharedPreferences 사용 불가")
+    }
+
+    /** 저장된 Google OAuth Web Client ID를 삭제한다. */
+    fun clearGoogleOAuthClientId() {
+        encryptedPrefs?.edit()?.remove(KEY_GOOGLE_OAUTH_CLIENT_ID)?.apply()
     }
 
     /** EncryptedSharedPreferences가 정상 초기화되었는지 반환한다. */
