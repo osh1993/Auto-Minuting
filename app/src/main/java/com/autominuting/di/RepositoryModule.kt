@@ -37,7 +37,6 @@ abstract class RepositoryModule {
 
     /**
      * AudioRepository 인터페이스를 AudioRepositoryImpl 구현체에 바인딩한다.
-     * SDK(1차) + Cloud API(2차) 이중 경로를 지원한다.
      */
     @Binds
     abstract fun bindAudioRepository(

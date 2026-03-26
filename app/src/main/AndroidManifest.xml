@@ -2,11 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- BLE 퍼미션 (API 31+) -->
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
-        android:usesPermissionFlags="neverForLocation" />
-
     <!-- MediaStore 오디오 파일 접근 (API 33+) -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <!-- MediaStore 파일 접근 폴백 (API 32 이하) -->
@@ -15,7 +10,6 @@
 
     <!-- Foreground Service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
 
     <!-- 배터리 최적화 무시 요청 -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -94,12 +88,6 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
-
-        <!-- 오디오 수집 Foreground Service (connectedDevice 타입: BLE 연결 유지) -->
-        <service
-            android:name=".service.AudioCollectionService"
-            android:foregroundServiceType="connectedDevice"
-            android:exported="false" />
 
         <!-- 파이프라인 알림 액션 처리 (회의록 생성/공유) -->
         <receiver

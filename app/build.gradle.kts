@@ -18,12 +18,6 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        // Plaud SDK 인증 키 (local.properties에서 읽음)
-        val plaudAppKey: String = project.findProperty("PLAUD_APP_KEY")?.toString() ?: ""
-        val plaudAppSecret: String = project.findProperty("PLAUD_APP_SECRET")?.toString() ?: ""
-        buildConfigField("String", "PLAUD_APP_KEY", "\"$plaudAppKey\"")
-        buildConfigField("String", "PLAUD_APP_SECRET", "\"$plaudAppSecret\"")
-
         // Gemini API 인증 키 (local.properties에서 읽음)
         val localProps = Properties()
         val localPropsFile = rootProject.file("local.properties")
@@ -53,26 +47,8 @@ android {
     }
 }
 
-// Guava 버전 충돌 방지 (Plaud SDK가 28.2 요구)
-configurations.all {
-    resolutionStrategy.force("com.google.guava:guava:28.2-android")
-}
-
-// KSP/Hilt Guava 버전 충돌 해결
-configurations.all {
-    resolutionStrategy.force("com.google.guava:guava:33.4.0-jre")
-}
-
 dependencies {
-    // Plaud SDK (AAR) -- D-01: 1차 오디오 수집 경로
-    // AAR 미배치 시 스텁(NiceBuildSdkWrapper)으로 컴파일 통과, Cloud API 폴백 자동 전환
-    val plaudAar = file("libs/plaud-sdk.aar")
-    if (plaudAar.exists()) {
-        implementation(files(plaudAar))
-    }
-    implementation(libs.guava)
-
-    // Retrofit + OkHttp -- D-02: Cloud API 폴백 경로
+    // Retrofit + OkHttp
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp)

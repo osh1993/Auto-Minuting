@@ -1,14 +1,11 @@
 package com.autominuting.domain.repository
 
-import com.autominuting.data.audio.BleConnectionState
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 
 /**
  * 오디오 수집을 위한 Repository 인터페이스.
  *
- * Plaud 녹음기에서 전송되는 오디오 파일을 수신하고
- * 로컬 저장소에 저장하는 역할을 담당한다.
+ * 오디오 파일을 수신하고 로컬 저장소에 저장하는 역할을 담당한다.
  */
 interface AudioRepository {
 
@@ -23,7 +20,4 @@ interface AudioRepository {
 
     /** 현재 오디오 수집이 진행 중인지 여부를 관찰한다. */
     fun isCollecting(): Flow<Boolean>
-
-    /** BLE 연결 상태를 StateFlow로 반환한다. */
-    fun getBleConnectionState(): StateFlow<BleConnectionState>
 }

@@ -21,7 +21,7 @@ import dagger.assisted.AssistedInject
 /**
  * 전사 파이프라인 트리거 Worker.
  *
- * AudioCollectionService에서 오디오 파일 저장이 완료되면
+ * 오디오 파일 저장이 완료되면
  * WorkManager를 통해 자동으로 enqueue되어 전사 파이프라인을 시작한다.
  *
  * TranscriptionRepository를 주입받아 Whisper(1차) + ML Kit(2차) 이중 경로로
@@ -51,7 +51,7 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
                 return Result.failure()
             }
 
-        // inputData에서 설정값 읽기 (AudioCollectionService에서 전달)
+        // inputData에서 설정값 읽기
         val automationMode = inputData.getString(KEY_AUTOMATION_MODE)
             ?: AutomationMode.FULL_AUTO.name
         val minutesFormat = inputData.getString(KEY_MINUTES_FORMAT)
