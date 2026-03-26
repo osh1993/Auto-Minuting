@@ -65,4 +65,35 @@ class MeetingRepositoryImpl @Inject constructor(
         // 3. DB 레코드 삭제
         meetingDao.delete(id)
     }
+
+    override suspend fun deleteMinutesOnly(id: Long) {
+        // 1. Entity 조회
+        val entity = meetingDao.getMeetingByIdOnce(id) ?: return
+
+        // 2. 회의록 파일만 삭제 (실패해도 진행 — 고아 파일 > 고아 레코드 원칙)
+        entity.minutesPath?.let { path ->
+            try { File(path).delete() } catch (_: Exception) { }
+        }
+
+        // 3. 회의록 경로 초기화 + 상태를 TRANSCRIBED로 되돌림 (전사 파일 보존)
+        meetingDao.clearMinutesPath(id, Instant.now().toEpochMilli())
+    }
+
+    override suspend fun deleteTranscript(id: Long) {
+        // 1. Entity 조회
+        val entity = meetingDao.getMeetingByIdOnce(id) ?: return
+
+        // 2. 전사 파일 삭제 (실패해도 진행)
+        entity.transcriptPath?.let { path ->
+            try { File(path).delete() } catch (_: Exception) { }
+        }
+
+        // 3. 연관 회의록 파일도 삭제 (전사가 없으면 회의록도 무효)
+        entity.minutesPath?.let { path ->
+            try { File(path).delete() } catch (_: Exception) { }
+        }
+
+        // 4. 전사/회의록 경로 초기화 + 상태를 AUDIO_SAVED로 되돌림
+        meetingDao.clearTranscriptPath(id, Instant.now().toEpochMilli())
+    }
 }

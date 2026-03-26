@@ -70,6 +70,14 @@ interface MeetingDao {
     @Query("SELECT * FROM meetings WHERE title LIKE '%' || :query || '%' ORDER BY recordedAt DESC")
     fun searchMeetings(query: String): Flow<List<MeetingEntity>>
 
+    /** 회의록 경로만 초기화하고 상태를 TRANSCRIBED로 되돌린다 (전사 파일 보존). */
+    @Query("UPDATE meetings SET minutesPath = NULL, pipelineStatus = 'TRANSCRIBED', updatedAt = :updatedAt WHERE id = :id")
+    suspend fun clearMinutesPath(id: Long, updatedAt: Long)
+
+    /** 전사 경로와 회의록 경로를 모두 초기화하고 상태를 AUDIO_SAVED로 되돌린다. */
+    @Query("UPDATE meetings SET transcriptPath = NULL, minutesPath = NULL, pipelineStatus = 'AUDIO_SAVED', updatedAt = :updatedAt WHERE id = :id")
+    suspend fun clearTranscriptPath(id: Long, updatedAt: Long)
+
     /** 회의를 삭제한다. */
     @Query("DELETE FROM meetings WHERE id = :id")
     suspend fun delete(id: Long)
