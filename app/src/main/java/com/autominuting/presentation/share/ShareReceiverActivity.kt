@@ -163,26 +163,34 @@ class ShareReceiverActivity : ComponentActivity() {
 
         val transcriptPath = if (finalFile.exists()) finalFile.absolutePath else tempFile.absolutePath
 
-        // 4. 회의록 형식 조회
-        val minutesFormat = userPreferencesRepository.getMinutesFormatOnce()
+        // 4. 회의록 자동 생성 시도 (실패해도 전사 데이터는 이미 DB에 보존됨)
+        try {
+            val minutesFormat = userPreferencesRepository.getMinutesFormatOnce()
 
-        // 5. MinutesGenerationWorker enqueue
-        val workRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
-            .setInputData(
-                workDataOf(
-                    MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
-                    MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath,
-                    MinutesGenerationWorker.KEY_MINUTES_FORMAT to minutesFormat.name
+            val workRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
+                .setInputData(
+                    workDataOf(
+                        MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
+                        MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath,
+                        MinutesGenerationWorker.KEY_MINUTES_FORMAT to minutesFormat.name
+                    )
                 )
-            )
-            .build()
-        WorkManager.getInstance(this@ShareReceiverActivity).enqueue(workRequest)
+                .build()
+            WorkManager.getInstance(this@ShareReceiverActivity).enqueue(workRequest)
 
-        Log.d(TAG, "회의록 생성 파이프라인 진입: meetingId=$meetingId, source=SAMSUNG_SHARE")
+            Log.d(TAG, "회의록 생성 파이프라인 진입: meetingId=$meetingId, source=SAMSUNG_SHARE")
 
-        // 6. 알림 및 Toast
-        PipelineNotificationHelper.updateProgress(this@ShareReceiverActivity, "회의록 생성 중...")
-        Toast.makeText(this@ShareReceiverActivity, "회의록 생성 중...", Toast.LENGTH_SHORT).show()
+            PipelineNotificationHelper.updateProgress(this@ShareReceiverActivity, "회의록 생성 중...")
+            Toast.makeText(this@ShareReceiverActivity, "회의록 생성 중...", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            // Worker enqueue 실패 시에도 전사 데이터(TRANSCRIBED 상태)는 DB에 보존됨
+            Log.e(TAG, "회의록 생성 Worker enqueue 실패 (전사 데이터는 보존됨)", e)
+            Toast.makeText(
+                this@ShareReceiverActivity,
+                "전사 데이터가 저장되었습니다. 수동으로 회의록을 생성할 수 있습니다.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     /**
