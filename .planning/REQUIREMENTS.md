@@ -13,7 +13,7 @@ Requirements for v2.1 milestone. Each maps to roadmap phases.
 
 ### 회의록 생성 (Minutes)
 
-- [ ] **MINS-01**: 사용자가 전사 파일을 선택하고 생성 버튼으로 회의록을 수동 생성할 수 있다 (프롬프트 템플릿 선택 또는 수기 입력)
+- [x] **MINS-01**: 사용자가 전사 파일을 선택하고 생성 버튼으로 회의록을 수동 생성할 수 있다 (프롬프트 템플릿 선택 또는 수기 입력)
 - [ ] **MINS-02**: 사용자가 프롬프트 템플릿을 추가/삭제/편집하여 관리할 수 있다
 
 ### 파일 관리 (File)
@@ -53,7 +53,7 @@ Deferred to future release.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | PLUD-02 | Phase 14 | Complete (No-Go) |
-| MINS-01 | Phase 15 | Pending |
+| MINS-01 | Phase 15 | Complete |
 | MINS-02 | Phase 15 | Pending |
 | FILE-02 | Phase 16 | Pending |
 | FILE-03 | Phase 16 | Pending |
