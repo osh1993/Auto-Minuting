@@ -73,7 +73,7 @@ Plans:
   4. 수동 생성된 회의록이 기존 자동 생성 회의록과 동일하게 목록에 표시되고 열람된다
 **Plans**: 2 plans
 Plans:
-- [ ] 15-01-PLAN.md — PromptTemplate 데이터 모델 + 템플릿 관리 UI
+- [x] 15-01-PLAN.md — PromptTemplate 데이터 모델 + 템플릿 관리 UI
 - [ ] 15-02-PLAN.md — 수동 회의록 생성 플로우 (커스텀 프롬프트 + 생성 다이얼로그)
 
 ### Phase 16: 파일 삭제 개선
@@ -117,7 +117,7 @@ Phases execute in numeric order: 14 → 15 → 16 → 17 → 18
 | 1-7 | v1.0 | 18/18 | Complete | 2026-03-24 |
 | 8-13 | v2.0 | 11/13 | Complete | 2026-03-26 |
 | 14. Plaud 연결 프로토콜 분석 | v2.1 | 2/2 | Complete    | 2026-03-26 |
-| 15. 수동 회의록 생성 + 프롬프트 템플릿 | v2.1 | 0/2 | Not started | - |
+| 15. 수동 회의록 생성 + 프롬프트 템플릿 | v2.1 | 1/2 | In progress | - |
 | 16. 파일 삭제 개선 | v2.1 | 0/? | Not started | - |
 | 17. UI/UX 정리 | v2.1 | 0/? | Not started | - |
 | 18. OAuth 인증 수정 | v2.1 | 0/? | Not started | - |
