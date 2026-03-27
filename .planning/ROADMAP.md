@@ -34,7 +34,15 @@
 Plans:
 - [ ] 19-01-PLAN.md — 전사 목록 수동 회의록 생성 UI + 음성 공유 intent-filter 정비
 
-### Phase 20: 전사 목록 액션 메뉴 (삭제, 전사, 공유)
+### Phase 20: 전사 목록 액션 메뉴 (삭제, 전사, 공유) (0/1 plans)
+
+**Goal:** 전사 목록 카드에 DropdownMenu 기반 액션 메뉴(삭제, 재전사, 공유)를 추가하여 사용성 개선
+
+**Plans:** 1 plan
+
+Plans:
+- [ ] 20-01-PLAN.md — 전사 카드 MoreVert 드롭다운 메뉴 + ViewModel 재전사/공유 로직
+
 ### Phase 21: 회의록 목록 액션 메뉴 (삭제, 공유)
 ### Phase 22: 설정 메뉴 및 테스트 도구 이동
 
