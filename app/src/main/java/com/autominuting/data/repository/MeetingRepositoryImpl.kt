@@ -83,17 +83,12 @@ class MeetingRepositoryImpl @Inject constructor(
         // 1. Entity 조회
         val entity = meetingDao.getMeetingByIdOnce(id) ?: return
 
-        // 2. 전사 파일 삭제 (실패해도 진행)
+        // 2. 전사 파일만 삭제 (회의록 파일은 보존)
         entity.transcriptPath?.let { path ->
             try { File(path).delete() } catch (_: Exception) { }
         }
 
-        // 3. 연관 회의록 파일도 삭제 (전사가 없으면 회의록도 무효)
-        entity.minutesPath?.let { path ->
-            try { File(path).delete() } catch (_: Exception) { }
-        }
-
-        // 4. 전사/회의록 경로 초기화 + 상태를 AUDIO_RECEIVED로 되돌림
+        // 3. 전사 경로만 초기화 + 상태를 AUDIO_RECEIVED로 되돌림 (회의록 경로 유지)
         meetingDao.clearTranscriptPath(id, Instant.now().toEpochMilli())
     }
 }

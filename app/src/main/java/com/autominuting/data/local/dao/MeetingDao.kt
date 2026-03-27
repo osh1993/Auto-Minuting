@@ -74,8 +74,8 @@ interface MeetingDao {
     @Query("UPDATE meetings SET minutesPath = NULL, pipelineStatus = 'TRANSCRIBED', updatedAt = :updatedAt WHERE id = :id")
     suspend fun clearMinutesPath(id: Long, updatedAt: Long)
 
-    /** 전사 경로와 회의록 경로를 모두 초기화하고 상태를 AUDIO_RECEIVED로 되돌린다. */
-    @Query("UPDATE meetings SET transcriptPath = NULL, minutesPath = NULL, pipelineStatus = 'AUDIO_RECEIVED', updatedAt = :updatedAt WHERE id = :id")
+    /** 전사 경로만 초기화하고 상태를 AUDIO_RECEIVED로 되돌린다 (회의록 보존). */
+    @Query("UPDATE meetings SET transcriptPath = NULL, pipelineStatus = 'AUDIO_RECEIVED', updatedAt = :updatedAt WHERE id = :id")
     suspend fun clearTranscriptPath(id: Long, updatedAt: Long)
 
     /** 회의를 삭제한다. */

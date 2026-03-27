@@ -62,7 +62,16 @@ class ShareReceiverActivity : ComponentActivity() {
         // 음성 파일(audio) 공유 확인 — EXTRA_TEXT가 없고 EXTRA_STREAM이 audio MIME인 경우
         @Suppress("DEPRECATION")
         val streamUri = intent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM)
-        val mimeType = streamUri?.let { contentResolver.getType(it) }
+        // getType()은 SecurityException/IllegalArgumentException을 throw할 수 있음
+        // (외부 앱의 content:// URI에서 provider를 찾을 수 없는 경우 등)
+        val mimeType = streamUri?.let { uri ->
+            try {
+                contentResolver.getType(uri)
+            } catch (e: Exception) {
+                Log.w(TAG, "contentResolver.getType() 실패, intent.type 사용: ${e.message}")
+                null
+            }
+        } ?: intent.type // ContentResolver 실패 시 intent.type을 폴백으로 사용
         val isAudioShare = intent.getStringExtra(Intent.EXTRA_TEXT).isNullOrBlank()
             && streamUri != null
             && mimeType?.startsWith("audio/") == true

@@ -250,18 +250,7 @@ private fun MinutesMeetingCard(
     onDeleteRequest: (Long) -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = {
-                    if (isSelectionMode) {
-                        // 이미 선택 모드: 아무 동작 없음
-                    } else {
-                        onLongClick()
-                    }
-                }
-            ),
+        modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = if (isSelected) {
             CardDefaults.cardColors(
@@ -272,7 +261,9 @@ private fun MinutesMeetingCard(
         }
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 선택 모드에서 체크박스 표시
@@ -283,7 +274,17 @@ private fun MinutesMeetingCard(
                 )
             }
 
-            Column(modifier = Modifier.weight(1f)) {
+            // 콘텐츠 영역: 클릭/롱클릭 처리
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .combinedClickable(
+                        onClick = onClick,
+                        onLongClick = {
+                            if (!isSelectionMode) onLongClick()
+                        }
+                    )
+            ) {
                 // 회의 제목
                 Text(
                     text = meeting.title,
@@ -326,6 +327,18 @@ private fun MinutesMeetingCard(
 
                     // 파이프라인 상태 칩
                     MinutesPipelineStatusChip(status = meeting.pipelineStatus)
+                }
+            }
+
+            // 단건 삭제 버튼 (선택 모드가 아닐 때만 표시)
+            // combinedClickable 밖에 위치하여 클릭 이벤트가 정상 전달됨
+            if (!isSelectionMode) {
+                IconButton(onClick = { onDeleteRequest(meeting.id) }) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "삭제",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }

@@ -54,7 +54,7 @@ class MinutesViewModel @Inject constructor(
             }
         }
         .map { list ->
-            list.sortedByDescending { meeting -> meeting.minutesPath != null }
+            list.filter { meeting -> meeting.minutesPath != null }
         }
         .stateIn(
             scope = viewModelScope,
@@ -62,7 +62,7 @@ class MinutesViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    /** 회의록만 삭제한다 (전사 파일 보존). */
+    /** 회의록만 삭제한다 (전사 파일 보존). 목록에서 자동으로 사라진다. */
     fun deleteMeeting(id: Long) {
         viewModelScope.launch {
             meetingRepository.deleteMinutesOnly(id)

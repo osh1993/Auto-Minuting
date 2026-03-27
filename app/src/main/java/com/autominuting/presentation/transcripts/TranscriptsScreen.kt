@@ -93,7 +93,7 @@ fun TranscriptsScreen(
         AlertDialog(
             onDismissRequest = { meetingToDelete = null },
             title = { Text("전사 파일 삭제") },
-            text = { Text("\"${meeting.title}\"의 전사 파일을 삭제할까요?\n연관된 회의록도 함께 삭제됩니다.") },
+            text = { Text("\"${meeting.title}\"의 전사 파일을 삭제할까요?\n회의록은 보존됩니다.") },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteTranscript(meeting.id)
@@ -217,12 +217,13 @@ private fun PipelineStatusChip(status: PipelineStatus) {
     )
 }
 
-/** 편집 가능한 상태인지 확인하는 확장 함수 (TRANSCRIBED 이상) */
+/** 편집 가능한 상태인지 확인하는 확장 함수 (전사 파일이 존재하는 상태) */
 private fun PipelineStatus.isEditable(): Boolean =
     this in setOf(
         PipelineStatus.TRANSCRIBED,
         PipelineStatus.GENERATING_MINUTES,
-        PipelineStatus.COMPLETED
+        PipelineStatus.COMPLETED,
+        PipelineStatus.FAILED
     )
 
 /** 녹음 시각 포맷터 (yyyy.MM.dd HH:mm) */
