@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.autominuting.data.auth.AuthMode
 import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.MinutesFormat
+import com.autominuting.domain.model.SttEngineType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -39,6 +40,9 @@ class UserPreferencesRepository @Inject constructor(
 
         /** Google 계정 표시 이름 */
         val GOOGLE_DISPLAY_NAME_KEY = stringPreferencesKey("google_display_name")
+
+        /** STT 엔진 유형 설정 키 */
+        val STT_ENGINE_KEY = stringPreferencesKey("stt_engine")
     }
 
     /** 현재 회의록 형식 설정을 관찰한다. 기본값: STRUCTURED */
@@ -57,6 +61,12 @@ class UserPreferencesRepository @Inject constructor(
     val authMode: Flow<AuthMode> = dataStore.data.map { prefs ->
         val name = prefs[AUTH_MODE_KEY] ?: AuthMode.API_KEY.name
         AuthMode.valueOf(name)
+    }
+
+    /** 현재 STT 엔진 유형을 관찰한다. 기본값: GEMINI */
+    val sttEngineType: Flow<SttEngineType> = dataStore.data.map { prefs ->
+        val name = prefs[STT_ENGINE_KEY] ?: SttEngineType.GEMINI.name
+        SttEngineType.valueOf(name)
     }
 
     /** 저장된 Google 계정 이메일을 관찰한다. */
@@ -100,6 +110,16 @@ class UserPreferencesRepository @Inject constructor(
     }
 
     /**
+     * STT 엔진 유형을 변경한다.
+     * @param type 새로운 STT 엔진 유형
+     */
+    suspend fun setSttEngineType(type: SttEngineType) {
+        dataStore.edit { prefs ->
+            prefs[STT_ENGINE_KEY] = type.name
+        }
+    }
+
+    /**
      * Google 계정 정보를 저장한다.
      * @param displayName 표시 이름
      * @param email 이메일 주소
@@ -137,5 +157,14 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun getAutomationModeOnce(): AutomationMode =
         dataStore.data.first().let { prefs ->
             AutomationMode.valueOf(prefs[AUTOMATION_MODE_KEY] ?: AutomationMode.FULL_AUTO.name)
+        }
+
+    /**
+     * 현재 STT 엔진 유형을 즉시 조회한다 (Worker 컨텍스트 등에서 사용).
+     * @return 현재 저장된 STT 엔진 유형. 기본값: GEMINI
+     */
+    suspend fun getSttEngineTypeOnce(): SttEngineType =
+        dataStore.data.first().let { prefs ->
+            SttEngineType.valueOf(prefs[STT_ENGINE_KEY] ?: SttEngineType.GEMINI.name)
         }
 }

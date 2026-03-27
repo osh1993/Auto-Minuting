@@ -2,8 +2,11 @@ package com.autominuting.data.repository
 
 import android.content.Context
 import android.util.Log
+import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.data.stt.GeminiSttEngine
+import com.autominuting.data.stt.SttEngine
 import com.autominuting.data.stt.WhisperEngine
+import com.autominuting.domain.model.SttEngineType
 import com.autominuting.domain.repository.TranscriptionRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -18,19 +21,15 @@ import javax.inject.Singleton
 /**
  * [TranscriptionRepository]의 구현체.
  *
- * Whisper(1차)와 Gemini STT(2차)의 이중 경로 폴백 패턴을 지원한다.
- * AudioRepositoryImpl의 SDK(1차) + Cloud API(2차) 패턴과 동일한 구조 — per D-08.
- *
- * 전사 흐름:
- * 1. Whisper 온디바이스 전사 시도 (1차)
- * 2. Whisper 실패 시 Gemini STT 클라우드 폴백 (2차)
- * 3. 둘 다 실패 시 Result.failure() 반환
- * 4. 성공 시 전사 텍스트를 파일로 저장
+ * 사용자 설정에 따라 STT 엔진을 선택하고, 실패 시 다른 엔진으로 폴백한다.
+ * - GEMINI 선택: Gemini STT(1차) → Whisper(2차 폴백)
+ * - WHISPER 선택: Whisper(1차) → Gemini STT(2차 폴백)
  */
 @Singleton
 class TranscriptionRepositoryImpl @Inject constructor(
     private val whisperEngine: WhisperEngine,
     private val geminiSttEngine: GeminiSttEngine,
+    private val userPreferencesRepository: UserPreferencesRepository,
     @ApplicationContext private val context: Context
 ) : TranscriptionRepository {
 
@@ -46,9 +45,7 @@ class TranscriptionRepositoryImpl @Inject constructor(
     /**
      * 오디오 파일을 텍스트로 전사한다.
      *
-     * 1차: Whisper 온디바이스 전사 시도
-     * 2차: Whisper 실패 시 ML Kit/SpeechRecognizer 폴백
-     * 양쪽 모두 실패 시 Result.failure() 반환
+     * 사용자가 설정한 STT 엔진을 1차로 시도하고, 실패 시 다른 엔진으로 폴백한다.
      *
      * @param audioFilePath 전사할 오디오 파일의 절대 경로
      * @return 성공 시 전사된 텍스트, 실패 시 예외를 포함한 Result
@@ -57,57 +54,50 @@ class TranscriptionRepositoryImpl @Inject constructor(
         withContext(Dispatchers.IO) {
             _isTranscribing.value = true
             try {
-                Log.d(TAG, "전사 파이프라인 시작: $audioFilePath")
+                val selectedEngine = userPreferencesRepository.getSttEngineTypeOnce()
+                Log.d(TAG, "전사 파이프라인 시작: $audioFilePath (엔진: $selectedEngine)")
 
-                // 1차: Whisper 엔진 시도
-                val whisperResult = try {
-                    Log.d(TAG, "1차 경로: ${whisperEngine.engineName()} 시도")
-                    whisperEngine.transcribe(audioFilePath)
-                } catch (e: Exception) {
-                    Log.w(TAG, "Whisper 전사 예외: ${e.message}")
-                    Result.failure(e)
+                val (primary, fallback) = when (selectedEngine) {
+                    SttEngineType.GEMINI -> geminiSttEngine to whisperEngine
+                    SttEngineType.WHISPER -> whisperEngine to geminiSttEngine
                 }
 
-                if (whisperResult.isSuccess) {
-                    val text = whisperResult.getOrThrow()
-                    Log.d(TAG, "Whisper 전사 성공: ${text.length}자")
-                    return@withContext Result.success(text)
-                }
+                // 1차: 선택된 엔진 시도
+                val primaryResult = tryEngine(primary, audioFilePath)
+                if (primaryResult.isSuccess) return@withContext primaryResult
 
-                Log.w(
-                    TAG,
-                    "Whisper 전사 실패, Gemini STT 폴백 전환: " +
-                        "${whisperResult.exceptionOrNull()?.message}"
-                )
+                Log.w(TAG, "${primary.engineName()} 실패, ${fallback.engineName()} 폴백 전환")
 
-                // 2차: Gemini STT 클라우드 폴백
-                val geminiResult = try {
-                    Log.d(TAG, "2차 경로: ${geminiSttEngine.engineName()} 시도")
-                    geminiSttEngine.transcribe(audioFilePath)
-                } catch (e: Exception) {
-                    Log.w(TAG, "Gemini STT 전사 예외: ${e.message}")
-                    Result.failure(e)
-                }
-
-                if (geminiResult.isSuccess) {
-                    val text = geminiResult.getOrThrow()
-                    Log.d(TAG, "Gemini STT 전사 성공: ${text.length}자")
-                    return@withContext Result.success(text)
-                }
+                // 2차: 폴백 엔진 시도
+                val fallbackResult = tryEngine(fallback, audioFilePath)
+                if (fallbackResult.isSuccess) return@withContext fallbackResult
 
                 // 양쪽 모두 실패
-                val whisperError = whisperResult.exceptionOrNull()
-                val geminiError = geminiResult.exceptionOrNull()
                 val combinedMessage =
-                    "전사 실패 — Whisper: ${whisperError?.message}, " +
-                        "Gemini: ${geminiError?.message}"
+                    "전사 실패 — ${primary.engineName()}: ${primaryResult.exceptionOrNull()?.message}, " +
+                        "${fallback.engineName()}: ${fallbackResult.exceptionOrNull()?.message}"
                 Log.e(TAG, combinedMessage)
 
-                Result.failure(TranscriptionException(combinedMessage, geminiError))
+                Result.failure(TranscriptionException(combinedMessage, fallbackResult.exceptionOrNull()))
             } finally {
                 _isTranscribing.value = false
             }
         }
+
+    /** 엔진 하나로 전사를 시도하고 결과를 반환한다. */
+    private suspend fun tryEngine(engine: SttEngine, audioFilePath: String): Result<String> {
+        return try {
+            Log.d(TAG, "${engine.engineName()} 시도")
+            val result = engine.transcribe(audioFilePath)
+            if (result.isSuccess) {
+                Log.d(TAG, "${engine.engineName()} 전사 성공: ${result.getOrThrow().length}자")
+            }
+            result
+        } catch (e: Exception) {
+            Log.w(TAG, "${engine.engineName()} 전사 예외: ${e.message}")
+            Result.failure(e)
+        }
+    }
 
     /** 현재 전사가 진행 중인지 여부를 관찰한다. */
     override fun isTranscribing(): Flow<Boolean> = _isTranscribing.asStateFlow()

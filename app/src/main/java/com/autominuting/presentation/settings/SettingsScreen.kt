@@ -24,6 +24,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,8 +51,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.autominuting.data.auth.AuthMode
 import com.autominuting.data.auth.AuthState
+import com.autominuting.data.stt.WhisperModelManager
 import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.MinutesFormat
+import com.autominuting.domain.model.SttEngineType
 
 /**
  * 설정 화면.
@@ -67,6 +70,8 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val selectedFormat by viewModel.minutesFormat.collectAsStateWithLifecycle()
+    val sttEngineType by viewModel.sttEngineType.collectAsStateWithLifecycle()
+    val whisperModelState by viewModel.whisperModelState.collectAsStateWithLifecycle()
     val automationMode by viewModel.automationMode.collectAsStateWithLifecycle()
     val authMode by viewModel.authMode.collectAsStateWithLifecycle()
     val authState by viewModel.authState.collectAsStateWithLifecycle()
@@ -191,6 +196,110 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.tertiary
                 )
+            }
+
+            // --- STT 엔진 선택 섹션 ---
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "STT 엔진",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = "음성을 텍스트로 변환할 엔진을 선택합니다",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // STT 엔진 드롭다운
+            var sttDropdownExpanded by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
+                expanded = sttDropdownExpanded,
+                onExpandedChange = { sttDropdownExpanded = it }
+            ) {
+                OutlinedTextField(
+                    value = when (sttEngineType) {
+                        SttEngineType.GEMINI -> "Gemini STT (클라우드)"
+                        SttEngineType.WHISPER -> "Whisper (온디바이스)"
+                    },
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sttDropdownExpanded) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = sttDropdownExpanded,
+                    onDismissRequest = { sttDropdownExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Gemini STT (클라우드)") },
+                        onClick = {
+                            viewModel.setSttEngineType(SttEngineType.GEMINI)
+                            sttDropdownExpanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Whisper (온디바이스)") },
+                        onClick = {
+                            viewModel.setSttEngineType(SttEngineType.WHISPER)
+                            sttDropdownExpanded = false
+                        }
+                    )
+                }
+            }
+
+            // Whisper 모델 관리 (항상 표시하되, WHISPER 선택 시 강조)
+            Spacer(modifier = Modifier.height(12.dp))
+            when (val state = whisperModelState) {
+                is WhisperModelManager.ModelState.NotDownloaded -> {
+                    Text(
+                        text = "Whisper 모델 미설치 (~500MB 다운로드 필요)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    FilledTonalButton(onClick = { viewModel.downloadWhisperModel() }) {
+                        Text("모델 다운로드")
+                    }
+                }
+                is WhisperModelManager.ModelState.Downloading -> {
+                    Text(
+                        text = "모델 다운로드 중... ${(state.progress * 100).toInt()}%",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    LinearProgressIndicator(
+                        progress = { state.progress },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                is WhisperModelManager.ModelState.Ready -> {
+                    Text(
+                        text = "Whisper 모델 설치 완료",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedButton(onClick = { viewModel.deleteWhisperModel() }) {
+                        Text("모델 삭제")
+                    }
+                }
+                is WhisperModelManager.ModelState.Error -> {
+                    Text(
+                        text = state.message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    FilledTonalButton(onClick = { viewModel.downloadWhisperModel() }) {
+                        Text("다시 시도")
+                    }
+                }
             }
 
             // --- Gemini 인증 모드 섹션 ---

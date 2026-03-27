@@ -10,8 +10,10 @@ import com.autominuting.data.auth.AuthState
 import com.autominuting.data.auth.GoogleAuthRepository
 import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.data.security.SecureApiKeyRepository
+import com.autominuting.data.stt.WhisperModelManager
 import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.MinutesFormat
+import com.autominuting.domain.model.SttEngineType
 import com.google.ai.client.generativeai.GenerativeModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +41,8 @@ sealed interface ApiKeyValidationState {
 class SettingsViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val secureApiKeyRepository: SecureApiKeyRepository,
-    private val googleAuthRepository: GoogleAuthRepository
+    private val googleAuthRepository: GoogleAuthRepository,
+    private val whisperModelManager: WhisperModelManager
 ) : ViewModel() {
 
     companion object {
@@ -53,6 +56,18 @@ class SettingsViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = MinutesFormat.STRUCTURED
         )
+
+    /** 현재 선택된 STT 엔진 유형 */
+    val sttEngineType: StateFlow<SttEngineType> = userPreferencesRepository.sttEngineType
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = SttEngineType.GEMINI
+        )
+
+    /** Whisper 모델 다운로드 상태 */
+    val whisperModelState: StateFlow<WhisperModelManager.ModelState> =
+        whisperModelManager.modelState
 
     /** 현재 선택된 자동화 모드 */
     val automationMode: StateFlow<AutomationMode> = userPreferencesRepository.automationMode
@@ -105,6 +120,23 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.setMinutesFormat(format)
         }
+    }
+
+    /** STT 엔진 유형을 변경한다. */
+    fun setSttEngineType(type: SttEngineType) {
+        viewModelScope.launch {
+            userPreferencesRepository.setSttEngineType(type)
+        }
+    }
+
+    /** Whisper 모델 다운로드를 시작한다. */
+    fun downloadWhisperModel() {
+        whisperModelManager.downloadModel()
+    }
+
+    /** Whisper 모델을 삭제한다. */
+    fun deleteWhisperModel() {
+        whisperModelManager.deleteModel()
     }
 
     /** 자동화 모드를 변경한다. */
