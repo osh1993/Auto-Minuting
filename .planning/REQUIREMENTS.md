@@ -19,7 +19,7 @@ Requirements for v2.1 milestone. Each maps to roadmap phases.
 ### 파일 관리 (File)
 
 - [ ] **FILE-02**: 사용자가 회의록을 다중 선택하여 삭제할 수 있고, 전사 파일은 보존된다
-- [ ] **FILE-03**: 사용자가 전사 파일을 별도로 삭제할 수 있다
+- [x] **FILE-03**: 사용자가 전사 파일을 별도로 삭제할 수 있다
 
 ### UI/UX 개선
 
@@ -56,7 +56,7 @@ Deferred to future release.
 | MINS-01 | Phase 15 | Complete |
 | MINS-02 | Phase 15 | Pending |
 | FILE-02 | Phase 16 | Pending |
-| FILE-03 | Phase 16 | Pending |
+| FILE-03 | Phase 16 | Complete |
 | UI-01 | Phase 17 | Pending |
 | UI-02 | Phase 17 | Pending |
 | UI-03 | Phase 17 | Pending |

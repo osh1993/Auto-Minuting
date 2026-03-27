@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Milestone complete
-stopped_at: Completed 19-01-PLAN.md
-last_updated: "2026-03-27T08:56:20.223Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 20-01-PLAN.md
+last_updated: "2026-03-27T09:18:25.235Z"
 progress:
   total_phases: 22
-  completed_phases: 17
-  total_plans: 39
-  completed_plans: 37
+  completed_phases: 18
+  total_plans: 40
+  completed_plans: 38
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다.
-**Current focus:** Phase 08 — foundation
+**Current focus:** Phase 20 — 전사 목록 액션 메뉴
 
 ## Current Position
 
-Phase: 18
-Plan: 01 (complete)
+Phase: 20 (전사 목록 액션 메뉴) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Plan: 01 (complete)
 | Phase 09 P01 | 3min | 2 tasks | 3 files |
 | Phase 18 P01 | 2min | 3 tasks | 4 files |
 | Phase 19 P01 | 5min | 2 tasks | 2 files |
+| Phase 20 P01 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,7 @@ Recent decisions affecting current work:
 - [Phase 09]: timestamp 기반 임시 파일명 후 meetingId로 rename하는 2단계 파일 저장 전략
 - [Phase 18]: OAuth Client ID는 EncryptedSharedPreferences에 암호화 저장, BuildConfig 폴백 유지
 - [Phase 19]: TranscriptsViewModel.generateMinutes()가 이미 구현되어 있어 ViewModel 수정 불필요, AndroidManifest audio/* 추가와 Screen UI만 변경
+- [Phase 20]: long-press 삭제를 DropdownMenu 삭제 항목으로 교체
 
 ### Pending Todos
 
@@ -90,6 +92,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-27T08:56:20.218Z
-Stopped at: Completed 19-01-PLAN.md
+Last session: 2026-03-27T09:18:25.229Z
+Stopped at: Completed 20-01-PLAN.md
 Resume file: None
