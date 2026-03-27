@@ -16,7 +16,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
@@ -51,6 +53,8 @@ fun TranscriptsScreen(
 ) {
     val meetings by viewModel.meetings.collectAsState()
     var meetingToDelete by remember { mutableStateOf<Meeting?>(null) }
+    // 회의록 재생성 확인 다이얼로그에 표시할 대상 회의
+    var meetingToRegenerate by remember { mutableStateOf<Meeting?>(null) }
 
     if (meetings.isEmpty()) {
         // 빈 목록 안내
@@ -82,7 +86,9 @@ fun TranscriptsScreen(
                     },
                     onDeleteRequest = { id ->
                         meetingToDelete = meetings.find { it.id == id }
-                    }
+                    },
+                    onGenerateMinutes = { id -> viewModel.generateMinutes(id) },
+                    onRegenerateMinutes = { m -> meetingToRegenerate = m }
                 )
             }
         }
@@ -107,6 +113,26 @@ fun TranscriptsScreen(
             }
         )
     }
+
+    // 회의록 재생성 확인 대화상자
+    meetingToRegenerate?.let { meeting ->
+        AlertDialog(
+            onDismissRequest = { meetingToRegenerate = null },
+            title = { Text("회의록 재생성") },
+            text = { Text("기존 회의록을 삭제하고 새로 생성할까요?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.generateMinutes(meeting.id)
+                    meetingToRegenerate = null
+                }) {
+                    Text("재생성")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { meetingToRegenerate = null }) { Text("취소") }
+            }
+        )
+    }
 }
 
 /**
@@ -118,7 +144,9 @@ fun TranscriptsScreen(
 private fun TranscriptMeetingCard(
     meeting: Meeting,
     onClick: () -> Unit,
-    onDeleteRequest: (Long) -> Unit
+    onDeleteRequest: (Long) -> Unit,
+    onGenerateMinutes: (Long) -> Unit,
+    onRegenerateMinutes: (Meeting) -> Unit
 ) {
     val isEditable = meeting.pipelineStatus.isEditable()
 
@@ -158,6 +186,37 @@ private fun TranscriptMeetingCard(
 
                 // 파이프라인 상태 칩
                 PipelineStatusChip(status = meeting.pipelineStatus)
+            }
+
+            // 회의록 작성/재생성 버튼 (TRANSCRIBING, GENERATING_MINUTES 상태에서는 미표시)
+            when (meeting.pipelineStatus) {
+                PipelineStatus.TRANSCRIBED, PipelineStatus.FAILED -> {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        FilledTonalButton(
+                            onClick = { onGenerateMinutes(meeting.id) }
+                        ) {
+                            Text("회의록 작성")
+                        }
+                    }
+                }
+                PipelineStatus.COMPLETED -> {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        OutlinedButton(
+                            onClick = { onRegenerateMinutes(meeting) }
+                        ) {
+                            Text("회의록 재생성")
+                        }
+                    }
+                }
+                else -> Unit
             }
         }
     }
