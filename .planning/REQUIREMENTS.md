@@ -27,6 +27,12 @@ Requirements for v2.1 milestone. Each maps to roadmap phases.
 - [ ] **UI-02**: NotebookLM 열기 버튼이 설정 화면에서 메인 화면으로 이동한다
 - [ ] **UI-03**: 테스트 도구(spike 패키지) 코드가 삭제된다
 
+### 전사 엔진 (STT)
+
+- [x] **STT-01**: SpeechRecognizer 대신 Gemini STT 클라우드 엔진으로 음성 파일 전사가 동작한다
+- [x] **STT-02**: 사용자가 설정에서 STT 엔진(Gemini/Whisper)을 선택할 수 있다
+- [ ] **STT-03**: Whisper 온디바이스 전사가 NDK 빌드를 통해 동작한다
+
 ### 인증 수정
 
 - [ ] **AUTH-03**: Google OAuth Web Client ID 미설정 오류가 해결되어 Google 계정 로그인이 동작한다
@@ -61,11 +67,14 @@ Deferred to future release.
 | UI-02 | Phase 17 | Pending |
 | UI-03 | Phase 17 | Pending |
 | AUTH-03 | Phase 18 | Pending |
+| STT-01 | Phase 20/23 | Complete |
+| STT-02 | Phase 23 | Complete |
+| STT-03 | Phase 23 | Pending |
 
 **Coverage:**
 
-- v2.1 requirements: 9 total
-- Mapped to phases: 9
+- v2.1 requirements: 12 total
+- Mapped to phases: 12
 - Unmapped: 0
 
 ---

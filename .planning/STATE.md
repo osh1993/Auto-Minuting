@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: Ready to plan
-stopped_at: Completed 20-01-PLAN.md
-last_updated: "2026-03-27T09:24:05.031Z"
+milestone: v3.0
+milestone_name: 기능 확장 및 UX 개선
+status: In progress
+stopped_at: Completed Phase 23 (STT 엔진 선택)
+last_updated: "2026-03-28T02:00:00.000Z"
 progress:
-  total_phases: 22
-  completed_phases: 18
+  total_phases: 23
+  completed_phases: 19
   total_plans: 40
   completed_plans: 38
 ---
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다.
-**Current focus:** Phase 20 — 전사 목록 액션 메뉴
+**Current focus:** Phase 23 완료 — STT 엔진 선택, 다음 Phase 21
 
 ## Current Position
 
 Phase: 21
-Plan: Not started
+Plan: Not started (Phase 23 완료 후)
 
 ## Performance Metrics
 
@@ -77,12 +77,16 @@ Recent decisions affecting current work:
 - [Phase 18]: OAuth Client ID는 EncryptedSharedPreferences에 암호화 저장, BuildConfig 폴백 유지
 - [Phase 19]: TranscriptsViewModel.generateMinutes()가 이미 구현되어 있어 ViewModel 수정 불필요, AndroidManifest audio/* 추가와 Screen UI만 변경
 - [Phase 20]: long-press 삭제를 DropdownMenu 삭제 항목으로 교체
+- [Phase 20 디버그]: SpeechRecognizer→GeminiSttEngine 교체 (파일 전사 지원), 전사 목록 삭제를 deleteMeeting으로 변경
+- [Phase 23]: STT 엔진 선택 기능 추가 (Gemini/Whisper), 설정 UI 드롭다운 + 모델 다운로드 관리
+- [Phase 23]: Galaxy AI 온디바이스 STT는 삼성 API 미공개로 사용 불가 확인
 
 ### Pending Todos
 
 - ~~회의록 삭제 기능 미작동 (area: ui)~~ → 완료
-- ~~삼성 녹음앱 전사 텍스트 공유 수신 실패 (area: audio)~~ → 작업 중
-- GSD 맥락 동기화 필요 (area: planning)
+- ~~삼성 녹음앱 전사 텍스트 공유 수신 실패 (area: audio)~~ → 완료
+- ~~GSD 맥락 동기화 필요 (area: planning)~~ → 완료
+- Whisper NDK 빌드 미완료 (area: stt) — libwhisper.so + JNI 브릿지 구현 필요
 
 ### Blockers/Concerns
 
@@ -92,6 +96,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-27T09:18:25.229Z
-Stopped at: Completed 20-01-PLAN.md
+Last session: 2026-03-28T02:00:00.000Z
+Stopped at: Phase 23 완료 (STT 엔진 선택), GSD 맥락 동기화 완료
 Resume file: None
