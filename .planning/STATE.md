@@ -76,7 +76,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- 회의록 삭제 기능 미작동 (area: ui)
+- ~~회의록 삭제 기능 미작동 (area: ui)~~ → 작업 중
 - 삼성 녹음앱 전사 텍스트 공유 수신 실패 (area: audio)
 - GSD 맥락 동기화 필요 (area: planning)
 
