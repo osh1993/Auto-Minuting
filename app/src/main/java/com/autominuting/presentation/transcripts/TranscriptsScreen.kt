@@ -1,7 +1,6 @@
 package com.autominuting.presentation.transcripts
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,10 +12,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SuggestionChip
@@ -31,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.autominuting.domain.model.Meeting
@@ -52,6 +61,7 @@ fun TranscriptsScreen(
     onEditClick: (Long) -> Unit = {}
 ) {
     val meetings by viewModel.meetings.collectAsState()
+    val context = LocalContext.current
     var meetingToDelete by remember { mutableStateOf<Meeting?>(null) }
     // 회의록 재생성 확인 다이얼로그에 표시할 대상 회의
     var meetingToRegenerate by remember { mutableStateOf<Meeting?>(null) }
@@ -88,7 +98,9 @@ fun TranscriptsScreen(
                         meetingToDelete = meetings.find { it.id == id }
                     },
                     onGenerateMinutes = { id -> viewModel.generateMinutes(id) },
-                    onRegenerateMinutes = { m -> meetingToRegenerate = m }
+                    onRegenerateMinutes = { m -> meetingToRegenerate = m },
+                    onRetranscribe = { id -> viewModel.retranscribe(id) },
+                    onShare = { id -> viewModel.shareTranscript(id, context) }
                 )
             }
         }
@@ -138,36 +150,103 @@ fun TranscriptsScreen(
 /**
  * 개별 전사 회의 항목 카드.
  * 회의 제목, 녹음 시각, 파이프라인 상태를 표시한다.
+ * 더보기(MoreVert) 아이콘으로 재전사/공유/삭제 액션 메뉴를 제공한다.
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TranscriptMeetingCard(
     meeting: Meeting,
     onClick: () -> Unit,
     onDeleteRequest: (Long) -> Unit,
     onGenerateMinutes: (Long) -> Unit,
-    onRegenerateMinutes: (Meeting) -> Unit
+    onRegenerateMinutes: (Meeting) -> Unit,
+    onRetranscribe: (Long) -> Unit,
+    onShare: (Long) -> Unit
 ) {
     val isEditable = meeting.pipelineStatus.isEditable()
+    var showMenu by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .combinedClickable(
-                onClick = { if (isEditable) onClick() },
-                onLongClick = { onDeleteRequest(meeting.id) }
-            ),
+            .clickable { if (isEditable) onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // 회의 제목
-            Text(
-                text = meeting.title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            // 회의 제목 + 더보기 메뉴
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = meeting.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "더보기"
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        // 재전사: audioFilePath가 있고 TRANSCRIBED/COMPLETED/FAILED 상태일 때만 표시
+                        if (meeting.audioFilePath.isNotBlank() &&
+                            meeting.pipelineStatus in setOf(
+                                PipelineStatus.TRANSCRIBED,
+                                PipelineStatus.COMPLETED,
+                                PipelineStatus.FAILED
+                            )
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("재전사") },
+                                onClick = {
+                                    showMenu = false
+                                    onRetranscribe(meeting.id)
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Refresh, contentDescription = null)
+                                }
+                            )
+                        }
+                        // 공유: transcriptPath가 있을 때만 표시
+                        if (meeting.transcriptPath != null) {
+                            DropdownMenuItem(
+                                text = { Text("공유") },
+                                onClick = {
+                                    showMenu = false
+                                    onShare(meeting.id)
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Share, contentDescription = null)
+                                }
+                            )
+                        }
+                        // 삭제: 항상 표시
+                        DropdownMenuItem(
+                            text = { Text("삭제", color = MaterialTheme.colorScheme.error) },
+                            onClick = {
+                                showMenu = false
+                                onDeleteRequest(meeting.id)
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(4.dp))
 
