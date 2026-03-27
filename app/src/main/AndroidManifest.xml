@@ -21,6 +21,9 @@
     <!-- 알림 (API 33+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- 음성 인식 (SpeechRecognizer 사용 시 필수) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <queries>
         <!-- NotebookLM 앱 설치 확인용 (Android 11+ 패키지 가시성) -->
         <package android:name="com.google.android.apps.labs.language.tailwind" />

@@ -1,10 +1,14 @@
 package com.autominuting.presentation.share
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -39,6 +43,32 @@ class ShareReceiverActivity : ComponentActivity() {
 
     @Inject
     lateinit var userPreferencesRepository: UserPreferencesRepository
+
+    /** 음성 공유 시 RECORD_AUDIO 권한 요청 후 전사 진행 */
+    private var pendingAudioUri: android.net.Uri? = null
+
+    private val recordAudioPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val uri = pendingAudioUri
+        pendingAudioUri = null
+        if (granted && uri != null) {
+            lifecycleScope.launch {
+                try {
+                    processSharedAudio(uri)
+                } catch (e: Exception) {
+                    Log.e(TAG, "음성 파일 처리 실패", e)
+                    Toast.makeText(this@ShareReceiverActivity, "음성 파일 처리 중 오류가 발생했습니다", Toast.LENGTH_SHORT).show()
+                } finally {
+                    finish()
+                }
+            }
+        } else {
+            Log.w(TAG, "RECORD_AUDIO 권한이 거부되어 전사를 진행할 수 없습니다")
+            Toast.makeText(this, "음성 인식에 마이크 권한이 필요합니다", Toast.LENGTH_LONG).show()
+            finish()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,19 +108,23 @@ class ShareReceiverActivity : ComponentActivity() {
 
         if (isAudioShare) {
             Log.d(TAG, "음성 파일 공유 감지: uri=$streamUri, mimeType=$mimeType")
-            lifecycleScope.launch {
-                try {
-                    processSharedAudio(streamUri!!)
-                } catch (e: Exception) {
-                    Log.e(TAG, "음성 파일 처리 실패", e)
-                    Toast.makeText(
-                        this@ShareReceiverActivity,
-                        "음성 파일 처리 중 오류가 발생했습니다",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } finally {
-                    finish()
+            // RECORD_AUDIO 권한 확인 (SpeechRecognizer 사용 시 필수)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                == PackageManager.PERMISSION_GRANTED
+            ) {
+                lifecycleScope.launch {
+                    try {
+                        processSharedAudio(streamUri!!)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "음성 파일 처리 실패", e)
+                        Toast.makeText(this@ShareReceiverActivity, "음성 파일 처리 중 오류가 발생했습니다", Toast.LENGTH_SHORT).show()
+                    } finally {
+                        finish()
+                    }
                 }
+            } else {
+                pendingAudioUri = streamUri
+                recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
             return
         }

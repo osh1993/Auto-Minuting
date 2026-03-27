@@ -49,10 +49,10 @@ class TranscriptsViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    /** 전사 파일(+ 연관 회의록)을 삭제한다. */
+    /** 전사 항목 전체(회의 + 전사 파일 + 회의록)를 삭제한다. */
     fun deleteTranscript(id: Long) {
         viewModelScope.launch {
-            meetingRepository.deleteTranscript(id)
+            meetingRepository.deleteMeeting(id)
         }
     }
 
@@ -111,6 +111,9 @@ class TranscriptsViewModel @Inject constructor(
 
             // 기존 전사 파일 삭제 (전사 경로 초기화 + 파일 삭제)
             meetingRepository.deleteTranscript(meetingId)
+
+            // 즉시 TRANSCRIBING 상태로 변경 (목록에서 사라지지 않도록)
+            meetingRepository.updatePipelineStatus(meetingId, PipelineStatus.TRANSCRIBING)
 
             // TranscriptionTriggerWorker enqueue
             val workRequest = OneTimeWorkRequestBuilder<TranscriptionTriggerWorker>()
@@ -174,6 +177,7 @@ class TranscriptsViewModel @Inject constructor(
 
         /** 전사 목록에 표시할 파이프라인 상태 목록 */
         private val TRANSCRIPT_VISIBLE_STATUSES = setOf(
+            PipelineStatus.AUDIO_RECEIVED,
             PipelineStatus.TRANSCRIBING,
             PipelineStatus.TRANSCRIBED,
             PipelineStatus.GENERATING_MINUTES,

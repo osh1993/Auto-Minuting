@@ -31,6 +31,10 @@ import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.autominuting.domain.model.Meeting
 import com.autominuting.domain.model.PipelineStatus
@@ -66,6 +71,17 @@ fun TranscriptsScreen(
     // 회의록 재생성 확인 다이얼로그에 표시할 대상 회의
     var meetingToRegenerate by remember { mutableStateOf<Meeting?>(null) }
 
+    // RECORD_AUDIO 런타임 권한 요청 (재전사 시 필요)
+    var pendingRetranscribeId by remember { mutableStateOf<Long?>(null) }
+    val recordAudioLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            pendingRetranscribeId?.let { viewModel.retranscribe(it) }
+        }
+        pendingRetranscribeId = null
+    }
+
     if (meetings.isEmpty()) {
         // 빈 목록 안내
         Box(
@@ -89,8 +105,8 @@ fun TranscriptsScreen(
                 TranscriptMeetingCard(
                     meeting = meeting,
                     onClick = {
-                        // TRANSCRIBED 이상 상태에서만 편집 화면으로 이동
-                        if (meeting.pipelineStatus.isEditable()) {
+                        // 전사 파일이 있는 상태에서만 편집 화면으로 이동
+                        if (meeting.pipelineStatus.isEditable() && meeting.transcriptPath != null) {
                             onEditClick(meeting.id)
                         }
                     },
@@ -99,7 +115,16 @@ fun TranscriptsScreen(
                     },
                     onGenerateMinutes = { id -> viewModel.generateMinutes(id) },
                     onRegenerateMinutes = { m -> meetingToRegenerate = m },
-                    onRetranscribe = { id -> viewModel.retranscribe(id) },
+                    onRetranscribe = { id ->
+                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+                            == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            viewModel.retranscribe(id)
+                        } else {
+                            pendingRetranscribeId = id
+                            recordAudioLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        }
+                    },
                     onShare = { id -> viewModel.shareTranscript(id, context) }
                 )
             }
@@ -197,12 +222,11 @@ private fun TranscriptMeetingCard(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false }
                     ) {
-                        // 재전사: audioFilePath가 있고 TRANSCRIBED/COMPLETED/FAILED 상태일 때만 표시
+                        // 재전사: audioFilePath가 있고 진행 중이 아닐 때 표시
                         if (meeting.audioFilePath.isNotBlank() &&
-                            meeting.pipelineStatus in setOf(
-                                PipelineStatus.TRANSCRIBED,
-                                PipelineStatus.COMPLETED,
-                                PipelineStatus.FAILED
+                            meeting.pipelineStatus !in setOf(
+                                PipelineStatus.TRANSCRIBING,
+                                PipelineStatus.GENERATING_MINUTES
                             )
                         ) {
                             DropdownMenuItem(
@@ -268,8 +292,9 @@ private fun TranscriptMeetingCard(
             }
 
             // 회의록 작성/재생성 버튼 (TRANSCRIBING, GENERATING_MINUTES 상태에서는 미표시)
+            // FAILED 상태에서도 transcriptPath가 있어야 회의록 작성 가능
             when (meeting.pipelineStatus) {
-                PipelineStatus.TRANSCRIBED, PipelineStatus.FAILED -> {
+                PipelineStatus.TRANSCRIBED -> {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -279,6 +304,22 @@ private fun TranscriptMeetingCard(
                             onClick = { onGenerateMinutes(meeting.id) }
                         ) {
                             Text("회의록 작성")
+                        }
+                    }
+                }
+                PipelineStatus.FAILED -> {
+                    // 전사 파일이 있는 경우에만 회의록 작성 버튼 표시
+                    if (meeting.transcriptPath != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            FilledTonalButton(
+                                onClick = { onGenerateMinutes(meeting.id) }
+                            ) {
+                                Text("회의록 작성")
+                            }
                         }
                     }
                 }
@@ -308,6 +349,11 @@ private fun TranscriptMeetingCard(
 @Composable
 private fun PipelineStatusChip(status: PipelineStatus) {
     val (label, containerColor, labelColor) = when (status) {
+        PipelineStatus.AUDIO_RECEIVED -> Triple(
+            "전사 대기",
+            MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.onSurfaceVariant
+        )
         PipelineStatus.TRANSCRIBING -> Triple(
             "전사 중",
             MaterialTheme.colorScheme.tertiaryContainer,
@@ -332,11 +378,6 @@ private fun PipelineStatusChip(status: PipelineStatus) {
             "실패",
             MaterialTheme.colorScheme.errorContainer,
             MaterialTheme.colorScheme.onErrorContainer
-        )
-        else -> Triple(
-            status.name,
-            MaterialTheme.colorScheme.surfaceVariant,
-            MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 

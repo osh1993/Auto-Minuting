@@ -2,7 +2,7 @@ package com.autominuting.data.repository
 
 import android.content.Context
 import android.util.Log
-import com.autominuting.data.stt.MlKitEngine
+import com.autominuting.data.stt.GeminiSttEngine
 import com.autominuting.data.stt.WhisperEngine
 import com.autominuting.domain.repository.TranscriptionRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -18,19 +18,19 @@ import javax.inject.Singleton
 /**
  * [TranscriptionRepository]의 구현체.
  *
- * Whisper(1차)와 ML Kit/SpeechRecognizer(2차)의 이중 경로 폴백 패턴을 지원한다.
+ * Whisper(1차)와 Gemini STT(2차)의 이중 경로 폴백 패턴을 지원한다.
  * AudioRepositoryImpl의 SDK(1차) + Cloud API(2차) 패턴과 동일한 구조 — per D-08.
  *
  * 전사 흐름:
  * 1. Whisper 온디바이스 전사 시도 (1차)
- * 2. Whisper 실패 시 ML Kit/SpeechRecognizer 폴백 (2차)
+ * 2. Whisper 실패 시 Gemini STT 클라우드 폴백 (2차)
  * 3. 둘 다 실패 시 Result.failure() 반환
  * 4. 성공 시 전사 텍스트를 파일로 저장
  */
 @Singleton
 class TranscriptionRepositoryImpl @Inject constructor(
     private val whisperEngine: WhisperEngine,
-    private val mlKitEngine: MlKitEngine,
+    private val geminiSttEngine: GeminiSttEngine,
     @ApplicationContext private val context: Context
 ) : TranscriptionRepository {
 
@@ -76,34 +76,34 @@ class TranscriptionRepositoryImpl @Inject constructor(
 
                 Log.w(
                     TAG,
-                    "Whisper 전사 실패, ML Kit 폴백 전환: " +
+                    "Whisper 전사 실패, Gemini STT 폴백 전환: " +
                         "${whisperResult.exceptionOrNull()?.message}"
                 )
 
-                // 2차: ML Kit/SpeechRecognizer 폴백
-                val mlKitResult = try {
-                    Log.d(TAG, "2차 경로: ${mlKitEngine.engineName()} 시도")
-                    mlKitEngine.transcribe(audioFilePath)
+                // 2차: Gemini STT 클라우드 폴백
+                val geminiResult = try {
+                    Log.d(TAG, "2차 경로: ${geminiSttEngine.engineName()} 시도")
+                    geminiSttEngine.transcribe(audioFilePath)
                 } catch (e: Exception) {
-                    Log.w(TAG, "ML Kit 전사 예외: ${e.message}")
+                    Log.w(TAG, "Gemini STT 전사 예외: ${e.message}")
                     Result.failure(e)
                 }
 
-                if (mlKitResult.isSuccess) {
-                    val text = mlKitResult.getOrThrow()
-                    Log.d(TAG, "ML Kit 전사 성공: ${text.length}자")
+                if (geminiResult.isSuccess) {
+                    val text = geminiResult.getOrThrow()
+                    Log.d(TAG, "Gemini STT 전사 성공: ${text.length}자")
                     return@withContext Result.success(text)
                 }
 
                 // 양쪽 모두 실패
                 val whisperError = whisperResult.exceptionOrNull()
-                val mlKitError = mlKitResult.exceptionOrNull()
+                val geminiError = geminiResult.exceptionOrNull()
                 val combinedMessage =
                     "전사 실패 — Whisper: ${whisperError?.message}, " +
-                        "ML Kit: ${mlKitError?.message}"
+                        "Gemini: ${geminiError?.message}"
                 Log.e(TAG, combinedMessage)
 
-                Result.failure(TranscriptionException(combinedMessage, mlKitError))
+                Result.failure(TranscriptionException(combinedMessage, geminiError))
             } finally {
                 _isTranscribing.value = false
             }
