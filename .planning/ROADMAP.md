@@ -5,6 +5,7 @@
 - ✅ **v1.0 Auto Minuting MVP** — Phases 1-7 (shipped 2026-03-24)
 - ✅ **v2.0 실동작 파이프라인 + 기능 확장** — Phases 8-13 (shipped 2026-03-26)
 - ✅ **v2.1 안정화** — Phases 14-18 (shipped 2026-03-26)
+- **v3.0 기능 확장 및 UX 개선** — Phases 19-22
 
 ## Phases
 
@@ -26,6 +27,16 @@
 ### Phase 16: 파일 삭제 (1/1 plans) — completed 2026-03-26
 ### Phase 17: UI 정리 (1/1 plans) — completed 2026-03-26
 ### Phase 18: OAuth 수정 (1/1 plans) — completed 2026-03-26
+### Phase 19: 수동 회의록 생성 및 음성 공유 처리 (0/1 plans)
+
+**Plans:** 1 plan
+
+Plans:
+- [ ] 19-01-PLAN.md — 전사 목록 수동 회의록 생성 UI + 음성 공유 intent-filter 정비
+
+### Phase 20: 전사 목록 액션 메뉴 (삭제, 전사, 공유)
+### Phase 21: 회의록 목록 액션 메뉴 (삭제, 공유)
+### Phase 22: 설정 메뉴 및 테스트 도구 이동
 
 ## Milestone Details
 
@@ -39,3 +50,4 @@
 | 1-7 | v1.0 | 18/18 | Complete | 2026-03-24 |
 | 8-13 | v2.0 | 11/13 | Complete | 2026-03-26 |
 | 14-18 | v2.1 | 7/7 | Complete | 2026-03-26 |
+| 19-22 | v3.0 | 0/1 | In Progress | — |
