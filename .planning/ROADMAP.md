@@ -116,7 +116,12 @@ Plans:
   2. 사용자가 회의록 카드의 이름을 원하는 이름으로 편집할 수 있다
   3. 사용자가 회의록 목록에서 삭제 액션으로 회의록을 삭제할 수 있다
   4. 사용자가 회의록 목록에서 공유 액션으로 회의록을 외부 앱에 공유할 수 있다
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 26-01-PLAN.md — minutesTitle 데이터 레이어 + Gemini 제목 추출
+- [ ] 26-02-PLAN.md — MinutesScreen MoreVert 메뉴 + 이름 편집 + minutesTitle 표시
+
 **UI hint**: yes
 
 ### Phase 27: URL 음성 다운로드
@@ -155,6 +160,6 @@ Plans:
 | 19-23 | v3.0 | 1/1 | In Progress | — |
 | 24. 전사 카드 정보 표시 | v3.1 | 1/1 | Complete    | 2026-03-28 |
 | 25. 전사 이름 관리 | v3.1 | 1/1 | Complete    | 2026-03-28 |
-| 26. 회의록 제목 및 액션 | v3.1 | 0/0 | Not started | - |
+| 26. 회의록 제목 및 액션 | v3.1 | 0/2 | Not started | - |
 | 27. URL 음성 다운로드 | v3.1 | 0/0 | Not started | - |
 | 28. 설정 정리 | v3.1 | 0/0 | Not started | - |
