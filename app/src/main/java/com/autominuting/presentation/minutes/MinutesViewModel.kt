@@ -1,5 +1,7 @@
 package com.autominuting.presentation.minutes
 
+import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autominuting.domain.model.Meeting
@@ -7,14 +9,15 @@ import com.autominuting.domain.repository.MeetingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
@@ -73,6 +76,42 @@ class MinutesViewModel @Inject constructor(
     fun deleteSelectedMinutes(ids: Set<Long>) {
         viewModelScope.launch {
             ids.forEach { meetingRepository.deleteMinutesOnly(it) }
+        }
+    }
+
+    /** 회의록 제목(minutesTitle)을 변경한다. */
+    fun updateMinutesTitle(meetingId: Long, newTitle: String) {
+        viewModelScope.launch {
+            meetingRepository.updateMinutesTitle(meetingId, newTitle)
+        }
+    }
+
+    /**
+     * 회의록 텍스트를 외부 앱으로 공유한다.
+     * 회의록 파일을 읽어 ACTION_SEND Intent로 공유 시트를 띄운다.
+     *
+     * @param meetingId 공유할 Meeting의 ID
+     * @param activityContext Activity Context (startActivity 호출용)
+     */
+    fun shareMinutes(meetingId: Long, activityContext: Context) {
+        viewModelScope.launch {
+            val meeting = meetingRepository.getMeetingById(meetingId).first()
+            if (meeting?.minutesPath == null) return@launch
+
+            val minutesText = try {
+                File(meeting.minutesPath).readText()
+            } catch (e: Exception) {
+                return@launch
+            }
+            if (minutesText.isBlank()) return@launch
+
+            val sendIntent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_SUBJECT, meeting.minutesTitle ?: meeting.title)
+                putExtra(Intent.EXTRA_TEXT, minutesText)
+                type = "text/plain"
+            }
+            activityContext.startActivity(Intent.createChooser(sendIntent, null))
         }
     }
 
