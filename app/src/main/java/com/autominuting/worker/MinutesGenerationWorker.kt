@@ -126,11 +126,21 @@ class MinutesGenerationWorker @AssistedInject constructor(
                     file.absolutePath
                 }
 
-            // DB 업데이트: minutesPath + COMPLETED 상태
+            // Gemini 응답의 첫 줄에서 제목 추출 (# 마크다운 헤더 제거)
+            val minutesTitle = minutesText.lineSequence()
+                .map { it.trim() }
+                .firstOrNull { it.isNotBlank() }
+                ?.removePrefix("#")
+                ?.trim()
+                ?.take(100) // 제목 최대 100자 제한
+            Log.d(TAG, "회의록 제목 추출: $minutesTitle")
+
+            // DB 업데이트: minutesPath + minutesTitle + COMPLETED 상태
             val completedAt = System.currentTimeMillis()
             meetingDao.updateMinutes(
                 id = meetingId,
                 minutesPath = minutesPath,
+                minutesTitle = minutesTitle,
                 status = PipelineStatus.COMPLETED.name,
                 updatedAt = completedAt
             )
