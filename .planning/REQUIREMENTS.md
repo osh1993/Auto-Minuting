@@ -43,9 +43,9 @@ Requirements for v3.1 milestone. Each maps to roadmap phases.
 
 ### 카드 정보 표시 (Card)
 
-- [ ] **CARD-01**: 전사 카드에 파일 종류 아이콘(텍스트/음원)이 표시된다
-- [ ] **CARD-02**: 전사 카드에 전사 완료/미완료 상태 배지가 표시된다
-- [ ] **CARD-03**: 전사 카드에 회의록 작성 완료/미작성 상태 배지가 표시된다
+- [x] **CARD-01**: 전사 카드에 파일 종류 아이콘(텍스트/음원)이 표시된다
+- [x] **CARD-02**: 전사 카드에 전사 완료/미완료 상태 배지가 표시된다
+- [x] **CARD-03**: 전사 카드에 회의록 작성 완료/미작성 상태 배지가 표시된다
 
 ### 이름 관리 (Name)
 
@@ -96,9 +96,9 @@ Deferred to future release.
 | AUTH-03 | Phase 18 | Pending |
 | STT-01 | Phase 20/23 | Complete |
 | STT-02 | Phase 23 | Complete |
-| CARD-01 | Phase 24 | Pending |
-| CARD-02 | Phase 24 | Pending |
-| CARD-03 | Phase 24 | Pending |
+| CARD-01 | Phase 24 | Complete |
+| CARD-02 | Phase 24 | Complete |
+| CARD-03 | Phase 24 | Complete |
 | NAME-01 | Phase 25 | Pending |
 | NAME-02 | Phase 25 | Pending |
 | NAME-03 | Phase 26 | Pending |
