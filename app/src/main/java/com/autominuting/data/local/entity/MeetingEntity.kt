@@ -28,7 +28,9 @@ data class MeetingEntity(
     /** 레코드 최종 수정 시각 (epoch millis) */
     val updatedAt: Long,
     /** 데이터 소스 (PLAUD_BLE, SAMSUNG_SHARE 등) */
-    val source: String = "PLAUD_BLE"
+    val source: String = "PLAUD_BLE",
+    /** 회의록 자동 제목 (Gemini 응답 첫 줄에서 추출) */
+    val minutesTitle: String? = null
 ) {
     /**
      * Entity를 도메인 모델로 변환한다.
@@ -44,7 +46,8 @@ data class MeetingEntity(
         errorMessage = errorMessage,
         createdAt = Instant.ofEpochMilli(createdAt),
         updatedAt = Instant.ofEpochMilli(updatedAt),
-        source = source
+        source = source,
+        minutesTitle = minutesTitle
     )
 
     companion object {
@@ -62,7 +65,8 @@ data class MeetingEntity(
             errorMessage = meeting.errorMessage,
             createdAt = meeting.createdAt.toEpochMilli(),
             updatedAt = meeting.updatedAt.toEpochMilli(),
-            source = meeting.source
+            source = meeting.source,
+            minutesTitle = meeting.minutesTitle
         )
     }
 }

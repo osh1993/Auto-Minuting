@@ -53,12 +53,21 @@ interface MeetingDao {
         updatedAt: Long
     )
 
-    /** 회의록 생성 완료 후 minutesPath와 파이프라인 상태를 업데이트한다. */
-    @Query("UPDATE meetings SET minutesPath = :minutesPath, pipelineStatus = :status, updatedAt = :updatedAt WHERE id = :id")
+    /** 회의록 생성 완료 후 minutesPath, minutesTitle과 파이프라인 상태를 업데이트한다. */
+    @Query("UPDATE meetings SET minutesPath = :minutesPath, minutesTitle = :minutesTitle, pipelineStatus = :status, updatedAt = :updatedAt WHERE id = :id")
     suspend fun updateMinutes(
         id: Long,
         minutesPath: String,
+        minutesTitle: String?,
         status: String,
+        updatedAt: Long
+    )
+
+    /** 회의록 제목만 업데이트한다. */
+    @Query("UPDATE meetings SET minutesTitle = :minutesTitle, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateMinutesTitle(
+        id: Long,
+        minutesTitle: String,
         updatedAt: Long
     )
 
@@ -70,8 +79,8 @@ interface MeetingDao {
     @Query("SELECT * FROM meetings WHERE title LIKE '%' || :query || '%' ORDER BY recordedAt DESC")
     fun searchMeetings(query: String): Flow<List<MeetingEntity>>
 
-    /** 회의록 경로만 초기화하고 상태를 TRANSCRIBED로 되돌린다 (전사 파일 보존). */
-    @Query("UPDATE meetings SET minutesPath = NULL, pipelineStatus = 'TRANSCRIBED', updatedAt = :updatedAt WHERE id = :id")
+    /** 회의록 경로와 제목을 초기화하고 상태를 TRANSCRIBED로 되돌린다 (전사 파일 보존). */
+    @Query("UPDATE meetings SET minutesPath = NULL, minutesTitle = NULL, pipelineStatus = 'TRANSCRIBED', updatedAt = :updatedAt WHERE id = :id")
     suspend fun clearMinutesPath(id: Long, updatedAt: Long)
 
     /** 전사 경로만 초기화하고 상태를 AUDIO_RECEIVED로 되돌린다 (회의록 보존). */

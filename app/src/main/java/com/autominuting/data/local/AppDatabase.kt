@@ -17,7 +17,7 @@ import com.autominuting.data.local.entity.PromptTemplateEntity
  */
 @Database(
     entities = [MeetingEntity::class, PromptTemplateEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -34,6 +34,13 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE meetings ADD COLUMN source TEXT NOT NULL DEFAULT 'PLAUD_BLE'")
+            }
+        }
+
+        /** v3 -> v4: meetings 테이블에 minutesTitle 컬럼 추가 */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE meetings ADD COLUMN minutesTitle TEXT DEFAULT NULL")
             }
         }
 

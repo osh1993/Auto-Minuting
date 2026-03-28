@@ -40,4 +40,7 @@ interface MeetingRepository {
 
     /** 전사 파일(+ 연관 회의록 파일)을 삭제한다. */
     suspend fun deleteTranscript(id: Long)
+
+    /** 회의록 제목을 업데이트한다. */
+    suspend fun updateMinutesTitle(id: Long, title: String)
 }

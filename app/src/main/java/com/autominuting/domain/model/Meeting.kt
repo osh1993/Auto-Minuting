@@ -29,5 +29,7 @@ data class Meeting(
     val createdAt: Instant,
     val updatedAt: Instant,
     /** 데이터 소스 (PLAUD_BLE, SAMSUNG_SHARE 등) */
-    val source: String = "PLAUD_BLE"
+    val source: String = "PLAUD_BLE",
+    /** 회의록 자동 제목 (Gemini 응답 첫 줄에서 추출) */
+    val minutesTitle: String? = null
 )
