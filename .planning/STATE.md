@@ -80,6 +80,9 @@ Recent decisions affecting current work:
 - [Phase 20 디버그]: SpeechRecognizer→GeminiSttEngine 교체 (파일 전사 지원), 전사 목록 삭제를 deleteMeeting으로 변경
 - [Phase 23]: STT 엔진 선택 기능 추가 (Gemini/Whisper), 설정 UI 드롭다운 + 모델 다운로드 관리
 - [Phase 23]: Galaxy AI 온디바이스 STT는 삼성 API 미공개로 사용 불가 확인
+- [디버그]: AudioConverter ByteArray 합치기를 ByteArrayOutputStream으로 교체 (30분+ 오디오 OOM 방지)
+- [디버그]: Gemini API 할당량 초과 시 20초 간격 최대 3회 자동 재시도
+- [디버그]: 재전사 실패 시 기존 전사 파일 보존 + 이전 상태 복원
 
 ### Pending Todos
 
@@ -96,6 +99,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-28T02:00:00.000Z
-Stopped at: Phase 23 완료 (STT 엔진 선택), GSD 맥락 동기화 완료
+Last session: 2026-03-28T06:30:00.000Z
+Stopped at: Phase 23 디버그 수정 완료 (긴 음성 전사 + 재전사 안정성)
 Resume file: None

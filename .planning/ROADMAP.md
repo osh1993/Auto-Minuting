@@ -63,6 +63,11 @@ Plans:
 - WhisperModelManager: 500MB 모델 다운로드/관리
 - 설정 UI: STT 엔진 드롭다운 + Whisper 모델 다운로드
 
+**Post-phase fixes (2026-03-28):**
+- AudioConverter O(n^2) ByteArray 복사 → ByteArrayOutputStream (30분+ 오디오 OOM 방지)
+- Gemini API 할당량 초과 시 20초 간격 최대 3회 자동 재시도
+- 재전사 실패 시 기존 전사 파일 보존 + 이전 상태 복원
+
 **잔여 작업:**
 - [ ] whisper.cpp NDK 빌드 (libwhisper.so + JNI 브릿지)
 
