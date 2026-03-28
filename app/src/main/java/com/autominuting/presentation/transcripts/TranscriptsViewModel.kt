@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
+import java.time.Instant
 import javax.inject.Inject
 
 /**
@@ -48,6 +49,18 @@ class TranscriptsViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
         )
+
+    /** 전사 항목의 제목을 변경한다. */
+    fun updateTitle(meetingId: Long, newTitle: String) {
+        viewModelScope.launch {
+            val meeting = meetingRepository.getMeetingById(meetingId).first()
+            if (meeting != null) {
+                meetingRepository.updateMeeting(
+                    meeting.copy(title = newTitle, updatedAt = Instant.now())
+                )
+            }
+        }
+    }
 
     /** 전사 항목 전체(회의 + 전사 파일 + 회의록)를 삭제한다. */
     fun deleteTranscript(id: Long) {

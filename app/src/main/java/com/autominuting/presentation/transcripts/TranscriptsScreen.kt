@@ -31,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
@@ -72,6 +73,8 @@ fun TranscriptsScreen(
     val meetings by viewModel.meetings.collectAsState()
     val context = LocalContext.current
     var meetingToDelete by remember { mutableStateOf<Meeting?>(null) }
+    // 이름 편집 다이얼로그에 표시할 대상 회의
+    var meetingToRename by remember { mutableStateOf<Meeting?>(null) }
     // 회의록 재생성 확인 다이얼로그에 표시할 대상 회의
     var meetingToRegenerate by remember { mutableStateOf<Meeting?>(null) }
 
@@ -114,6 +117,7 @@ fun TranscriptsScreen(
                             onEditClick(meeting.id)
                         }
                     },
+                    onRenameRequest = { m -> meetingToRename = m },
                     onDeleteRequest = { id ->
                         meetingToDelete = meetings.find { it.id == id }
                     },
@@ -133,6 +137,38 @@ fun TranscriptsScreen(
                 )
             }
         }
+    }
+
+    // 이름 편집 대화상자
+    meetingToRename?.let { meeting ->
+        var editedName by remember(meeting.id) { mutableStateOf(meeting.title) }
+        AlertDialog(
+            onDismissRequest = { meetingToRename = null },
+            title = { Text("이름 편집") },
+            text = {
+                OutlinedTextField(
+                    value = editedName,
+                    onValueChange = { editedName = it },
+                    label = { Text("전사 이름") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val trimmed = editedName.trim()
+                        if (trimmed.isNotBlank()) {
+                            viewModel.updateTitle(meeting.id, trimmed)
+                        }
+                        meetingToRename = null
+                    }
+                ) { Text("확인") }
+            },
+            dismissButton = {
+                TextButton(onClick = { meetingToRename = null }) { Text("취소") }
+            }
+        )
     }
 
     // 전사 삭제 확인 대화상자
@@ -185,6 +221,7 @@ fun TranscriptsScreen(
 private fun TranscriptMeetingCard(
     meeting: Meeting,
     onClick: () -> Unit,
+    onRenameRequest: (Meeting) -> Unit,
     onDeleteRequest: (Long) -> Unit,
     onGenerateMinutes: (Long) -> Unit,
     onRegenerateMinutes: (Meeting) -> Unit,
@@ -215,7 +252,9 @@ private fun TranscriptMeetingCard(
                     text = meeting.title,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onRenameRequest(meeting) }
                 )
                 Box {
                     IconButton(onClick = { showMenu = true }) {
