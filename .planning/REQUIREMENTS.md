@@ -37,6 +37,32 @@ Requirements for v2.1 milestone. Each maps to roadmap phases.
 
 - [ ] **AUTH-03**: Google OAuth Web Client ID 미설정 오류가 해결되어 Google 계정 로그인이 동작한다
 
+## v3.1 Requirements
+
+Requirements for v3.1 milestone. Each maps to roadmap phases.
+
+### 카드 정보 표시 (Card)
+
+- [ ] **CARD-01**: 전사 카드에 파일 종류 아이콘(텍스트/음원)이 표시된다
+- [ ] **CARD-02**: 전사 카드에 전사 완료/미완료 상태 배지가 표시된다
+- [ ] **CARD-03**: 전사 카드에 회의록 작성 완료/미작성 상태 배지가 표시된다
+
+### 이름 관리 (Name)
+
+- [ ] **NAME-01**: 공유받은 파일의 원본 파일명이 전사 카드 제목으로 자동 설정된다
+- [ ] **NAME-02**: 사용자가 전사 카드의 이름을 편집할 수 있다
+- [ ] **NAME-03**: 회의록 생성 시 Gemini가 생성한 제목이 회의록 카드 제목으로 자동 설정된다
+- [ ] **NAME-04**: 사용자가 회의록 카드의 이름을 편집할 수 있다
+
+### 음성 다운로드 (Download)
+
+- [ ] **DL-01**: 사용자가 대시보드에서 URL을 입력하여 음성 파일을 다운로드하고 전사 파이프라인에 진입시킬 수 있다
+
+### UX 개선 (v3.0 이관)
+
+- [ ] **UX-01**: 회의록 목록에서 삭제, 공유 액션 메뉴를 사용할 수 있다
+- [ ] **UX-02**: 설정 메뉴가 정리되고 테스트 도구(spike) 코드가 삭제된다
+
 ## Future Requirements
 
 Deferred to future release.
@@ -44,6 +70,7 @@ Deferred to future release.
 - **PLUD-F01**: Plaud 리버스 엔지니어링 결과에 따른 연결 본구현
 - **SREC-F01**: 삼성 녹음앱 자동 감지 본구현 (v2.0 스파이크 Partial Go)
 - **NLMK-F01**: MCP 서버 API 본구현 (REST API 미존재 — 대기)
+- **STT-03**: Whisper 온디바이스 전사 NDK 빌드
 
 ## Out of Scope
 
@@ -69,14 +96,23 @@ Deferred to future release.
 | AUTH-03 | Phase 18 | Pending |
 | STT-01 | Phase 20/23 | Complete |
 | STT-02 | Phase 23 | Complete |
-| STT-03 | Phase 23 | Pending |
+| CARD-01 | TBD | Pending |
+| CARD-02 | TBD | Pending |
+| CARD-03 | TBD | Pending |
+| NAME-01 | TBD | Pending |
+| NAME-02 | TBD | Pending |
+| NAME-03 | TBD | Pending |
+| NAME-04 | TBD | Pending |
+| DL-01 | TBD | Pending |
+| UX-01 | TBD | Pending |
+| UX-02 | TBD | Pending |
 
 **Coverage:**
 
-- v2.1 requirements: 12 total
-- Mapped to phases: 12
-- Unmapped: 0
+- v3.1 requirements: 10 total
+- Mapped to phases: 0 (roadmap pending)
+- Unmapped: 10
 
 ---
 
-*Requirements defined: 2026-03-26*
+*Requirements defined: 2026-03-26, v3.1 추가: 2026-03-28*
