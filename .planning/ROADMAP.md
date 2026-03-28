@@ -120,7 +120,7 @@ Plans:
 
 Plans:
 - [x] 26-01-PLAN.md — minutesTitle 데이터 레이어 + Gemini 제목 추출
-- [ ] 26-02-PLAN.md — MinutesScreen MoreVert 메뉴 + 이름 편집 + minutesTitle 표시
+- [x] 26-02-PLAN.md — MinutesScreen MoreVert 메뉴 + 이름 편집 + minutesTitle 표시
 
 **UI hint**: yes
 
@@ -160,6 +160,6 @@ Plans:
 | 19-23 | v3.0 | 1/1 | In Progress | — |
 | 24. 전사 카드 정보 표시 | v3.1 | 1/1 | Complete    | 2026-03-28 |
 | 25. 전사 이름 관리 | v3.1 | 1/1 | Complete    | 2026-03-28 |
-| 26. 회의록 제목 및 액션 | v3.1 | 1/2 | In Progress|  |
+| 26. 회의록 제목 및 액션 | v3.1 | 2/2 | Complete   | 2026-03-28 |
 | 27. URL 음성 다운로드 | v3.1 | 0/0 | Not started | - |
 | 28. 설정 정리 | v3.1 | 0/0 | Not started | - |
