@@ -51,7 +51,7 @@ Requirements for v3.1 milestone. Each maps to roadmap phases.
 
 - [x] **NAME-01**: 공유받은 파일의 원본 파일명이 전사 카드 제목으로 자동 설정된다
 - [x] **NAME-02**: 사용자가 전사 카드의 이름을 편집할 수 있다
-- [ ] **NAME-03**: 회의록 생성 시 Gemini가 생성한 제목이 회의록 카드 제목으로 자동 설정된다
+- [x] **NAME-03**: 회의록 생성 시 Gemini가 생성한 제목이 회의록 카드 제목으로 자동 설정된다
 - [ ] **NAME-04**: 사용자가 회의록 카드의 이름을 편집할 수 있다
 
 ### 음성 다운로드 (Download)
@@ -101,7 +101,7 @@ Deferred to future release.
 | CARD-03 | Phase 24 | Complete |
 | NAME-01 | Phase 25 | Complete |
 | NAME-02 | Phase 25 | Complete |
-| NAME-03 | Phase 26 | Pending |
+| NAME-03 | Phase 26 | Complete |
 | NAME-04 | Phase 26 | Pending |
 | UX-01 | Phase 26 | Pending |
 | DL-01 | Phase 27 | Pending |
