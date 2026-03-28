@@ -109,8 +109,8 @@ class TranscriptsViewModel @Inject constructor(
                 return@launch
             }
 
-            // 기존 전사 파일 삭제 (전사 경로 초기화 + 파일 삭제)
-            meetingRepository.deleteTranscript(meetingId)
+            // 기존 전사 파일은 보존 (재전사 실패 시 복구 가능하도록)
+            // Worker 성공 후 새 전사 파일로 덮어쓰므로 별도 삭제 불필요
 
             // 즉시 TRANSCRIBING 상태로 변경 (목록에서 사라지지 않도록)
             meetingRepository.updatePipelineStatus(meetingId, PipelineStatus.TRANSCRIBING)

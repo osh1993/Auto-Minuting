@@ -70,7 +70,13 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
         }
 
         val now = System.currentTimeMillis()
-        Log.d(TAG, "전사 파이프라인 시작: meetingId=$meetingId, audioPath=$audioFilePath, mode=$automationMode")
+
+        // 재전사 시 기존 전사 파일 보존을 위해 이전 상태 저장
+        val previousEntity = meetingDao.getMeetingByIdOnce(meetingId)
+        val previousTranscriptPath = previousEntity?.transcriptPath
+        val previousStatus = previousEntity?.pipelineStatus
+
+        Log.d(TAG, "전사 파이프라인 시작: meetingId=$meetingId, audioPath=$audioFilePath, mode=$automationMode, 이전상태=$previousStatus")
 
         // 파이프라인 상태를 TRANSCRIBING으로 업데이트
         meetingDao.updatePipelineStatus(
@@ -147,13 +153,24 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
             val errorMessage = error?.message ?: "알 수 없는 전사 오류"
             Log.e(TAG, "전사 실패: $errorMessage", error)
 
-            // 파이프라인 상태를 FAILED로 업데이트
-            meetingDao.updatePipelineStatus(
-                id = meetingId,
-                status = PipelineStatus.FAILED.name,
-                errorMessage = errorMessage,
-                updatedAt = System.currentTimeMillis()
-            )
+            // 재전사 실패 시: 기존 전사 파일이 있으면 이전 상태로 복원
+            if (!previousTranscriptPath.isNullOrBlank() && java.io.File(previousTranscriptPath).exists()) {
+                Log.d(TAG, "재전사 실패 — 기존 전사 파일 보존, 이전 상태($previousStatus)로 복원")
+                meetingDao.updatePipelineStatus(
+                    id = meetingId,
+                    status = previousStatus ?: PipelineStatus.TRANSCRIBED.name,
+                    errorMessage = "재전사 실패: $errorMessage",
+                    updatedAt = System.currentTimeMillis()
+                )
+            } else {
+                // 최초 전사 실패: FAILED로 업데이트
+                meetingDao.updatePipelineStatus(
+                    id = meetingId,
+                    status = PipelineStatus.FAILED.name,
+                    errorMessage = errorMessage,
+                    updatedAt = System.currentTimeMillis()
+                )
+            }
 
             Result.failure()
         }

@@ -7,6 +7,7 @@ import android.media.MediaFormat
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
@@ -123,7 +124,9 @@ class AudioConverter @Inject constructor() {
         codec.configure(inputFormat, null, null, 0)
         codec.start()
 
-        val pcmChunks = mutableListOf<ByteArray>()
+        // ByteArrayOutputStream으로 PCM 청크를 효율적으로 합침 (O(n) 메모리)
+        // 기존 fold + ByteArray 연결은 O(n^2) 복사가 발생하여 긴 오디오에서 OOM 유발
+        val pcmStream = ByteArrayOutputStream()
         val bufferInfo = MediaCodec.BufferInfo()
         var isEos = false
 
@@ -154,7 +157,7 @@ class AudioConverter @Inject constructor() {
                 val outputBuffer = codec.getOutputBuffer(outputIndex)!!
                 val chunk = ByteArray(bufferInfo.size)
                 outputBuffer.get(chunk)
-                pcmChunks.add(chunk)
+                pcmStream.write(chunk)
                 codec.releaseOutputBuffer(outputIndex, false)
                 outputIndex = codec.dequeueOutputBuffer(bufferInfo, 0L)
             }
@@ -164,8 +167,7 @@ class AudioConverter @Inject constructor() {
         codec.release()
         extractor.release()
 
-        // PCM 데이터 합치기
-        val rawPcm = pcmChunks.fold(ByteArray(0)) { acc, chunk -> acc + chunk }
+        val rawPcm = pcmStream.toByteArray()
 
         // 리샘플링 및 모노 변환
         return resampleToTarget(rawPcm, sourceSampleRate, sourceChannels)

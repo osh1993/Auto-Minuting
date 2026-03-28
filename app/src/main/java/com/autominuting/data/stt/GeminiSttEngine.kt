@@ -4,8 +4,10 @@ import android.util.Log
 import com.autominuting.BuildConfig
 import com.autominuting.data.security.SecureApiKeyRepository
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.QuotaExceededException
 import com.google.ai.client.generativeai.type.content
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
@@ -41,6 +43,13 @@ class GeminiSttEngine @Inject constructor(
         """.trimMargin()
 
         /** 지원하는 오디오 MIME 타입 */
+        /** 할당량 초과 시 최대 재시도 횟수 */
+        private const val MAX_RETRIES = 3
+        /** 재시도 간격 (밀리초) */
+        private const val RETRY_DELAY_MS = 20_000L
+        /** Gemini 인라인 blob 최대 크기 (20MB) */
+        private const val MAX_INLINE_BYTES = 20 * 1024 * 1024L
+
         private val MIME_MAP = mapOf(
             "m4a" to "audio/mp4",
             "mp4" to "audio/mp4",
@@ -84,7 +93,12 @@ class GeminiSttEngine @Inject constructor(
                         GeminiSttException("지원하지 않는 오디오 형식: $extension")
                     )
 
-                Log.d(TAG, "Gemini STT 전사 시작: $audioFilePath (${audioFile.length()} bytes, $mimeType)")
+                val fileSize = audioFile.length()
+                Log.d(TAG, "Gemini STT 전사 시작: $audioFilePath ($fileSize bytes, $mimeType)")
+
+                if (fileSize > MAX_INLINE_BYTES) {
+                    Log.w(TAG, "파일 크기 ${fileSize / 1024 / 1024}MB — 인라인 blob 제한(20MB) 초과 가능성")
+                }
 
                 val model = GenerativeModel(
                     modelName = MODEL_NAME,
@@ -93,22 +107,38 @@ class GeminiSttEngine @Inject constructor(
 
                 val audioBytes = audioFile.readBytes()
 
-                val response = model.generateContent(
-                    content {
-                        blob(mimeType, audioBytes)
-                        text(TRANSCRIPTION_PROMPT)
-                    }
-                )
+                // 할당량 초과 시 자동 재시도
+                var lastException: Exception? = null
+                for (attempt in 1..MAX_RETRIES) {
+                    try {
+                        val response = model.generateContent(
+                            content {
+                                blob(mimeType, audioBytes)
+                                text(TRANSCRIPTION_PROMPT)
+                            }
+                        )
 
-                val text = response.text?.trim()
-                if (text.isNullOrBlank()) {
-                    return@withContext Result.failure(
-                        GeminiSttException("Gemini 전사 결과가 비어있습니다")
-                    )
+                        val text = response.text?.trim()
+                        if (text.isNullOrBlank()) {
+                            return@withContext Result.failure(
+                                GeminiSttException("Gemini 전사 결과가 비어있습니다")
+                            )
+                        }
+
+                        Log.d(TAG, "Gemini STT 전사 완료: ${text.length}자 (시도 $attempt)")
+                        return@withContext Result.success(text)
+                    } catch (e: QuotaExceededException) {
+                        lastException = e
+                        if (attempt < MAX_RETRIES) {
+                            Log.w(TAG, "할당량 초과, ${RETRY_DELAY_MS / 1000}초 후 재시도 ($attempt/$MAX_RETRIES)")
+                            delay(RETRY_DELAY_MS)
+                        }
+                    }
                 }
 
-                Log.d(TAG, "Gemini STT 전사 완료: ${text.length}자")
-                Result.success(text)
+                Result.failure(GeminiSttException(
+                    "Gemini API 할당량 초과 (${MAX_RETRIES}회 재시도 실패)", lastException
+                ))
             } catch (e: Exception) {
                 Log.e(TAG, "Gemini STT 전사 중 오류: ${e.message}", e)
                 Result.failure(GeminiSttException("Gemini STT 전사 실패: ${e.message}", e))
