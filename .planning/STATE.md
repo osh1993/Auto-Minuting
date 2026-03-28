@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: v3.0
-milestone_name: 기능 확장 및 UX 개선
-status: In progress
-stopped_at: Completed Phase 23 (STT 엔진 선택)
-last_updated: "2026-03-28T02:00:00.000Z"
+milestone: v3.1
+milestone_name: UX 개선 및 정보 표시 강화
+status: Defining requirements
+stopped_at: Milestone v3.1 시작
+last_updated: "2026-03-28T07:00:00.000Z"
 progress:
   total_phases: 23
   completed_phases: 19
@@ -19,12 +19,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다.
-**Current focus:** Phase 23 완료 — STT 엔진 선택, 다음 Phase 21
+**Current focus:** Milestone v3.1 시작 — 요구사항 정의 중
 
 ## Current Position
 
-Phase: 21
-Plan: Not started (Phase 23 완료 후)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-28 — Milestone v3.1 시작
 
 ## Performance Metrics
 
@@ -99,6 +101,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-28T06:30:00.000Z
-Stopped at: Phase 23 디버그 수정 완료 (긴 음성 전사 + 재전사 안정성)
+Last session: 2026-03-28T07:00:00.000Z
+Stopped at: Milestone v3.1 시작 — 요구사항 정의 중
 Resume file: None

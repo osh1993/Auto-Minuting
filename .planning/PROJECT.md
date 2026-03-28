@@ -83,20 +83,18 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 | AnnotatedString Markdown 렌더링 | 외부 라이브러리 없이 직접 구현 | ✓ v1.0 |
 | Room LIKE 검색 | v1 데이터 규모에 FTS 불필요 | ✓ v1.0 |
 
-## Current Milestone: v2.1 안정화 + UX 개선
+## Current Milestone: v3.1 UX 개선 및 정보 표시 강화
 
-**Goal:** 실기기 테스트 피드백 반영, Plaud 연결 프로토콜 분석, 회의록/전사 관리 UX 개선
+**Goal:** 전사/회의록 목록 카드의 정보 가시성과 관리 편의성을 높이고, URL 기반 음성 다운로드를 추가한다.
 
 **Target features:**
-- Plaud 녹음기 연결 프로토콜 리버스 엔지니어링 (BLE가 아닌 연결 방식 추적)
-- 수동 회의록 생성 — 전사 파일 기반 생성 버튼 + 프롬프트 템플릿 선택/수기 입력
-- 프롬프트 템플릿 관리 (추가/삭제/편집)
-- 회의록 다중 선택 삭제 (전사 파일 보존)
-- 전사 파일 별도 삭제 기능
-- 앱 아이콘 리디자인
-- 테스트 도구(spike) 코드 삭제
-- NotebookLM 열기 버튼 메인 화면 이동
-- Google OAuth Web Client ID 설정 문제 해결
+- 전사 카드 정보 표시 개선 (파일 종류, 전사/회의록 상태 뱃지)
+- 전사 카드 이름 관리 (공유 파일명 사용 + 이름 편집)
+- 회의록 카드 자동 제목 (생성 시 내용 기반)
+- 회의록 카드 이름 편집
+- URL 입력으로 음성 파일 다운로드 → 전사 파이프라인 진입
+- 회의록 목록 액션 메뉴 (삭제, 공유) *(v3.0에서 이관)*
+- 설정 메뉴 및 테스트 도구 이동 *(v3.0에서 이관)*
 
 ## Evolution
 
@@ -119,4 +117,4 @@ This document evolves at phase transitions and milestone boundaries.
 **v1.0 Roadmap archived to:** `.planning/milestones/v1.0-ROADMAP.md`
 
 ---
-*Last updated: 2026-03-28 after Phase 23 completion (STT 엔진 선택)*
+*Last updated: 2026-03-28 — Milestone v3.1 시작*
