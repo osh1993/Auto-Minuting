@@ -12,11 +12,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.automirrored.filled.TextSnippet
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -199,12 +203,14 @@ private fun TranscriptMeetingCard(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // 회의 제목 + 더보기 메뉴
+            // 회의 제목 + 파일 종류 아이콘 + 더보기 메뉴
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                FileTypeIcon(meeting)
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = meeting.title,
                     style = MaterialTheme.typography.titleMedium,
@@ -275,20 +281,37 @@ private fun TranscriptMeetingCard(
             Spacer(modifier = Modifier.height(4.dp))
 
             // 녹음 시각
+            Text(
+                text = meeting.recordedAt.atZone(ZoneId.systemDefault())
+                    .format(DATE_TIME_FORMATTER),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            // 상태 배지 Row
+            Spacer(modifier = Modifier.height(4.dp))
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = meeting.recordedAt.atZone(ZoneId.systemDefault())
-                        .format(DATE_TIME_FORMATTER),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                // 파이프라인 상태 칩
-                PipelineStatusChip(status = meeting.pipelineStatus)
+                TranscriptionStatusBadge(meeting)
+                MinutesStatusBadge(meeting)
+                // FAILED 상태일 때 오류 배지 표시
+                if (meeting.pipelineStatus == PipelineStatus.FAILED) {
+                    SuggestionChip(
+                        onClick = {},
+                        label = {
+                            Text(
+                                text = "오류",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        },
+                        colors = SuggestionChipDefaults.suggestionChipColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            labelColor = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    )
+                }
             }
 
             // 회의록 작성/재생성 버튼 (TRANSCRIBING, GENERATING_MINUTES 상태에서는 미표시)
@@ -343,41 +366,80 @@ private fun TranscriptMeetingCard(
 }
 
 /**
- * 파이프라인 상태를 나타내는 칩 컴포넌트.
- * 상태별로 색상과 텍스트가 다르게 표시된다.
+ * 파일 종류 아이콘.
+ * audioFilePath가 비어있지 않으면 음성 파일, 비어있으면 텍스트 공유로 표시한다.
  */
 @Composable
-private fun PipelineStatusChip(status: PipelineStatus) {
-    val (label, containerColor, labelColor) = when (status) {
-        PipelineStatus.AUDIO_RECEIVED -> Triple(
-            "전사 대기",
-            MaterialTheme.colorScheme.surfaceVariant,
-            MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        PipelineStatus.TRANSCRIBING -> Triple(
+private fun FileTypeIcon(meeting: Meeting) {
+    val isAudio = meeting.audioFilePath.isNotBlank()
+    Icon(
+        imageVector = if (isAudio) Icons.Default.AudioFile else Icons.AutoMirrored.Filled.TextSnippet,
+        contentDescription = if (isAudio) "음성 파일" else "텍스트 공유",
+        modifier = Modifier.size(20.dp),
+        tint = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+/**
+ * 전사 상태 배지.
+ * TRANSCRIBING -> "전사 중", transcriptPath != null -> "전사 완료", else -> "전사 미완료"
+ */
+@Composable
+private fun TranscriptionStatusBadge(meeting: Meeting) {
+    val (label, containerColor, labelColor) = when {
+        meeting.pipelineStatus == PipelineStatus.TRANSCRIBING -> Triple(
             "전사 중",
             MaterialTheme.colorScheme.tertiaryContainer,
             MaterialTheme.colorScheme.onTertiaryContainer
         )
-        PipelineStatus.TRANSCRIBED -> Triple(
+        meeting.transcriptPath != null -> Triple(
             "전사 완료",
             MaterialTheme.colorScheme.primaryContainer,
             MaterialTheme.colorScheme.onPrimaryContainer
         )
-        PipelineStatus.GENERATING_MINUTES -> Triple(
+        else -> Triple(
+            "전사 미완료",
+            MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+
+    SuggestionChip(
+        onClick = {},
+        label = {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall
+            )
+        },
+        colors = SuggestionChipDefaults.suggestionChipColors(
+            containerColor = containerColor,
+            labelColor = labelColor
+        )
+    )
+}
+
+/**
+ * 회의록 상태 배지.
+ * GENERATING_MINUTES -> "회의록 생성 중", minutesPath != null -> "회의록 완료", else -> "회의록 미작성"
+ */
+@Composable
+private fun MinutesStatusBadge(meeting: Meeting) {
+    val (label, containerColor, labelColor) = when {
+        meeting.pipelineStatus == PipelineStatus.GENERATING_MINUTES -> Triple(
             "회의록 생성 중",
+            MaterialTheme.colorScheme.tertiaryContainer,
+            MaterialTheme.colorScheme.onTertiaryContainer
+        )
+        meeting.minutesPath != null -> Triple(
+            "회의록 완료",
             MaterialTheme.colorScheme.primaryContainer,
             MaterialTheme.colorScheme.onPrimaryContainer
         )
-        PipelineStatus.COMPLETED -> Triple(
-            "완료",
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.onPrimaryContainer
-        )
-        PipelineStatus.FAILED -> Triple(
-            "실패",
-            MaterialTheme.colorScheme.errorContainer,
-            MaterialTheme.colorScheme.onErrorContainer
+        else -> Triple(
+            "회의록 미작성",
+            MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 
