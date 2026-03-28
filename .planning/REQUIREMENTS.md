@@ -96,22 +96,22 @@ Deferred to future release.
 | AUTH-03 | Phase 18 | Pending |
 | STT-01 | Phase 20/23 | Complete |
 | STT-02 | Phase 23 | Complete |
-| CARD-01 | TBD | Pending |
-| CARD-02 | TBD | Pending |
-| CARD-03 | TBD | Pending |
-| NAME-01 | TBD | Pending |
-| NAME-02 | TBD | Pending |
-| NAME-03 | TBD | Pending |
-| NAME-04 | TBD | Pending |
-| DL-01 | TBD | Pending |
-| UX-01 | TBD | Pending |
-| UX-02 | TBD | Pending |
+| CARD-01 | Phase 24 | Pending |
+| CARD-02 | Phase 24 | Pending |
+| CARD-03 | Phase 24 | Pending |
+| NAME-01 | Phase 25 | Pending |
+| NAME-02 | Phase 25 | Pending |
+| NAME-03 | Phase 26 | Pending |
+| NAME-04 | Phase 26 | Pending |
+| UX-01 | Phase 26 | Pending |
+| DL-01 | Phase 27 | Pending |
+| UX-02 | Phase 28 | Pending |
 
 **Coverage:**
 
 - v3.1 requirements: 10 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 10
+- Mapped to phases: 10/10
+- Unmapped: 0
 
 ---
 
