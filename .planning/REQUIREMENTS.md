@@ -56,7 +56,7 @@ Requirements for v3.1 milestone. Each maps to roadmap phases.
 
 ### 음성 다운로드 (Download)
 
-- [ ] **DL-01**: 사용자가 대시보드에서 URL을 입력하여 음성 파일을 다운로드하고 전사 파이프라인에 진입시킬 수 있다
+- [x] **DL-01**: 사용자가 대시보드에서 URL을 입력하여 음성 파일을 다운로드하고 전사 파이프라인에 진입시킬 수 있다
 
 ### UX 개선 (v3.0 이관)
 
@@ -104,7 +104,7 @@ Deferred to future release.
 | NAME-03 | Phase 26 | Complete |
 | NAME-04 | Phase 26 | Complete |
 | UX-01 | Phase 26 | Complete |
-| DL-01 | Phase 27 | Pending |
+| DL-01 | Phase 27 | Complete |
 | UX-02 | Phase 28 | Pending |
 
 **Coverage:**

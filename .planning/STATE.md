@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 26-02-PLAN.md
-last_updated: "2026-03-28T12:48:40.954Z"
+stopped_at: Completed 27-01-PLAN.md
+last_updated: "2026-03-28T13:00:25.552Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 28
-  completed_phases: 21
-  total_plans: 44
-  completed_plans: 42
+  completed_phases: 22
+  total_plans: 45
+  completed_plans: 43
 ---
 
 # Project State
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다.
-**Current focus:** Phase 26 — 회의록 제목 및 액션
+**Current focus:** Phase 27 — URL 음성 다운로드
 
 ## Current Position
 
-Phase: 27
-Plan: Not started
+Phase: 27 (URL 음성 다운로드) — EXECUTING
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
@@ -64,6 +64,7 @@ Recent decisions affecting current work:
 - [Phase 25]: ContentResolver DISPLAY_NAME으로 공유 파일명 추출, 카드 제목 clickable로 이름 편집 구분
 - [Phase 26]: Gemini 응답 첫 줄을 minutesTitle로 자동 추출, # 마크다운 헤더 제거 후 100자 제한
 - [Phase 26]: 카드 제목 클릭으로 이름 편집 다이얼로그 진입 (Phase 25 패턴 재사용)
+- [Phase 27]: source = URL_DOWNLOAD로 출처 구분하여 기존 PLAUD_BLE, SAMSUNG_SHARE와 병렬 추적
 
 ### Pending Todos
 
@@ -76,6 +77,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-28T12:46:02.511Z
-Stopped at: Completed 26-02-PLAN.md
+Last session: 2026-03-28T13:00:25.547Z
+Stopped at: Completed 27-01-PLAN.md
 Resume file: None
