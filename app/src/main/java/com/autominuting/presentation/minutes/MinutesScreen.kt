@@ -2,6 +2,7 @@ package com.autominuting.presentation.minutes
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,11 +19,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.autominuting.domain.model.Meeting
@@ -64,7 +70,9 @@ fun MinutesScreen(
 ) {
     val meetings by viewModel.meetings.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val context = LocalContext.current
     var meetingToDelete by remember { mutableStateOf<Meeting?>(null) }
+    var meetingToRename by remember { mutableStateOf<Meeting?>(null) }
     var selectedIds by remember { mutableStateOf(emptySet<Long>()) }
     val isSelectionMode = selectedIds.isNotEmpty()
     var showBatchDeleteDialog by remember { mutableStateOf(false) }
@@ -192,18 +200,54 @@ fun MinutesScreen(
                                 selectedIds = setOf(meeting.id)
                             }
                         },
+                        onRenameRequest = { m -> meetingToRename = m },
                         onDeleteRequest = { id ->
                             meetingToDelete = meetings.find { it.id == id }
-                        }
+                        },
+                        onShare = { id -> viewModel.shareMinutes(id, context) }
                     )
                 }
             }
         }
 
+        // 이름 편집 대화상자
+        meetingToRename?.let { meeting ->
+            var editedName by remember(meeting.id) {
+                mutableStateOf(meeting.minutesTitle ?: meeting.title)
+            }
+            AlertDialog(
+                onDismissRequest = { meetingToRename = null },
+                title = { Text("회의록 이름 편집") },
+                text = {
+                    OutlinedTextField(
+                        value = editedName,
+                        onValueChange = { editedName = it },
+                        label = { Text("회의록 이름") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            val trimmed = editedName.trim()
+                            if (trimmed.isNotBlank()) {
+                                viewModel.updateMinutesTitle(meeting.id, trimmed)
+                            }
+                            meetingToRename = null
+                        }
+                    ) { Text("확인") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { meetingToRename = null }) { Text("취소") }
+                }
+            )
+        }
+
         // 단건 삭제 확인 대화상자
         meetingToDelete?.let { meeting ->
             DeleteConfirmationDialog(
-                meetingTitle = meeting.title,
+                meetingTitle = meeting.minutesTitle ?: meeting.title,
                 onConfirm = {
                     viewModel.deleteMeeting(meeting.id)
                     meetingToDelete = null
@@ -247,8 +291,11 @@ private fun MinutesMeetingCard(
     isSelected: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    onDeleteRequest: (Long) -> Unit
+    onRenameRequest: (Meeting) -> Unit,
+    onDeleteRequest: (Long) -> Unit,
+    onShare: (Long) -> Unit
 ) {
+    var showMenu by remember { mutableStateOf(false) }
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -285,11 +332,12 @@ private fun MinutesMeetingCard(
                         }
                     )
             ) {
-                // 회의 제목
+                // 회의록 제목 (minutesTitle 우선, 없으면 title 표시)
                 Text(
-                    text = meeting.title,
+                    text = meeting.minutesTitle ?: meeting.title,
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.clickable { onRenameRequest(meeting) }
                 )
 
                 // 출처 뱃지 (삼성 공유)
@@ -330,15 +378,48 @@ private fun MinutesMeetingCard(
                 }
             }
 
-            // 단건 삭제 버튼 (선택 모드가 아닐 때만 표시)
-            // combinedClickable 밖에 위치하여 클릭 이벤트가 정상 전달됨
+            // MoreVert 액션 메뉴 (선택 모드가 아닐 때만 표시)
             if (!isSelectionMode) {
-                IconButton(onClick = { onDeleteRequest(meeting.id) }) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "삭제",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "더보기"
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        // 공유: minutesPath가 있을 때만 표시
+                        if (meeting.minutesPath != null) {
+                            DropdownMenuItem(
+                                text = { Text("공유") },
+                                onClick = {
+                                    showMenu = false
+                                    onShare(meeting.id)
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Share, contentDescription = null)
+                                }
+                            )
+                        }
+                        // 삭제: 항상 표시
+                        DropdownMenuItem(
+                            text = { Text("삭제", color = MaterialTheme.colorScheme.error) },
+                            onClick = {
+                                showMenu = false
+                                onDeleteRequest(meeting.id)
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }
