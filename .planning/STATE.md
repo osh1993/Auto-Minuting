@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 24-01-PLAN.md
-last_updated: "2026-03-28T12:19:38.651Z"
+stopped_at: Completed 25-01-PLAN.md
+last_updated: "2026-03-28T12:27:49.140Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 28
-  completed_phases: 19
-  total_plans: 41
-  completed_plans: 39
+  completed_phases: 20
+  total_plans: 42
+  completed_plans: 40
 ---
 
 # Project State
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다.
-**Current focus:** Phase 24 — 전사 카드 정보 표시
+**Current focus:** Phase 25 — 전사 이름 관리
 
 ## Current Position
 
-Phase: 25
-Plan: Not started
+Phase: 25 (전사 이름 관리) — EXECUTING
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
@@ -61,6 +61,7 @@ Recent decisions affecting current work:
 - [디버그]: Gemini API 할당량 초과 시 자동 재시도
 - [v3.1]: Phase 21/22(v3.0)를 v3.1 Phase 26/28로 이관
 - [Phase 24]: PipelineStatusChip 단일 칩 제거, 전사/회의록 개별 배지로 대체하여 상태 가시성 향상
+- [Phase 25]: ContentResolver DISPLAY_NAME으로 공유 파일명 추출, 카드 제목 clickable로 이름 편집 구분
 
 ### Pending Todos
 
@@ -73,6 +74,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-28T12:08:19.425Z
-Stopped at: Completed 24-01-PLAN.md
+Last session: 2026-03-28T12:27:49.135Z
+Stopped at: Completed 25-01-PLAN.md
 Resume file: None
