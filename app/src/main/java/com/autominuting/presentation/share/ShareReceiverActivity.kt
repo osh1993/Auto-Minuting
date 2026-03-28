@@ -22,6 +22,7 @@ import com.autominuting.worker.MinutesGenerationWorker
 import com.autominuting.worker.TranscriptionTriggerWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import android.provider.OpenableColumns
 import java.io.File
 import java.time.Instant
 import javax.inject.Inject
@@ -300,7 +301,7 @@ class ShareReceiverActivity : ComponentActivity() {
 
         // 2. MeetingEntity 생성 (AUDIO_RECEIVED 상태로 DB 저장)
         val meeting = Meeting(
-            title = "음성 공유 회의",
+            title = getDisplayName(audioUri) ?: "음성 공유 회의",
             recordedAt = Instant.ofEpochMilli(now),
             audioFilePath = audioFile.absolutePath,
             pipelineStatus = PipelineStatus.AUDIO_RECEIVED,
@@ -336,6 +337,30 @@ class ShareReceiverActivity : ComponentActivity() {
                 "음성 파일이 저장되었습니다. 수동으로 전사를 시작할 수 있습니다.",
                 Toast.LENGTH_LONG
             ).show()
+        }
+    }
+
+    /**
+     * content URI에서 원본 파일명을 추출한다.
+     * 확장자를 제거하여 제목으로 사용할 수 있는 이름을 반환한다.
+     *
+     * @param uri 공유된 파일의 content:// URI
+     * @return 확장자가 제거된 파일명, 추출 실패 시 null
+     */
+    private fun getDisplayName(uri: android.net.Uri): String? {
+        return try {
+            contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+                ?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        if (nameIndex >= 0) {
+                            cursor.getString(nameIndex)?.substringBeforeLast(".")
+                        } else null
+                    } else null
+                }
+        } catch (e: Exception) {
+            Log.w(TAG, "파일명 추출 실패: ${e.message}")
+            null
         }
     }
 
