@@ -133,24 +133,24 @@ Deferred to future release.
 | UX-01 | Phase 26 | Complete |
 | DL-01 | Phase 27 | Complete |
 | UX-02 | Phase 28 | Complete |
-| PIPE-01 | TBD | Pending |
-| PIPE-02 | TBD | Pending |
-| PIPE-03 | TBD | Pending |
-| PIPE-04 | TBD | Pending |
-| QUOTA-01 | TBD | Pending |
-| QUOTA-02 | TBD | Pending |
-| SHARE-01 | TBD | Pending |
-| GUI-01 | TBD | Pending |
-| GUI-02 | TBD | Pending |
-| GUI-03 | TBD | Pending |
-| GUI-04 | TBD | Pending |
+| PIPE-01 | Phase 29 | Pending |
+| PIPE-02 | Phase 29 | Pending |
+| PIPE-03 | Phase 30 | Pending |
+| PIPE-04 | Phase 30 | Pending |
+| QUOTA-01 | Phase 31 | Pending |
+| QUOTA-02 | Phase 31 | Pending |
+| SHARE-01 | Phase 32 | Pending |
+| GUI-01 | Phase 33 | Pending |
+| GUI-02 | Phase 33 | Pending |
+| GUI-03 | Phase 33 | Pending |
+| GUI-04 | Phase 33 | Pending |
 
 **Coverage:**
 
 - v4.0 requirements: 11 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 11
+- Mapped to phases: 11
+- Unmapped: 0
 
 ---
 
-*Requirements defined: 2026-03-26, v3.1 추가: 2026-03-28*
+*Requirements defined: 2026-03-26, v3.1 추가: 2026-03-28, v4.0 추가: 2026-03-29*

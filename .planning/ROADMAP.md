@@ -7,6 +7,7 @@
 - ✅ **v2.1 안정화** — Phases 14-18 (shipped 2026-03-26)
 - ✅ **v3.0 기능 확장 및 UX 개선** — Phases 19-23 (shipped 2026-03-28)
 - ✅ **v3.1 UX 개선 및 정보 표시 강화** — Phases 24-28 (shipped 2026-03-29)
+- **v4.0 파이프라인 고도화 및 GUI 품질 개선** — Phases 29-33
 
 ## Phases
 
@@ -153,6 +154,69 @@ Plans:
 
 **UI hint**: yes
 
+## Phase Details (v4.0)
+
+### Phase 29: 전사 카드 UX 개선
+**Goal**: 하이브리드 모드에서 전사 완료 후 회의록 생성 확인 플로우가 추가되고, 전사 카드의 회의록 관련 버튼이 메뉴로 정리된다
+**Depends on**: Nothing (기존 전사 카드 UI 위에 동작 변경)
+**Requirements**: PIPE-01, PIPE-02
+**Success Criteria** (what must be TRUE):
+  1. 하이브리드 모드에서 전사가 완료되면 대시보드에 "회의록 생성" 확인 버튼이 나타난다
+  2. 사용자가 확인 버튼을 누르면 회의록 생성이 시작되고, 무시하면 전사만 유지된다
+  3. 전사 카드의 "회의록 작성" 및 "재생성" 버튼이 MoreVert 드롭다운 메뉴 안에 위치한다
+  4. 전사 카드의 카드 면적이 줄어들어 목록 가독성이 향상된다
+**Plans**: TBD
+
+**UI hint**: yes
+
+### Phase 30: 프롬프트 템플릿 선택
+**Goal**: 회의록 생성 시 프롬프트 템플릿을 선택할 수 있고, 기본 템플릿 설정으로 자동 생성이 가능하다
+**Depends on**: Phase 29 (회의록 생성 버튼 동작이 변경되므로 순서 필요)
+**Requirements**: PIPE-03, PIPE-04
+**Success Criteria** (what must be TRUE):
+  1. 회의록 생성 시 프롬프트 템플릿 목록이 다이얼로그로 표시되어 사용자가 선택할 수 있다
+  2. 기존 3종 프리셋(구조화/요약/액션아이템)이 템플릿 목록에 포함된다
+  3. 설정에서 기본 프롬프트 템플릿을 지정하면 다이얼로그 없이 자동으로 해당 템플릿으로 생성된다
+  4. 자동 모드에서도 기본 템플릿 설정에 따라 회의록이 자동 생성된다
+**Plans**: TBD
+
+**UI hint**: yes
+
+### Phase 31: Gemini 쿼터 관리
+**Goal**: 사용자가 Gemini Free 쿼터 사용량을 확인하고 한도 초과 전에 알림을 받을 수 있다
+**Depends on**: Nothing (독립 기능, 대시보드에 위젯 추가)
+**Requirements**: QUOTA-01, QUOTA-02
+**Success Criteria** (what must be TRUE):
+  1. 대시보드에서 Gemini Free 쿼터의 현재 사용량과 잔여량을 확인할 수 있다
+  2. 쿼터 사용량이 90%를 초과하면 알림(Snackbar 또는 배너)이 표시된다
+  3. 쿼터 표시가 전사(STT)와 회의록 생성(Minutes) 호출을 구분하여 보여준다
+**Plans**: TBD
+
+**UI hint**: yes
+
+### Phase 32: Plaud 공유 링크 수신
+**Goal**: 다른 앱에서 Plaud 공유 링크를 공유받으면 오디오를 자동 추출하여 전사 파이프라인에 진입시킨다
+**Depends on**: Nothing (독립 기능, 기존 공유 수신 인프라 활용)
+**Requirements**: SHARE-01
+**Success Criteria** (what must be TRUE):
+  1. 다른 앱에서 web.plaud.ai 링크를 공유하면 앱이 수신 대상으로 표시된다
+  2. 공유받은 링크에서 오디오 파일 URL이 자동 추출된다
+  3. 추출된 오디오가 다운로드되어 전사 파이프라인에 자동 진입한다
+**Plans**: TBD
+
+### Phase 33: GUI 일관성 개선
+**Goal**: 앱 전반의 GUI가 일관되고 접근성 표준을 준수한다
+**Depends on**: Phase 29 (전사 카드 UI 변경 후 TopAppBar 등 적용)
+**Requirements**: GUI-01, GUI-02, GUI-03, GUI-04
+**Success Criteria** (what must be TRUE):
+  1. DashboardScreen과 TranscriptsScreen에 TopAppBar가 표시되어 다른 화면과 일관된 헤더를 갖는다
+  2. 앱의 모든 아이콘에 적절한 contentDescription이 설정되어 TalkBack으로 읽힌다
+  3. 전사 목록과 회의록 목록의 빈 상태가 아이콘+안내 텍스트로 통일되어 표시된다
+  4. 전사 목록과 회의록 목록의 날짜가 yyyy.MM.dd HH:mm 포맷으로 통일되어 표시된다
+**Plans**: TBD
+
+**UI hint**: yes
+
 ## Milestone Details
 
 - v1.0 (Phases 1-7): `.planning/milestones/v1.0-ROADMAP.md`
@@ -171,3 +235,8 @@ Plans:
 | 26. 회의록 제목 및 액션 | v3.1 | 2/2 | Complete    | 2026-03-28 |
 | 27. URL 음성 다운로드 | v3.1 | 1/1 | Complete    | 2026-03-28 |
 | 28. 설정 정리 | v3.1 | 1/1 | Complete    | 2026-03-29 |
+| 29. 전사 카드 UX 개선 | v4.0 | 0/? | Not started | - |
+| 30. 프롬프트 템플릿 선택 | v4.0 | 0/? | Not started | - |
+| 31. Gemini 쿼터 관리 | v4.0 | 0/? | Not started | - |
+| 32. Plaud 공유 링크 수신 | v4.0 | 0/? | Not started | - |
+| 33. GUI 일관성 개선 | v4.0 | 0/? | Not started | - |
