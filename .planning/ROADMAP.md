@@ -271,8 +271,9 @@ Plans:
 **Goal:** 설정 화면의 회의록 관련 설정이 논리적으로 재배치되고, 레거시 코드가 제거되며, 직접 입력 프롬프트를 기본으로 설정할 수 있다
 **Requirements**: SET-01, SET-02, SET-03
 **Depends on:** Phase 34
-**Plans:** 2 plans
+**Plans:** 3 plans
 
 Plans:
 - [ ] 35-01-PLAN.md — MinutesFormat 전면 제거 + 자동모드 회의록 설정 이동
 - [ ] 35-02-PLAN.md — 직접 입력 커스텀 프롬프트 기본 설정 기능
+- [ ] 35-03-PLAN.md — MinutesFormat 참조 제거 및 자동모드 Switch 이동 (gap closure)
