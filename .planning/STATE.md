@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Phase 35 Plan 03 완료 — MinutesFormat 참조 전면 제거 및 빌드 성공
-last_updated: "2026-03-29T19:33:34.519Z"
+last_updated: "2026-03-29T19:35:41.497Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 35
@@ -24,8 +24,8 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 
 ## Current Position
 
-Phase: 35 (회의록 설정 구조 개편) — EXECUTING
-Plan: 2 of 2
+Phase: 35
+Plan: Not started
 Status: Ready to execute
 Last activity: 2026-03-29
 

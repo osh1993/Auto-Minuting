@@ -19,6 +19,7 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 **v3.1 완료** (2026-03-29) — 카드 정보 표시, 이름 관리, 회의록 제목/액션, URL 다운로드, 설정 정리
 **Whisper NDK 빌드 완료** (2026-03-29) — whisper.cpp submodule + CMake + JNI, 온디바이스 전사 동작 확인
 **Phase 34 완료** (2026-03-30) — Whisper 전사 진행률 표시 (JNI progress_callback → 알림/DashboardScreen/TranscriptsScreen)
+**Phase 35 완료** (2026-03-30) — 회의록 설정 구조 개편 (MinutesFormat 전면 제거, 자동모드 Switch 이동, CUSTOM_PROMPT_MODE_ID 직접 입력)
 
 - 65+ Kotlin 파일, 7,000+ LOC
 - Tech stack: Kotlin 2.3.20, Jetpack Compose (BOM 2026.03), Hilt 2.56, Room 2.8.4, WorkManager
@@ -122,4 +123,4 @@ This document evolves at phase transitions and milestone boundaries.
 **v1.0 Roadmap archived to:** `.planning/milestones/v1.0-ROADMAP.md`
 
 ---
-*Last updated: 2026-03-30 — Phase 34 완료*
+*Last updated: 2026-03-30 — Phase 35 완료 (v4.0 마일스톤 완료)*
