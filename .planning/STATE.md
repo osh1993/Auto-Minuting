@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 34-whisper-01-PLAN.md
-last_updated: "2026-03-29T14:53:51.994Z"
-last_activity: 2026-03-29 -- Phase 34 execution started
+stopped_at: Phase 34 Plan 02 완료 — Whisper 전사 진행률 UI 연결
+last_updated: "2026-03-29T14:59:11.339Z"
+last_activity: 2026-03-29
 progress:
   total_phases: 35
-  completed_phases: 28
+  completed_phases: 29
   total_plans: 53
-  completed_plans: 49
+  completed_plans: 51
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Phase: 34 (Whisper 전사 진행률 표시) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 34
-Last activity: 2026-03-29 -- Phase 34 execution started
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-03-29
 
 ## Performance Metrics
 
@@ -68,6 +68,7 @@ Recent decisions affecting current work:
 - [Phase 31]: 성공 호출만 카운트: 429 재시도나 실패는 쿼터에 포함하지 않음
 - [Phase 33]: DashboardScreen 인라인 타이틀 제거, TopAppBar로 대체. 모든 화면 Scaffold+TopAppBar 통일
 - [Phase 34-whisper]: whisper.cpp progress_callback JNI 콜백: 같은 스레드이므로 GlobalRef 불필요, onProgress 기본값 = {} 로 하위 호환
+- [Phase 34]: Worker setProgress + 알림 동시 업데이트로 코드 중복 방지
 
 ### Roadmap Evolution
 
@@ -85,6 +86,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29T14:53:51.987Z
-Stopped at: Completed 34-whisper-01-PLAN.md
+Last session: 2026-03-29T14:59:11.331Z
+Stopped at: Phase 34 Plan 02 완료 — Whisper 전사 진행률 UI 연결
 Resume file: None

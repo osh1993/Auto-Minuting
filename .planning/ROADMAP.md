@@ -261,10 +261,10 @@ Plans:
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 33
-**Plans:** 0 plans
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 34 to break down)
+- [x] TBD (run /gsd:plan-phase 34 to break down) (completed 2026-03-29)
 
 ### Phase 35: 회의록 설정 구조 개편 (자동모드 이동, 직접 입력, 형식 제거)
 
