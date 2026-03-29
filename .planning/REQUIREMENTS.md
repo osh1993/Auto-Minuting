@@ -61,7 +61,7 @@ Requirements for v3.1 milestone. Each maps to roadmap phases.
 ### UX 개선 (v3.0 이관)
 
 - [x] **UX-01**: 회의록 목록에서 삭제, 공유 액션 메뉴를 사용할 수 있다
-- [ ] **UX-02**: 설정 메뉴가 정리되고 테스트 도구(spike) 코드가 삭제된다
+- [x] **UX-02**: 설정 메뉴가 정리되고 테스트 도구(spike) 코드가 삭제된다
 
 ## Future Requirements
 
@@ -105,7 +105,7 @@ Deferred to future release.
 | NAME-04 | Phase 26 | Complete |
 | UX-01 | Phase 26 | Complete |
 | DL-01 | Phase 27 | Complete |
-| UX-02 | Phase 28 | Pending |
+| UX-02 | Phase 28 | Complete |
 
 **Coverage:**
 
