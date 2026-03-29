@@ -93,6 +93,8 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val selectedFormat by viewModel.minutesFormat.collectAsStateWithLifecycle()
+    val templates by viewModel.templates.collectAsStateWithLifecycle()
+    val defaultTemplateId by viewModel.defaultTemplateId.collectAsStateWithLifecycle()
     val sttEngineType by viewModel.sttEngineType.collectAsStateWithLifecycle()
     val whisperModelState by viewModel.whisperModelState.collectAsStateWithLifecycle()
     val automationMode by viewModel.automationMode.collectAsStateWithLifecycle()
@@ -126,13 +128,76 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 회의록 형식
+                // 기본 프롬프트 템플릿
+                Text(
+                    text = "기본 프롬프트 템플릿",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "기본 템플릿을 설정하면 선택 없이 자동으로 해당 템플릿으로 생성됩니다",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // 기본 템플릿 드롭다운
+                var templateDropdownExpanded by remember { mutableStateOf(false) }
+                val selectedTemplateName = if (defaultTemplateId == 0L) {
+                    "매번 선택"
+                } else {
+                    templates.find { it.id == defaultTemplateId }?.name ?: "매번 선택"
+                }
+
+                ExposedDropdownMenuBox(
+                    expanded = templateDropdownExpanded,
+                    onExpandedChange = { templateDropdownExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = selectedTemplateName,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = templateDropdownExpanded)
+                        },
+                        modifier = Modifier
+                            .menuAnchor(type = androidx.compose.material3.ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = templateDropdownExpanded,
+                        onDismissRequest = { templateDropdownExpanded = false }
+                    ) {
+                        // "매번 선택" 옵션 (id = 0)
+                        DropdownMenuItem(
+                            text = { Text("매번 선택") },
+                            onClick = {
+                                viewModel.setDefaultTemplateId(0L)
+                                templateDropdownExpanded = false
+                            }
+                        )
+                        // 템플릿 목록
+                        templates.forEach { template ->
+                            DropdownMenuItem(
+                                text = { Text(template.name) },
+                                onClick = {
+                                    viewModel.setDefaultTemplateId(template.id)
+                                    templateDropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 회의록 형식 (폴백용)
                 Text(
                     text = "회의록 형식",
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = "기본 회의록 생성 형식을 선택합니다",
+                    text = "템플릿 미사용 시 기본 회의록 생성 형식",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

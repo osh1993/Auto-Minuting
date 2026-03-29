@@ -45,6 +45,7 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.ui.platform.LocalContext
 import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.PipelineStatus
+import com.autominuting.presentation.transcripts.ManualMinutesDialog
 import com.autominuting.util.NotebookLmHelper
 
 /**
@@ -58,11 +59,15 @@ fun DashboardScreen(
 ) {
     val activePipeline by viewModel.activePipeline.collectAsStateWithLifecycle()
     val automationMode by viewModel.automationMode.collectAsStateWithLifecycle()
+    val templates by viewModel.templates.collectAsStateWithLifecycle()
+    val defaultTemplateId by viewModel.defaultTemplateId.collectAsStateWithLifecycle()
     val downloadState by viewModel.downloadState.collectAsStateWithLifecycle()
     val plaudShareUrl by viewModel.plaudShareUrl.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     var urlText by remember { mutableStateOf("") }
+    // 하이브리드 모드에서 템플릿 선택 다이얼로그 표시 여부
+    var showPipelineTemplateDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -137,7 +142,13 @@ fun DashboardScreen(
                                     Text("무시")
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Button(onClick = { viewModel.generateMinutesForPipeline(meeting.id) }) {
+                                Button(onClick = {
+                                    if (defaultTemplateId > 0) {
+                                        viewModel.generateMinutesForPipeline(meeting.id)
+                                    } else {
+                                        showPipelineTemplateDialog = true
+                                    }
+                                }) {
                                     Text("회의록 생성")
                                 }
                             }
@@ -296,6 +307,27 @@ fun DashboardScreen(
 
         // 하단 여백
         Spacer(modifier = Modifier.height(16.dp))
+    }
+
+    // 하이브리드 모드 템플릿 선택 다이얼로그
+    if (showPipelineTemplateDialog) {
+        val pipelineMeeting = activePipeline
+        if (pipelineMeeting != null) {
+            ManualMinutesDialog(
+                meetingTitle = pipelineMeeting.title,
+                templates = templates,
+                isGenerating = false,
+                onGenerate = { templateId, customPrompt ->
+                    viewModel.generateMinutesForPipelineWithTemplate(
+                        pipelineMeeting.id, templateId, customPrompt
+                    )
+                    showPipelineTemplateDialog = false
+                },
+                onDismiss = { showPipelineTemplateDialog = false }
+            )
+        } else {
+            showPipelineTemplateDialog = false
+        }
     }
 }
 

@@ -11,7 +11,9 @@ import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.Meeting
 import com.autominuting.domain.model.PipelineStatus
+import com.autominuting.domain.model.PromptTemplate
 import com.autominuting.domain.repository.MeetingRepository
+import com.autominuting.domain.repository.PromptTemplateRepository
 import com.autominuting.worker.MinutesGenerationWorker
 import com.autominuting.worker.TranscriptionTriggerWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,6 +44,7 @@ import javax.inject.Inject
 class DashboardViewModel @Inject constructor(
     private val meetingRepository: MeetingRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
+    private val promptTemplateRepository: PromptTemplateRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -61,6 +64,22 @@ class DashboardViewModel @Inject constructor(
             initialValue = AutomationMode.FULL_AUTO
         )
 
+    /** 프롬프트 템플릿 목록 */
+    val templates: StateFlow<List<PromptTemplate>> = promptTemplateRepository.getAll()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
+    /** 기본 프롬프트 템플릿 ID (0 = 미설정, 매번 선택) */
+    val defaultTemplateId: StateFlow<Long> = userPreferencesRepository.defaultTemplateId
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = 0L
+        )
+
     /** 사용자가 "무시"한 파이프라인 ID 세트 */
     private val _dismissedPipelineIds = MutableStateFlow<Set<Long>>(emptySet())
 
@@ -77,22 +96,43 @@ class DashboardViewModel @Inject constructor(
 
     /**
      * 하이브리드 모드에서 전사 완료 후 회의록 생성을 시작한다.
-     * MinutesGenerationWorker를 enqueue한다.
+     * 기본 템플릿이 설정되어 있으면 해당 templateId를 전달한다.
      */
     fun generateMinutesForPipeline(meetingId: Long) {
         viewModelScope.launch {
-            val meeting = meetingRepository.getMeetingById(meetingId).first() ?: return@launch
-            if (meeting.transcriptPath == null) return@launch
-            val minutesFormat = userPreferencesRepository.getMinutesFormatOnce()
-            val workRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
-                .setInputData(workDataOf(
-                    MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
-                    MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to meeting.transcriptPath,
-                    MinutesGenerationWorker.KEY_MINUTES_FORMAT to minutesFormat.name
-                ))
-                .build()
-            WorkManager.getInstance(context).enqueue(workRequest)
+            val templateId = userPreferencesRepository.getDefaultTemplateIdOnce()
+            enqueueMinutesWorker(meetingId, templateId = if (templateId > 0) templateId else null)
         }
+    }
+
+    /**
+     * 다이얼로그에서 템플릿/커스텀 프롬프트 선택 후 회의록을 생성한다.
+     */
+    fun generateMinutesForPipelineWithTemplate(meetingId: Long, templateId: Long?, customPrompt: String?) {
+        viewModelScope.launch {
+            enqueueMinutesWorker(meetingId, templateId = templateId, customPrompt = customPrompt)
+        }
+    }
+
+    /** MinutesGenerationWorker enqueue 공통 헬퍼 */
+    private suspend fun enqueueMinutesWorker(
+        meetingId: Long,
+        templateId: Long? = null,
+        customPrompt: String? = null
+    ) {
+        val meeting = meetingRepository.getMeetingById(meetingId).first() ?: return
+        if (meeting.transcriptPath == null) return
+        val minutesFormat = userPreferencesRepository.getMinutesFormatOnce()
+        val workRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
+            .setInputData(workDataOf(
+                MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
+                MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to meeting.transcriptPath,
+                MinutesGenerationWorker.KEY_MINUTES_FORMAT to minutesFormat.name,
+                MinutesGenerationWorker.KEY_TEMPLATE_ID to (templateId ?: 0L),
+                MinutesGenerationWorker.KEY_CUSTOM_PROMPT to customPrompt
+            ))
+            .build()
+        WorkManager.getInstance(context).enqueue(workRequest)
     }
 
     /**

@@ -70,12 +70,16 @@ fun TranscriptsScreen(
     onEditClick: (Long) -> Unit = {}
 ) {
     val meetings by viewModel.meetings.collectAsState()
+    val templates by viewModel.templates.collectAsState()
+    val defaultTemplateId by viewModel.defaultTemplateId.collectAsState()
     val context = LocalContext.current
     var meetingToDelete by remember { mutableStateOf<Meeting?>(null) }
     // 이름 편집 다이얼로그에 표시할 대상 회의
     var meetingToRename by remember { mutableStateOf<Meeting?>(null) }
     // 회의록 재생성 확인 다이얼로그에 표시할 대상 회의
     var meetingToRegenerate by remember { mutableStateOf<Meeting?>(null) }
+    // 템플릿 선택 다이얼로그에 표시할 대상 회의 (기본 템플릿 미설정 시)
+    var meetingForTemplateSelect by remember { mutableStateOf<Meeting?>(null) }
 
     // RECORD_AUDIO 런타임 권한 요청 (재전사 시 필요)
     var pendingRetranscribeId by remember { mutableStateOf<Long?>(null) }
@@ -120,8 +124,20 @@ fun TranscriptsScreen(
                     onDeleteRequest = { id ->
                         meetingToDelete = meetings.find { it.id == id }
                     },
-                    onGenerateMinutes = { id -> viewModel.generateMinutes(id) },
-                    onRegenerateMinutes = { m -> meetingToRegenerate = m },
+                    onGenerateMinutes = { id ->
+                        if (defaultTemplateId > 0) {
+                            viewModel.generateMinutes(id)
+                        } else {
+                            meetingForTemplateSelect = meetings.find { it.id == id }
+                        }
+                    },
+                    onRegenerateMinutes = { m ->
+                        if (defaultTemplateId > 0) {
+                            meetingToRegenerate = m // 재생성 확인 다이얼로그 표시
+                        } else {
+                            meetingForTemplateSelect = m // 템플릿 선택 다이얼로그로 직접 이동
+                        }
+                    },
                     onRetranscribe = { id ->
                         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
                             == PackageManager.PERMISSION_GRANTED
@@ -190,7 +206,7 @@ fun TranscriptsScreen(
         )
     }
 
-    // 회의록 재생성 확인 대화상자
+    // 회의록 재생성 확인 대화상자 (기본 템플릿 설정 시)
     meetingToRegenerate?.let { meeting ->
         AlertDialog(
             onDismissRequest = { meetingToRegenerate = null },
@@ -207,6 +223,20 @@ fun TranscriptsScreen(
             dismissButton = {
                 TextButton(onClick = { meetingToRegenerate = null }) { Text("취소") }
             }
+        )
+    }
+
+    // 템플릿 선택 다이얼로그 (기본 템플릿 미설정 시)
+    meetingForTemplateSelect?.let { meeting ->
+        ManualMinutesDialog(
+            meetingTitle = meeting.title,
+            templates = templates,
+            isGenerating = false,
+            onGenerate = { templateId, customPrompt ->
+                viewModel.generateMinutesWithTemplate(meeting.id, templateId, customPrompt)
+                meetingForTemplateSelect = null
+            },
+            onDismiss = { meetingForTemplateSelect = null }
         )
     }
 }

@@ -11,7 +11,9 @@ import androidx.work.workDataOf
 import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.domain.model.Meeting
 import com.autominuting.domain.model.PipelineStatus
+import com.autominuting.domain.model.PromptTemplate
 import com.autominuting.domain.repository.MeetingRepository
+import com.autominuting.domain.repository.PromptTemplateRepository
 import com.autominuting.worker.MinutesGenerationWorker
 import com.autominuting.worker.TranscriptionTriggerWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,6 +36,7 @@ import javax.inject.Inject
 class TranscriptsViewModel @Inject constructor(
     private val meetingRepository: MeetingRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
+    private val promptTemplateRepository: PromptTemplateRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -48,6 +51,22 @@ class TranscriptsViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
+        )
+
+    /** 프롬프트 템플릿 목록 */
+    val templates: StateFlow<List<PromptTemplate>> = promptTemplateRepository.getAll()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
+    /** 기본 프롬프트 템플릿 ID (0 = 미설정, 매번 선택) */
+    val defaultTemplateId: StateFlow<Long> = userPreferencesRepository.defaultTemplateId
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = 0L
         )
 
     /** 전사 항목의 제목을 변경한다. */
@@ -71,37 +90,70 @@ class TranscriptsViewModel @Inject constructor(
 
     /**
      * 수동 회의록 생성을 트리거한다.
-     * Meeting의 transcriptPath를 기반으로 MinutesGenerationWorker를 enqueue한다.
+     * 기본 템플릿이 설정되어 있으면(> 0) 바로 Worker를 enqueue하고,
+     * 미설정(0)이면 호출측에서 다이얼로그를 표시해야 한다.
      *
      * @param meetingId 회의록을 생성할 Meeting의 ID
+     * @return true이면 Worker가 enqueue됨, false이면 다이얼로그 표시 필요
      */
     fun generateMinutes(meetingId: Long) {
         viewModelScope.launch {
-            val meeting = meetingRepository.getMeetingById(meetingId).first()
-            if (meeting == null) {
-                Log.w(TAG, "회의를 찾을 수 없습니다: meetingId=$meetingId")
-                return@launch
+            val templateId = userPreferencesRepository.getDefaultTemplateIdOnce()
+            if (templateId > 0) {
+                // 기본 템플릿이 설정되어 있으면 바로 생성
+                enqueueMinutesWorker(meetingId, templateId = templateId)
+            } else {
+                // 기본 템플릿 미설정 → 기존 minutesFormat 폴백으로 바로 생성
+                enqueueMinutesWorker(meetingId)
             }
-            if (meeting.transcriptPath == null) {
-                Log.w(TAG, "전사 파일 경로가 없습니다: meetingId=$meetingId")
-                return@launch
-            }
-
-            val minutesFormat = userPreferencesRepository.getMinutesFormatOnce()
-
-            val workRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
-                .setInputData(
-                    workDataOf(
-                        MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
-                        MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to meeting.transcriptPath,
-                        MinutesGenerationWorker.KEY_MINUTES_FORMAT to minutesFormat.name
-                    )
-                )
-                .build()
-
-            WorkManager.getInstance(context).enqueue(workRequest)
-            Log.d(TAG, "회의록 생성 Worker enqueue 완료: meetingId=$meetingId, format=$minutesFormat")
         }
+    }
+
+    /**
+     * ManualMinutesDialog에서 템플릿/커스텀 프롬프트를 선택한 후 호의록을 생성한다.
+     *
+     * @param meetingId 회의록을 생성할 Meeting의 ID
+     * @param templateId 선택된 프롬프트 템플릿 ID (null이면 미선택)
+     * @param customPrompt 직접 입력한 커스텀 프롬프트 (null이면 미입력)
+     */
+    fun generateMinutesWithTemplate(meetingId: Long, templateId: Long?, customPrompt: String?) {
+        viewModelScope.launch {
+            enqueueMinutesWorker(meetingId, templateId = templateId, customPrompt = customPrompt)
+        }
+    }
+
+    /** MinutesGenerationWorker를 enqueue하는 공통 헬퍼 */
+    private suspend fun enqueueMinutesWorker(
+        meetingId: Long,
+        templateId: Long? = null,
+        customPrompt: String? = null
+    ) {
+        val meeting = meetingRepository.getMeetingById(meetingId).first()
+        if (meeting == null) {
+            Log.w(TAG, "회의를 찾을 수 없습니다: meetingId=$meetingId")
+            return
+        }
+        if (meeting.transcriptPath == null) {
+            Log.w(TAG, "전사 파일 경로가 없습니다: meetingId=$meetingId")
+            return
+        }
+
+        val minutesFormat = userPreferencesRepository.getMinutesFormatOnce()
+
+        val workRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
+            .setInputData(
+                workDataOf(
+                    MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
+                    MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to meeting.transcriptPath,
+                    MinutesGenerationWorker.KEY_MINUTES_FORMAT to minutesFormat.name,
+                    MinutesGenerationWorker.KEY_TEMPLATE_ID to (templateId ?: 0L),
+                    MinutesGenerationWorker.KEY_CUSTOM_PROMPT to customPrompt
+                )
+            )
+            .build()
+
+        WorkManager.getInstance(context).enqueue(workRequest)
+        Log.d(TAG, "회의록 생성 Worker enqueue 완료: meetingId=$meetingId, templateId=$templateId")
     }
 
     /**

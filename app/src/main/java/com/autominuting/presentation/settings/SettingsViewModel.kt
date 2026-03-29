@@ -13,7 +13,9 @@ import com.autominuting.data.security.SecureApiKeyRepository
 import com.autominuting.data.stt.WhisperModelManager
 import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.MinutesFormat
+import com.autominuting.domain.model.PromptTemplate
 import com.autominuting.domain.model.SttEngineType
+import com.autominuting.domain.repository.PromptTemplateRepository
 import com.google.ai.client.generativeai.GenerativeModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,7 +44,8 @@ class SettingsViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val secureApiKeyRepository: SecureApiKeyRepository,
     private val googleAuthRepository: GoogleAuthRepository,
-    private val whisperModelManager: WhisperModelManager
+    private val whisperModelManager: WhisperModelManager,
+    private val promptTemplateRepository: PromptTemplateRepository
 ) : ViewModel() {
 
     companion object {
@@ -83,6 +86,22 @@ class SettingsViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = AuthMode.API_KEY
+        )
+
+    /** 프롬프트 템플릿 목록 */
+    val templates: StateFlow<List<PromptTemplate>> = promptTemplateRepository.getAll()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
+    /** 기본 프롬프트 템플릿 ID (0 = 미설정, 매번 선택) */
+    val defaultTemplateId: StateFlow<Long> = userPreferencesRepository.defaultTemplateId
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = 0L
         )
 
     /** Google 인증 상태 */
@@ -137,6 +156,13 @@ class SettingsViewModel @Inject constructor(
     /** Whisper 모델을 삭제한다. */
     fun deleteWhisperModel() {
         whisperModelManager.deleteModel()
+    }
+
+    /** 기본 프롬프트 템플릿을 변경한다. */
+    fun setDefaultTemplateId(id: Long) {
+        viewModelScope.launch {
+            userPreferencesRepository.setDefaultTemplateId(id)
+        }
     }
 
     /** 자동화 모드를 변경한다. */
