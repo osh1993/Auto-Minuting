@@ -2,6 +2,7 @@ package com.autominuting.presentation.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,6 +58,28 @@ import com.autominuting.domain.model.MinutesFormat
 import com.autominuting.domain.model.SttEngineType
 
 /**
+ * 설정 섹션 헤더 + 콘텐츠를 그룹화하는 재사용 가능한 composable.
+ *
+ * @param title 섹션 헤더 텍스트
+ * @param content 섹션 내부 콘텐츠
+ */
+@Composable
+private fun SettingsSection(
+    title: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary
+    )
+    Spacer(modifier = Modifier.height(12.dp))
+    content()
+    Spacer(modifier = Modifier.height(8.dp))
+    HorizontalDivider()
+}
+
+/**
  * 설정 화면.
  * 회의록 형식 선택, 자동화 모드 토글, Gemini 인증 모드(API 키/OAuth) 선택,
  * Google 로그인/로그아웃 UI를 제공한다.
@@ -91,277 +114,270 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            // 프롬프트 템플릿 관리
-            OutlinedButton(
-                onClick = onNavigateToTemplates,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("프롬프트 템플릿 관리")
+            // === 회의록 설정 섹션 ===
+            SettingsSection(title = "회의록 설정") {
+                // 프롬프트 템플릿 관리
+                OutlinedButton(
+                    onClick = onNavigateToTemplates,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("프롬프트 템플릿 관리")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 회의록 형식
+                Text(
+                    text = "회의록 형식",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "기본 회의록 생성 형식을 선택합니다",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // 형식 드롭다운
+                var expanded by remember { mutableStateOf(false) }
+                val formatLabels = mapOf(
+                    MinutesFormat.STRUCTURED to "구조화된 회의록",
+                    MinutesFormat.SUMMARY to "요약",
+                    MinutesFormat.ACTION_ITEMS to "액션 아이템"
+                )
+
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = formatLabels[selectedFormat] ?: "",
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                        },
+                        modifier = Modifier
+                            .menuAnchor(type = androidx.compose.material3.ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        MinutesFormat.entries.forEach { format ->
+                            DropdownMenuItem(
+                                text = { Text(formatLabels[format] ?: format.name) },
+                                onClick = {
+                                    viewModel.setMinutesFormat(format)
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // 회의록 형식 섹션
-            Text(
-                text = "회의록 형식",
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = "기본 회의록 생성 형식을 선택합니다",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // 형식 드롭다운
-            var expanded by remember { mutableStateOf(false) }
-            val formatLabels = mapOf(
-                MinutesFormat.STRUCTURED to "구조화된 회의록",
-                MinutesFormat.SUMMARY to "요약",
-                MinutesFormat.ACTION_ITEMS to "액션 아이템"
-            )
-
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = it }
-            ) {
-                OutlinedTextField(
-                    value = formatLabels[selectedFormat] ?: "",
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                    },
-                    modifier = Modifier
-                        .menuAnchor(type = androidx.compose.material3.ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                        .fillMaxWidth()
-                )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
+            // === 전사 설정 섹션 ===
+            SettingsSection(title = "전사 설정") {
+                // 자동화 모드
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    MinutesFormat.entries.forEach { format ->
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "완전 자동 모드",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = "오디오 감지부터 회의록 생성까지 자동 진행",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Switch(
+                        checked = automationMode == AutomationMode.FULL_AUTO,
+                        onCheckedChange = { isAuto ->
+                            viewModel.setAutomationMode(
+                                if (isAuto) AutomationMode.FULL_AUTO else AutomationMode.HYBRID
+                            )
+                        }
+                    )
+                }
+
+                if (automationMode == AutomationMode.HYBRID) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "하이브리드 모드: 전사 완료 후 확인을 거쳐 회의록 생성",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // STT 엔진
+                Text(
+                    text = "STT 엔진",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "음성을 텍스트로 변환할 엔진을 선택합니다",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // STT 엔진 드롭다운
+                var sttDropdownExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = sttDropdownExpanded,
+                    onExpandedChange = { sttDropdownExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = when (sttEngineType) {
+                            SttEngineType.GEMINI -> "Gemini STT (클라우드)"
+                            SttEngineType.WHISPER -> "Whisper (온디바이스)"
+                        },
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sttDropdownExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = sttDropdownExpanded,
+                        onDismissRequest = { sttDropdownExpanded = false }
+                    ) {
                         DropdownMenuItem(
-                            text = { Text(formatLabels[format] ?: format.name) },
+                            text = { Text("Gemini STT (클라우드)") },
                             onClick = {
-                                viewModel.setMinutesFormat(format)
-                                expanded = false
+                                viewModel.setSttEngineType(SttEngineType.GEMINI)
+                                sttDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Whisper (온디바이스)") },
+                            onClick = {
+                                viewModel.setSttEngineType(SttEngineType.WHISPER)
+                                sttDropdownExpanded = false
                             }
                         )
                     }
                 }
-            }
 
-            // 자동화 모드 섹션
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "자동화 모드",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "완전 자동 모드",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        text = "오디오 감지부터 회의록 생성까지 자동 진행",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Switch(
-                    checked = automationMode == AutomationMode.FULL_AUTO,
-                    onCheckedChange = { isAuto ->
-                        viewModel.setAutomationMode(
-                            if (isAuto) AutomationMode.FULL_AUTO else AutomationMode.HYBRID
+                // Whisper 모델 관리
+                Spacer(modifier = Modifier.height(12.dp))
+                when (val state = whisperModelState) {
+                    is WhisperModelManager.ModelState.NotDownloaded -> {
+                        Text(
+                            text = "Whisper 모델 미설치 (~500MB 다운로드 필요)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        FilledTonalButton(onClick = { viewModel.downloadWhisperModel() }) {
+                            Text("모델 다운로드")
+                        }
+                    }
+                    is WhisperModelManager.ModelState.Downloading -> {
+                        Text(
+                            text = "모델 다운로드 중... ${(state.progress * 100).toInt()}%",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        LinearProgressIndicator(
+                            progress = { state.progress },
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
-                )
+                    is WhisperModelManager.ModelState.Ready -> {
+                        Text(
+                            text = "Whisper 모델 설치 완료",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedButton(onClick = { viewModel.deleteWhisperModel() }) {
+                            Text("모델 삭제")
+                        }
+                    }
+                    is WhisperModelManager.ModelState.Error -> {
+                        Text(
+                            text = state.message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        FilledTonalButton(onClick = { viewModel.downloadWhisperModel() }) {
+                            Text("다시 시도")
+                        }
+                    }
+                }
             }
 
-            if (automationMode == AutomationMode.HYBRID) {
-                Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // === 인증 섹션 ===
+            SettingsSection(title = "인증") {
                 Text(
-                    text = "하이브리드 모드: 전사 완료 후 확인을 거쳐 회의록 생성",
+                    text = "Gemini API 호출 시 사용할 인증 방식을 선택합니다",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.tertiary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
 
-            // --- STT 엔진 선택 섹션 ---
-            Spacer(modifier = Modifier.height(24.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-            Text(
-                text = "STT 엔진",
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = "음성을 텍스트로 변환할 엔진을 선택합니다",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // STT 엔진 드롭다운
-            var sttDropdownExpanded by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-                expanded = sttDropdownExpanded,
-                onExpandedChange = { sttDropdownExpanded = it }
-            ) {
-                OutlinedTextField(
-                    value = when (sttEngineType) {
-                        SttEngineType.GEMINI -> "Gemini STT (클라우드)"
-                        SttEngineType.WHISPER -> "Whisper (온디바이스)"
-                    },
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sttDropdownExpanded) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor()
-                )
-                ExposedDropdownMenu(
-                    expanded = sttDropdownExpanded,
-                    onDismissRequest = { sttDropdownExpanded = false }
+                // 인증 모드 RadioButton
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    DropdownMenuItem(
-                        text = { Text("Gemini STT (클라우드)") },
-                        onClick = {
-                            viewModel.setSttEngineType(SttEngineType.GEMINI)
-                            sttDropdownExpanded = false
-                        }
+                    RadioButton(
+                        selected = authMode == AuthMode.API_KEY,
+                        onClick = { viewModel.setAuthMode(AuthMode.API_KEY) }
                     )
-                    DropdownMenuItem(
-                        text = { Text("Whisper (온디바이스)") },
-                        onClick = {
-                            viewModel.setSttEngineType(SttEngineType.WHISPER)
-                            sttDropdownExpanded = false
-                        }
-                    )
-                }
-            }
-
-            // Whisper 모델 관리 (항상 표시하되, WHISPER 선택 시 강조)
-            Spacer(modifier = Modifier.height(12.dp))
-            when (val state = whisperModelState) {
-                is WhisperModelManager.ModelState.NotDownloaded -> {
                     Text(
-                        text = "Whisper 모델 미설치 (~500MB 다운로드 필요)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "API 키",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(end = 24.dp)
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    FilledTonalButton(onClick = { viewModel.downloadWhisperModel() }) {
-                        Text("모델 다운로드")
-                    }
-                }
-                is WhisperModelManager.ModelState.Downloading -> {
+
+                    RadioButton(
+                        selected = authMode == AuthMode.OAUTH,
+                        onClick = { viewModel.setAuthMode(AuthMode.OAUTH) }
+                    )
                     Text(
-                        text = "모델 다운로드 중... ${(state.progress * 100).toInt()}%",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    LinearProgressIndicator(
-                        progress = { state.progress },
-                        modifier = Modifier.fillMaxWidth()
+                        text = "Google 계정",
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
-                is WhisperModelManager.ModelState.Ready -> {
-                    Text(
-                        text = "Whisper 모델 설치 완료",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 인증 모드별 UI
+                if (authMode == AuthMode.OAUTH) {
+                    // OAuth Client ID 입력
+                    OAuthClientIdSection(viewModel = viewModel)
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Google 계정 (OAuth)
+                    GoogleAccountSection(
+                        authState = authState,
+                        onSignIn = { viewModel.signInWithGoogle(context) },
+                        onSignOut = { viewModel.signOut() }
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    OutlinedButton(onClick = { viewModel.deleteWhisperModel() }) {
-                        Text("모델 삭제")
-                    }
+                } else {
+                    // API 키
+                    ApiKeySection(viewModel = viewModel)
                 }
-                is WhisperModelManager.ModelState.Error -> {
-                    Text(
-                        text = state.message,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    FilledTonalButton(onClick = { viewModel.downloadWhisperModel() }) {
-                        Text("다시 시도")
-                    }
-                }
-            }
-
-            // --- Gemini 인증 모드 섹션 ---
-            Spacer(modifier = Modifier.height(24.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Gemini 인증",
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = "Gemini API 호출 시 사용할 인증 방식을 선택합니다",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 인증 모드 RadioButton
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                RadioButton(
-                    selected = authMode == AuthMode.API_KEY,
-                    onClick = { viewModel.setAuthMode(AuthMode.API_KEY) }
-                )
-                Text(
-                    text = "API 키",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(end = 24.dp)
-                )
-
-                RadioButton(
-                    selected = authMode == AuthMode.OAUTH,
-                    onClick = { viewModel.setAuthMode(AuthMode.OAUTH) }
-                )
-                Text(
-                    text = "Google 계정",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 인증 모드별 UI
-            if (authMode == AuthMode.OAUTH) {
-                // --- OAuth Client ID 입력 섹션 ---
-                OAuthClientIdSection(viewModel = viewModel)
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // --- Google 계정 (OAuth) 섹션 ---
-                GoogleAccountSection(
-                    authState = authState,
-                    onSignIn = { viewModel.signInWithGoogle(context) },
-                    onSignOut = { viewModel.signOut() }
-                )
-            } else {
-                // --- API 키 섹션 ---
-                ApiKeySection(viewModel = viewModel)
             }
 
         }
