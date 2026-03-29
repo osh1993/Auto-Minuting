@@ -252,6 +252,6 @@ Plans:
 | 28. 설정 정리 | v3.1 | 1/1 | Complete    | 2026-03-29 |
 | 29. 전사 카드 UX 개선 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 30. 프롬프트 템플릿 선택 | v4.0 | 1/1 | Complete    | 2026-03-29 |
-| 31. Gemini 쿼터 관리 | v4.0 | 1/1 | Complete   | 2026-03-29 |
+| 31. Gemini 쿼터 관리 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 32. Plaud 공유 링크 수신 | v4.0 | 0/1 | Not started | - |
 | 33. GUI 일관성 개선 | v4.0 | 0/1 | Not started | - |
