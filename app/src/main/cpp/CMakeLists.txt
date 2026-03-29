@@ -60,6 +60,7 @@ target_compile_options(whisper_lib PRIVATE
     -DNDEBUG
     -fPIC
     -pthread
+    -march=armv8-a+dotprod+fp16
 )
 
 # JNI 브릿지

@@ -19,9 +19,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Whisper 모델 파일(ggml-small.bin) 다운로드 및 관리.
+ * Whisper 모델 파일(ggml-small-q5_1.bin) 다운로드 및 관리.
  *
- * 모델은 약 500MB로 APK에 번들할 수 없어 최초 사용 시 다운로드한다.
+ * 모델은 약 200MB(q5_1 양자화)로 APK에 번들할 수 없어 최초 사용 시 다운로드한다.
  * HuggingFace에서 OkHttp로 직접 다운로드하며 진행률을 StateFlow로 제공한다.
  */
 @Singleton
@@ -31,9 +31,9 @@ class WhisperModelManager @Inject constructor(
     companion object {
         private const val TAG = "WhisperModelManager"
         private const val MODEL_DIR = "models"
-        private const val MODEL_FILE = "ggml-small.bin"
+        private const val MODEL_FILE = "ggml-small-q5_1.bin"
         private const val MODEL_URL =
-            "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin"
+            "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q5_1.bin"
         /** 다운로드 중 사용할 임시 파일 확장자 */
         private const val TEMP_SUFFIX = ".downloading"
     }

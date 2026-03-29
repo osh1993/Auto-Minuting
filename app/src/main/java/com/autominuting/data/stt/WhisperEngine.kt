@@ -12,7 +12,7 @@ import javax.inject.Singleton
 /**
  * whisper.cpp JNI 래퍼를 통한 온디바이스 STT 엔진.
  *
- * Whisper small 모델(ggml-small.bin)을 사용하여 한국어 음성을 텍스트로 전사한다.
+ * Whisper small 양자화 모델(ggml-small-q5_1.bin)을 사용하여 한국어 음성을 텍스트로 전사한다.
  * 네이티브 라이브러리가 로드되지 않으면 스텁 모드로 동작하여 Result.failure()를 반환한다.
  * (Phase 3의 NiceBuildSdkWrapper 스텁 패턴과 동일 — per D-08)
  *
@@ -31,7 +31,7 @@ class WhisperEngine @Inject constructor(
 
         /** 모델 파일 경로 (앱 내부 저장소) */
         private const val MODEL_DIR = "models"
-        private const val MODEL_FILE = "ggml-small.bin"
+        private const val MODEL_FILE = "ggml-small-q5_1.bin"
 
         /** Whisper 파라미터 */
         private const val LANGUAGE = "ko"
