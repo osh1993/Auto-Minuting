@@ -71,8 +71,8 @@ Requirements for v4.0 milestone. Each maps to roadmap phases.
 
 - [x] **PIPE-01**: 하이브리드 모드에서 전사 완료 시 대시보드에 "회의록 생성" 확인 버튼이 표시된다
 - [x] **PIPE-02**: 전사 카드의 "회의록 작성/재생성" 버튼이 MoreVert 드롭다운 메뉴 안으로 이동한다
-- [ ] **PIPE-03**: 회의록 생성 시 프롬프트 템플릿을 선택할 수 있는 다이얼로그가 표시된다
-- [ ] **PIPE-04**: 설정에서 기본 프롬프트 템플릿을 지정하면 선택 없이 자동으로 해당 템플릿으로 생성된다
+- [x] **PIPE-03**: 회의록 생성 시 프롬프트 템플릿을 선택할 수 있는 다이얼로그가 표시된다
+- [x] **PIPE-04**: 설정에서 기본 프롬프트 템플릿을 지정하면 선택 없이 자동으로 해당 템플릿으로 생성된다
 
 ### 쿼터 관리 (Quota)
 
@@ -135,8 +135,8 @@ Deferred to future release.
 | UX-02 | Phase 28 | Complete |
 | PIPE-01 | Phase 29 | Complete |
 | PIPE-02 | Phase 29 | Complete |
-| PIPE-03 | Phase 30 | Pending |
-| PIPE-04 | Phase 30 | Pending |
+| PIPE-03 | Phase 30 | Complete |
+| PIPE-04 | Phase 30 | Complete |
 | QUOTA-01 | Phase 31 | Pending |
 | QUOTA-02 | Phase 31 | Pending |
 | SHARE-01 | Phase 32 | Pending |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Phase 29 Plan 01 완료 — 전사 카드 UX 개선
-last_updated: "2026-03-29T09:01:08.762Z"
+stopped_at: Phase 30 Plan 01 완료 — 프롬프트 템플릿 선택
+last_updated: "2026-03-29T09:14:13.169Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 33
-  completed_phases: 24
-  total_plans: 47
-  completed_plans: 45
+  completed_phases: 25
+  total_plans: 48
+  completed_plans: 46
 ---
 
 # Project State
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다.
-**Current focus:** Phase 29 — 전사 카드 UX 개선
+**Current focus:** Phase 30 — 프롬프트 템플릿 선택
 
 ## Current Position
 
-Phase: 30
-Plan: Not started
+Phase: 30 (프롬프트 템플릿 선택) — EXECUTING
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-03-29
 
@@ -62,6 +62,7 @@ Recent decisions affecting current work:
 - [GSD 외부]: Whisper NDK 빌드 완료 (whisper.cpp submodule + CMake + JNI 브릿지)
 - [GSD 외부]: 재전사 실패 시 진행 중 상태(TRANSCRIBING) 복원 방지 → TRANSCRIBED로 안전 복원
 - [Phase 29]: dismissed 파이프라인 ID를 MutableStateFlow로 관리 + 하이브리드 배너 CheckCircle 아이콘
+- [Phase 30]: 프롬프트 해결 우선순위: customPrompt > templateId > minutesFormat 폴백
 
 ### Pending Todos
 
@@ -74,6 +75,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29T09:00:38.385Z
-Stopped at: Phase 29 Plan 01 완료 — 전사 카드 UX 개선
+Last session: 2026-03-29T09:14:13.163Z
+Stopped at: Phase 30 Plan 01 완료 — 프롬프트 템플릿 선택
 Resume file: None
