@@ -196,10 +196,10 @@ Plans:
   1. 대시보드에서 Gemini Free 쿼터의 현재 사용량과 잔여량을 확인할 수 있다
   2. 쿼터 사용량이 90%를 초과하면 알림(Snackbar 또는 배너)이 표시된다
   3. 쿼터 표시가 전사(STT)와 회의록 생성(Minutes) 호출을 구분하여 보여준다
-**Plans**: 1 plan
+**Plans:** 1 plan
 
 Plans:
-- [ ] 29-01-PLAN.md — 대시보드 하이브리드 확인 플로우 + 전사 카드 회의록 버튼 메뉴 이동
+- [ ] 31-01-PLAN.md — GeminiQuotaTracker 데이터 레이어 + 대시보드 쿼터 위젯 + 90% 경고 배너
 
 **UI hint**: yes
 
@@ -214,7 +214,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 29-01-PLAN.md — 대시보드 하이브리드 확인 플로우 + 전사 카드 회의록 버튼 메뉴 이동
+- [ ] 32-01-PLAN.md — Plaud 공유 링크 수신 + WebView 오디오 추출 + 전사 파이프라인 진입
 
 ### Phase 33: GUI 일관성 개선
 **Goal**: 앱 전반의 GUI가 일관되고 접근성 표준을 준수한다
@@ -228,7 +228,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 29-01-PLAN.md — 대시보드 하이브리드 확인 플로우 + 전사 카드 회의록 버튼 메뉴 이동
+- [ ] 33-01-PLAN.md — TopAppBar 추가 + contentDescription + 빈 상태 통일 + 날짜 포맷 통일
 
 **UI hint**: yes
 
@@ -252,6 +252,6 @@ Plans:
 | 28. 설정 정리 | v3.1 | 1/1 | Complete    | 2026-03-29 |
 | 29. 전사 카드 UX 개선 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 30. 프롬프트 템플릿 선택 | v4.0 | 1/1 | Complete    | 2026-03-29 |
-| 31. Gemini 쿼터 관리 | v4.0 | 0/? | Not started | - |
-| 32. Plaud 공유 링크 수신 | v4.0 | 0/? | Not started | - |
-| 33. GUI 일관성 개선 | v4.0 | 0/? | Not started | - |
+| 31. Gemini 쿼터 관리 | v4.0 | 0/1 | Not started | - |
+| 32. Plaud 공유 링크 수신 | v4.0 | 0/1 | Not started | - |
+| 33. GUI 일관성 개선 | v4.0 | 0/1 | Not started | - |
