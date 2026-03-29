@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 34 Plan 02 완료 — Whisper 전사 진행률 UI 연결
-last_updated: "2026-03-29T15:03:50.527Z"
+stopped_at: Phase 35 Plan 01 완료 — MinutesFormat 제거 및 설정 구조 개편
+last_updated: "2026-03-29T18:57:36.434Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 35
@@ -69,6 +69,8 @@ Recent decisions affecting current work:
 - [Phase 33]: DashboardScreen 인라인 타이틀 제거, TopAppBar로 대체. 모든 화면 Scaffold+TopAppBar 통일
 - [Phase 34-whisper]: whisper.cpp progress_callback JNI 콜백: 같은 스레드이므로 GlobalRef 불필요, onProgress 기본값 = {} 로 하위 호환
 - [Phase 34]: Worker setProgress + 알림 동시 업데이트로 코드 중복 방지
+- [Phase 35]: MinutesFormat enum 전면 제거, PromptTemplate 시스템이 완전 대체
+- [Phase 35]: 자동모드 Switch를 회의록 설정 섹션으로 이동 (의미적 일관성)
 
 ### Roadmap Evolution
 
@@ -86,6 +88,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29T14:59:11.331Z
-Stopped at: Phase 34 Plan 02 완료 — Whisper 전사 진행률 UI 연결
+Last session: 2026-03-29T18:57:36.427Z
+Stopped at: Phase 35 Plan 01 완료 — MinutesFormat 제거 및 설정 구조 개편
 Resume file: None

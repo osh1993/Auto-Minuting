@@ -1,7 +1,5 @@
 package com.autominuting.data.minutes
 
-import com.autominuting.domain.model.MinutesFormat
-
 /**
  * 회의록 생성 엔진의 공통 인터페이스.
  *
@@ -16,13 +14,11 @@ interface MinutesEngine {
      * 전사 텍스트를 받아 구조화된 회의록을 생성한다.
      *
      * @param transcriptText 전사된 회의 텍스트
-     * @param format 회의록 출력 형식 (기본값: STRUCTURED)
-     * @param customPrompt 사용자 정의 프롬프트 (non-null이면 format 무시)
+     * @param customPrompt 사용자 정의 프롬프트 (non-null이면 기본 프롬프트 대신 사용)
      * @return 성공 시 Markdown 형식의 회의록, 실패 시 예외를 포함한 Result
      */
     suspend fun generate(
         transcriptText: String,
-        format: MinutesFormat = MinutesFormat.STRUCTURED,
         customPrompt: String? = null
     ): Result<String>
 

@@ -2,7 +2,6 @@ package com.autominuting.data.minutes
 
 import android.util.Log
 import com.autominuting.data.auth.GoogleAuthRepository
-import com.autominuting.domain.model.MinutesFormat
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -30,12 +29,11 @@ class GeminiOAuthEngine @Inject constructor(
      * 전사 텍스트를 Gemini REST API에 전달하여 회의록을 생성한다.
      *
      * @param transcriptText 전사된 회의 텍스트
-     * @param format 회의록 출력 형식
+     * @param customPrompt 사용자 정의 프롬프트 (null이면 STRUCTURED 기본 사용)
      * @return 성공 시 Markdown 형식의 회의록, 실패 시 예외를 포함한 Result
      */
     override suspend fun generate(
         transcriptText: String,
-        format: MinutesFormat,
         customPrompt: String?
     ): Result<String> {
         if (!isAvailable()) {
@@ -50,11 +48,7 @@ class GeminiOAuthEngine @Inject constructor(
             val prompt = if (customPrompt != null) {
                 customPrompt + "\n\n---\n\n## 회의 전사 텍스트\n\n" + transcriptText
             } else {
-                when (format) {
-                    MinutesFormat.STRUCTURED -> MinutesPrompts.STRUCTURED
-                    MinutesFormat.SUMMARY -> MinutesPrompts.SUMMARY
-                    MinutesFormat.ACTION_ITEMS -> MinutesPrompts.ACTION_ITEMS
-                } + transcriptText
+                MinutesPrompts.STRUCTURED + transcriptText
             }
 
             val request = GenerateContentRequest(

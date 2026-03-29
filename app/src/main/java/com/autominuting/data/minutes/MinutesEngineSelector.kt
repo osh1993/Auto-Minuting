@@ -3,7 +3,6 @@ package com.autominuting.data.minutes
 import android.util.Log
 import com.autominuting.data.auth.AuthMode
 import com.autominuting.data.preferences.UserPreferencesRepository
-import com.autominuting.domain.model.MinutesFormat
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Provider
@@ -31,12 +30,11 @@ class MinutesEngineSelector @Inject constructor(
      */
     override suspend fun generate(
         transcriptText: String,
-        format: MinutesFormat,
         customPrompt: String?
     ): Result<String> {
         val engine = selectEngine()
         Log.d(TAG, "선택된 엔진: ${engine.engineName()}")
-        return engine.generate(transcriptText, format, customPrompt)
+        return engine.generate(transcriptText, customPrompt)
     }
 
     override fun engineName(): String = "MinutesEngineSelector"

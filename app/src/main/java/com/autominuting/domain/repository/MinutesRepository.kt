@@ -1,6 +1,5 @@
 package com.autominuting.domain.repository
 
-import com.autominuting.domain.model.MinutesFormat
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -14,11 +13,11 @@ interface MinutesRepository {
     /**
      * 전사 텍스트로부터 회의록을 생성한다.
      * @param transcriptText 전사된 회의 텍스트
+     * @param customPrompt 사용자 정의 프롬프트 (null이면 기본 STRUCTURED 프롬프트 사용)
      * @return 성공 시 생성된 회의록 텍스트, 실패 시 예외를 포함한 Result
      */
     suspend fun generateMinutes(
         transcriptText: String,
-        format: MinutesFormat = MinutesFormat.STRUCTURED,
         customPrompt: String? = null
     ): Result<String>
 

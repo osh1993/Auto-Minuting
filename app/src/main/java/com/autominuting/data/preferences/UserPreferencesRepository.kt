@@ -7,7 +7,6 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.autominuting.data.auth.AuthMode
 import com.autominuting.domain.model.AutomationMode
-import com.autominuting.domain.model.MinutesFormat
 import com.autominuting.domain.model.SttEngineType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -18,8 +17,8 @@ import javax.inject.Singleton
 /**
  * 사용자 설정을 DataStore로 관리하는 Repository.
  *
- * 회의록 형식(MinutesFormat), 자동화 모드(AutomationMode),
- * 인증 모드(AuthMode), Google 계정 정보를 Flow로 관찰하거나 즉시 조회할 수 있다.
+ * 자동화 모드(AutomationMode), 인증 모드(AuthMode),
+ * Google 계정 정보를 Flow로 관찰하거나 즉시 조회할 수 있다.
  */
 @Singleton
 class UserPreferencesRepository @Inject constructor(
@@ -27,9 +26,6 @@ class UserPreferencesRepository @Inject constructor(
 ) {
 
     companion object {
-        /** 회의록 형식 설정 키 */
-        val MINUTES_FORMAT_KEY = stringPreferencesKey("minutes_format")
-
         /** 자동화 모드 설정 키 */
         val AUTOMATION_MODE_KEY = stringPreferencesKey("automation_mode")
 
@@ -47,12 +43,6 @@ class UserPreferencesRepository @Inject constructor(
 
         /** 기본 프롬프트 템플릿 ID 설정 키 (0 = 미설정, 매번 선택) */
         val DEFAULT_TEMPLATE_ID_KEY = longPreferencesKey("default_template_id")
-    }
-
-    /** 현재 회의록 형식 설정을 관찰한다. 기본값: STRUCTURED */
-    val minutesFormat: Flow<MinutesFormat> = dataStore.data.map { prefs ->
-        val name = prefs[MINUTES_FORMAT_KEY] ?: MinutesFormat.STRUCTURED.name
-        MinutesFormat.valueOf(name)
     }
 
     /** 현재 자동화 모드 설정을 관찰한다. 기본값: FULL_AUTO */
@@ -86,16 +76,6 @@ class UserPreferencesRepository @Inject constructor(
     /** 저장된 Google 계정 표시 이름을 관찰한다. */
     val googleDisplayName: Flow<String?> = dataStore.data.map { prefs ->
         prefs[GOOGLE_DISPLAY_NAME_KEY]
-    }
-
-    /**
-     * 회의록 형식을 변경한다.
-     * @param format 새로운 회의록 형식
-     */
-    suspend fun setMinutesFormat(format: MinutesFormat) {
-        dataStore.edit { prefs ->
-            prefs[MINUTES_FORMAT_KEY] = format.name
-        }
     }
 
     /**
@@ -149,15 +129,6 @@ class UserPreferencesRepository @Inject constructor(
             prefs.remove(GOOGLE_EMAIL_KEY)
         }
     }
-
-    /**
-     * 현재 회의록 형식을 즉시 조회한다 (Worker enqueue 시점 등에서 사용).
-     * @return 현재 저장된 회의록 형식. 기본값: STRUCTURED
-     */
-    suspend fun getMinutesFormatOnce(): MinutesFormat =
-        dataStore.data.first().let { prefs ->
-            MinutesFormat.valueOf(prefs[MINUTES_FORMAT_KEY] ?: MinutesFormat.STRUCTURED.name)
-        }
 
     /**
      * 현재 자동화 모드를 즉시 조회한다 (Worker enqueue 시점 등에서 사용).
