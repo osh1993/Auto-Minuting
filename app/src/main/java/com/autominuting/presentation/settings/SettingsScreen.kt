@@ -74,7 +74,7 @@ private fun SettingsSection(
         color = MaterialTheme.colorScheme.primary
     )
     Spacer(modifier = Modifier.height(12.dp))
-    content()
+    Column { content() }
     Spacer(modifier = Modifier.height(8.dp))
     HorizontalDivider()
 }
