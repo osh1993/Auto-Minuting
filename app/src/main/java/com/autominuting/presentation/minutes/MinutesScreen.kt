@@ -151,7 +151,7 @@ fun MinutesScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Description,
-                        contentDescription = null,
+                        contentDescription = "빈 목록",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
@@ -400,7 +400,7 @@ private fun MinutesMeetingCard(
                                     onShare(meeting.id)
                                 },
                                 leadingIcon = {
-                                    Icon(Icons.Default.Share, contentDescription = null)
+                                    Icon(Icons.Default.Share, contentDescription = "공유")
                                 }
                             )
                         }
@@ -414,7 +414,7 @@ private fun MinutesMeetingCard(
                             leadingIcon = {
                                 Icon(
                                     Icons.Default.Delete,
-                                    contentDescription = null,
+                                    contentDescription = "삭제",
                                     tint = MaterialTheme.colorScheme.error
                                 )
                             }

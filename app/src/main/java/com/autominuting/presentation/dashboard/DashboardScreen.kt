@@ -243,7 +243,7 @@ fun DashboardScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                        contentDescription = null,
+                        contentDescription = "NotebookLM",
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))

@@ -336,7 +336,7 @@ private fun TranscriptMeetingCard(
                                     onRetranscribe(meeting.id)
                                 },
                                 leadingIcon = {
-                                    Icon(Icons.Default.Refresh, contentDescription = null)
+                                    Icon(Icons.Default.Refresh, contentDescription = "재전사")
                                 }
                             )
                         }
@@ -350,7 +350,7 @@ private fun TranscriptMeetingCard(
                                     onGenerateMinutes(meeting.id)
                                 },
                                 leadingIcon = {
-                                    Icon(Icons.Default.Description, contentDescription = null)
+                                    Icon(Icons.Default.Description, contentDescription = "회의록 작성")
                                 }
                             )
                         }
@@ -363,7 +363,7 @@ private fun TranscriptMeetingCard(
                                     onRegenerateMinutes(meeting)
                                 },
                                 leadingIcon = {
-                                    Icon(Icons.Default.Refresh, contentDescription = null)
+                                    Icon(Icons.Default.Refresh, contentDescription = "회의록 재생성")
                                 }
                             )
                         }
@@ -376,7 +376,7 @@ private fun TranscriptMeetingCard(
                                     onShare(meeting.id)
                                 },
                                 leadingIcon = {
-                                    Icon(Icons.Default.Share, contentDescription = null)
+                                    Icon(Icons.Default.Share, contentDescription = "공유")
                                 }
                             )
                         }
@@ -390,7 +390,7 @@ private fun TranscriptMeetingCard(
                             leadingIcon = {
                                 Icon(
                                     Icons.Default.Delete,
-                                    contentDescription = null,
+                                    contentDescription = "삭제",
                                     tint = MaterialTheme.colorScheme.error
                                 )
                             }

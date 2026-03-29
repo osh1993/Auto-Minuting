@@ -470,7 +470,7 @@ private fun GoogleAccountSection(
             ) {
                 Icon(
                     imageVector = Icons.Default.AccountCircle,
-                    contentDescription = null,
+                    contentDescription = "Google 계정",
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -504,7 +504,7 @@ private fun GoogleAccountSection(
                 ) {
                     Icon(
                         imageVector = Icons.Default.AccountCircle,
-                        contentDescription = null,
+                        contentDescription = "Google 계정",
                         modifier = Modifier.size(40.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
@@ -542,7 +542,7 @@ private fun GoogleAccountSection(
                 ) {
                     Icon(
                         imageVector = Icons.Default.AccountCircle,
-                        contentDescription = null,
+                        contentDescription = "Google 계정",
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
