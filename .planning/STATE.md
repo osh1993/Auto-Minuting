@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 35
 Plan: Not started
 Status: Ready to execute
-Last activity: 2026-03-29
+Last activity: 2026-03-30 - Completed quick task 260330-bee: Whisper 전사 성능 개선 P0~P3 (모델 캐싱, 스레드, ARM 최적화, 양자화 모델)
 
 ## Performance Metrics
 
@@ -83,6 +83,12 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 None.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260330-bee | Whisper 전사 성능 개선 P0~P3 (모델 캐싱, 스레드, ARM 최적화, 양자화 모델) | 2026-03-30 | b8d1474 | [260330-bee-whisper-p0-p3-arm](./quick/260330-bee-whisper-p0-p3-arm/) |
 
 ### Blockers/Concerns
 
