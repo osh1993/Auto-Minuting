@@ -50,7 +50,10 @@ class TranscriptionRepositoryImpl @Inject constructor(
      * @param audioFilePath 전사할 오디오 파일의 절대 경로
      * @return 성공 시 전사된 텍스트, 실패 시 예외를 포함한 Result
      */
-    override suspend fun transcribe(audioFilePath: String): Result<String> =
+    override suspend fun transcribe(
+        audioFilePath: String,
+        onProgress: (Float) -> Unit
+    ): Result<String> =
         withContext(Dispatchers.IO) {
             _isTranscribing.value = true
             try {
@@ -63,7 +66,7 @@ class TranscriptionRepositoryImpl @Inject constructor(
                     SttEngineType.WHISPER -> whisperEngine
                 }
 
-                val result = tryEngine(engine, audioFilePath)
+                val result = tryEngine(engine, audioFilePath, onProgress)
                 if (result.isSuccess) return@withContext result
 
                 val errorMessage = "전사 실패 — ${engine.engineName()}: ${result.exceptionOrNull()?.message}"
@@ -76,10 +79,14 @@ class TranscriptionRepositoryImpl @Inject constructor(
         }
 
     /** 엔진 하나로 전사를 시도하고 결과를 반환한다. */
-    private suspend fun tryEngine(engine: SttEngine, audioFilePath: String): Result<String> {
+    private suspend fun tryEngine(
+        engine: SttEngine,
+        audioFilePath: String,
+        onProgress: (Float) -> Unit
+    ): Result<String> {
         return try {
             Log.d(TAG, "${engine.engineName()} 시도")
-            val result = engine.transcribe(audioFilePath)
+            val result = engine.transcribe(audioFilePath, onProgress)
             if (result.isSuccess) {
                 Log.d(TAG, "${engine.engineName()} 전사 성공: ${result.getOrThrow().length}자")
             }

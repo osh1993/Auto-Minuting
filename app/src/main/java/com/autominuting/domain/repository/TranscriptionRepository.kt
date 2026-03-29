@@ -13,9 +13,13 @@ interface TranscriptionRepository {
     /**
      * 오디오 파일을 텍스트로 전사한다.
      * @param audioFilePath 전사할 오디오 파일의 절대 경로
+     * @param onProgress 전사 진행률 콜백 (0.0~1.0). Whisper 엔진만 실제 진행률 제공.
      * @return 성공 시 전사된 텍스트, 실패 시 예외를 포함한 Result
      */
-    suspend fun transcribe(audioFilePath: String): Result<String>
+    suspend fun transcribe(
+        audioFilePath: String,
+        onProgress: (Float) -> Unit = {}
+    ): Result<String>
 
     /** 현재 전사가 진행 중인지 여부를 관찰한다. */
     fun isTranscribing(): Flow<Boolean>

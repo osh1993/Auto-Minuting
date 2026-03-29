@@ -78,7 +78,10 @@ class GeminiSttEngine @Inject constructor(
         return available
     }
 
-    override suspend fun transcribe(audioFilePath: String): Result<String> =
+    override suspend fun transcribe(
+        audioFilePath: String,
+        onProgress: (Float) -> Unit
+    ): Result<String> =
         withContext(Dispatchers.IO) {
             try {
                 val apiKey = getApiKey()
