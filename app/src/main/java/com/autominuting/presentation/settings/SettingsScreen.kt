@@ -55,7 +55,6 @@ import com.autominuting.data.auth.AuthState
 import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.data.stt.WhisperModelManager
 import com.autominuting.domain.model.AutomationMode
-import com.autominuting.domain.model.MinutesFormat
 import com.autominuting.domain.model.SttEngineType
 
 /**
@@ -93,7 +92,6 @@ fun SettingsScreen(
     onNavigateToTemplates: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val selectedFormat by viewModel.minutesFormat.collectAsStateWithLifecycle()
     val templates by viewModel.templates.collectAsStateWithLifecycle()
     val defaultTemplateId by viewModel.defaultTemplateId.collectAsStateWithLifecycle()
     val defaultCustomPrompt by viewModel.defaultCustomPrompt.collectAsStateWithLifecycle()
@@ -120,6 +118,44 @@ fun SettingsScreen(
         ) {
             // === 회의록 설정 섹션 ===
             SettingsSection(title = "회의록 설정") {
+                // 자동화 모드
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "완전 자동 모드",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = "오디오 감지부터 회의록 생성까지 자동 진행",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Switch(
+                        checked = automationMode == AutomationMode.FULL_AUTO,
+                        onCheckedChange = { isAuto ->
+                            viewModel.setAutomationMode(
+                                if (isAuto) AutomationMode.FULL_AUTO else AutomationMode.HYBRID
+                            )
+                        }
+                    )
+                }
+
+                if (automationMode == AutomationMode.HYBRID) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "하이브리드 모드: 전사 완료 후 확인을 거쳐 회의록 생성",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 // 프롬프트 템플릿 관리
                 OutlinedButton(
                     onClick = onNavigateToTemplates,
@@ -230,103 +266,12 @@ fun SettingsScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 회의록 형식 (폴백용)
-                Text(
-                    text = "회의록 형식",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = "템플릿 미사용 시 기본 회의록 생성 형식",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // 형식 드롭다운
-                var expanded by remember { mutableStateOf(false) }
-                val formatLabels = mapOf(
-                    MinutesFormat.STRUCTURED to "구조화된 회의록",
-                    MinutesFormat.SUMMARY to "요약",
-                    MinutesFormat.ACTION_ITEMS to "액션 아이템"
-                )
-
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = formatLabels[selectedFormat] ?: "",
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                        },
-                        modifier = Modifier
-                            .menuAnchor(type = androidx.compose.material3.ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                            .fillMaxWidth()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        MinutesFormat.entries.forEach { format ->
-                            DropdownMenuItem(
-                                text = { Text(formatLabels[format] ?: format.name) },
-                                onClick = {
-                                    viewModel.setMinutesFormat(format)
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // === 전사 설정 섹션 ===
             SettingsSection(title = "전사 설정") {
-                // 자동화 모드
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "완전 자동 모드",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Text(
-                            text = "오디오 감지부터 회의록 생성까지 자동 진행",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    Switch(
-                        checked = automationMode == AutomationMode.FULL_AUTO,
-                        onCheckedChange = { isAuto ->
-                            viewModel.setAutomationMode(
-                                if (isAuto) AutomationMode.FULL_AUTO else AutomationMode.HYBRID
-                            )
-                        }
-                    )
-                }
-
-                if (automationMode == AutomationMode.HYBRID) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "하이브리드 모드: 전사 완료 후 확인을 거쳐 회의록 생성",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 // STT 엔진
                 Text(
                     text = "STT 엔진",

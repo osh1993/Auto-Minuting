@@ -11,7 +11,6 @@ import androidx.work.workDataOf
 import com.autominuting.data.local.dao.MeetingDao
 import com.autominuting.data.repository.TranscriptionRepositoryImpl
 import com.autominuting.domain.model.AutomationMode
-import com.autominuting.domain.model.MinutesFormat
 import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.domain.repository.TranscriptionRepository
@@ -56,8 +55,6 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
         // inputData에서 설정값 읽기
         val automationMode = inputData.getString(KEY_AUTOMATION_MODE)
             ?: AutomationMode.FULL_AUTO.name
-        val minutesFormat = inputData.getString(KEY_MINUTES_FORMAT)
-            ?: MinutesFormat.STRUCTURED.name
         // templateId: inputData에서 전달되지 않으면 UserPreferences에서 기본값 조회
         val templateId = inputData.getLong(KEY_TEMPLATE_ID, 0L).let { id ->
             if (id == 0L) userPreferencesRepository.getDefaultTemplateIdOnce() else id
@@ -140,7 +137,6 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
                         workDataOf(
                             MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
                             MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath,
-                            MinutesGenerationWorker.KEY_MINUTES_FORMAT to minutesFormat,
                             MinutesGenerationWorker.KEY_TEMPLATE_ID to templateId,
                             MinutesGenerationWorker.KEY_CUSTOM_PROMPT to resolvedCustomPrompt
                         )
@@ -152,7 +148,7 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
             } else {
                 // 하이브리드: 알림만 표시, 사용자 확인 대기
                 PipelineNotificationHelper.notifyTranscriptionComplete(
-                    applicationContext, meetingId, transcriptPath, minutesFormat,
+                    applicationContext, meetingId, transcriptPath,
                     customPrompt = resolvedCustomPrompt
                 )
                 Log.d(TAG, "하이브리드 모드: 전사 완료 알림 표시, 사용자 확인 대기")
@@ -202,9 +198,10 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
         const val KEY_MEETING_ID = "meetingId"
         const val KEY_TRANSCRIPT_PATH = "transcriptPath"
         const val KEY_AUTOMATION_MODE = "automationMode"
-        const val KEY_MINUTES_FORMAT = "minutesFormat"
         /** 프롬프트 템플릿 ID (FULL_AUTO 체이닝 시 MinutesGenerationWorker에 전달) */
         const val KEY_TEMPLATE_ID = "templateId"
+        /** 전사 진행률 키 (0-100 정수, DashboardViewModel에서 관찰) */
+        const val KEY_PROGRESS = "progress"
         private const val TAG = "TranscriptionTrigger"
     }
 }

@@ -145,14 +145,11 @@ class TranscriptsViewModel @Inject constructor(
             return
         }
 
-        val minutesFormat = userPreferencesRepository.getMinutesFormatOnce()
-
         val workRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
             .setInputData(
                 workDataOf(
                     MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
                     MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to meeting.transcriptPath,
-                    MinutesGenerationWorker.KEY_MINUTES_FORMAT to minutesFormat.name,
                     MinutesGenerationWorker.KEY_TEMPLATE_ID to (templateId ?: 0L),
                     MinutesGenerationWorker.KEY_CUSTOM_PROMPT to customPrompt
                 )

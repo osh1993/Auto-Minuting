@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.autominuting.R
-import com.autominuting.domain.model.MinutesFormat
 
 /**
  * 파이프라인 진행 상태 알림을 관리하는 유틸리티 객체.
@@ -119,7 +118,6 @@ object PipelineNotificationHelper {
         context: Context,
         meetingId: Long,
         transcriptPath: String,
-        minutesFormat: String = MinutesFormat.STRUCTURED.name,
         customPrompt: String? = null
     ) {
         // 회의록 생성 시작 액션 Intent
@@ -127,7 +125,6 @@ object PipelineNotificationHelper {
             action = "com.autominuting.action.GENERATE_MINUTES"
             putExtra("meetingId", meetingId)
             putExtra("transcriptPath", transcriptPath)
-            putExtra("minutesFormat", minutesFormat)
             customPrompt?.let { putExtra("customPrompt", it) }
         }
         val generatePendingIntent = PendingIntent.getBroadcast(
