@@ -255,3 +255,23 @@ Plans:
 | 31. Gemini 쿼터 관리 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 32. Plaud 공유 링크 수신 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 33. GUI 일관성 개선 | v4.0 | 1/1 | Complete    | 2026-03-29 |
+
+### Phase 34: Whisper 전사 진행률 표시
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 33
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 34 to break down)
+
+### Phase 35: 회의록 설정 구조 개편 (자동모드 이동, 직접 입력, 형식 제거)
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 34
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 35 to break down)

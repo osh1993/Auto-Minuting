@@ -68,6 +68,11 @@ Recent decisions affecting current work:
 - [Phase 31]: 성공 호출만 카운트: 429 재시도나 실패는 쿼터에 포함하지 않음
 - [Phase 33]: DashboardScreen 인라인 타이틀 제거, TopAppBar로 대체. 모든 화면 Scaffold+TopAppBar 통일
 
+### Roadmap Evolution
+
+- Phase 34 added: Whisper 전사 진행률 표시
+- Phase 35 added: 회의록 설정 구조 개편 (자동모드 이동, 직접 입력, 형식 제거)
+
 ### Pending Todos
 
 None.
