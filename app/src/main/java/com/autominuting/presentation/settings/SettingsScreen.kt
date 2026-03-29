@@ -52,6 +52,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.autominuting.data.auth.AuthMode
 import com.autominuting.data.auth.AuthState
+import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.data.stt.WhisperModelManager
 import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.MinutesFormat
@@ -95,6 +96,7 @@ fun SettingsScreen(
     val selectedFormat by viewModel.minutesFormat.collectAsStateWithLifecycle()
     val templates by viewModel.templates.collectAsStateWithLifecycle()
     val defaultTemplateId by viewModel.defaultTemplateId.collectAsStateWithLifecycle()
+    val defaultCustomPrompt by viewModel.defaultCustomPrompt.collectAsStateWithLifecycle()
     val sttEngineType by viewModel.sttEngineType.collectAsStateWithLifecycle()
     val whisperModelState by viewModel.whisperModelState.collectAsStateWithLifecycle()
     val automationMode by viewModel.automationMode.collectAsStateWithLifecycle()
@@ -143,10 +145,10 @@ fun SettingsScreen(
 
                 // 기본 템플릿 드롭다운
                 var templateDropdownExpanded by remember { mutableStateOf(false) }
-                val selectedTemplateName = if (defaultTemplateId == 0L) {
-                    "매번 선택"
-                } else {
-                    templates.find { it.id == defaultTemplateId }?.name ?: "매번 선택"
+                val selectedTemplateName = when (defaultTemplateId) {
+                    0L -> "매번 선택"
+                    UserPreferencesRepository.CUSTOM_PROMPT_MODE_ID -> "직접 입력"
+                    else -> templates.find { it.id == defaultTemplateId }?.name ?: "매번 선택"
                 }
 
                 ExposedDropdownMenuBox(
@@ -176,6 +178,14 @@ fun SettingsScreen(
                                 templateDropdownExpanded = false
                             }
                         )
+                        // "직접 입력" 옵션
+                        DropdownMenuItem(
+                            text = { Text("직접 입력") },
+                            onClick = {
+                                viewModel.setDefaultTemplateId(UserPreferencesRepository.CUSTOM_PROMPT_MODE_ID)
+                                templateDropdownExpanded = false
+                            }
+                        )
                         // 템플릿 목록
                         templates.forEach { template ->
                             DropdownMenuItem(
@@ -186,6 +196,37 @@ fun SettingsScreen(
                                 }
                             )
                         }
+                    }
+                }
+
+                // 직접 입력 모드일 때 프롬프트 입력 TextField 표시
+                if (defaultTemplateId == UserPreferencesRepository.CUSTOM_PROMPT_MODE_ID) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "기본 프롬프트",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "회의록 생성 시 사용할 프롬프트를 직접 입력하세요",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = defaultCustomPrompt,
+                        onValueChange = { viewModel.setDefaultCustomPrompt(it) },
+                        placeholder = { Text("예: 회의 내용을 요약하고 액션 아이템을 정리해주세요") },
+                        minLines = 3,
+                        maxLines = 8,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (defaultCustomPrompt.isBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "프롬프트가 비어있으면 기본 구조화된 회의록 형식이 사용됩니다",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
 
