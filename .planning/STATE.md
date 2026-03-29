@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Phase 33 Plan 01 완료 — GUI 일관성 개선
-last_updated: "2026-03-29T09:42:26.864Z"
+stopped_at: Completed 34-whisper-01-PLAN.md
+last_updated: "2026-03-29T14:53:51.994Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 33
-  completed_phases: 28
-  total_plans: 51
+  completed_phases: 27
+  total_plans: 52
   completed_plans: 49
 ---
 
@@ -67,6 +67,7 @@ Recent decisions affecting current work:
 - [Phase 31]: DataStore 공유: 기존 user_preferences DataStore를 GeminiQuotaTracker에서도 사용
 - [Phase 31]: 성공 호출만 카운트: 429 재시도나 실패는 쿼터에 포함하지 않음
 - [Phase 33]: DashboardScreen 인라인 타이틀 제거, TopAppBar로 대체. 모든 화면 Scaffold+TopAppBar 통일
+- [Phase 34-whisper]: whisper.cpp progress_callback JNI 콜백: 같은 스레드이므로 GlobalRef 불필요, onProgress 기본값 = {} 로 하위 호환
 
 ### Pending Todos
 
@@ -79,6 +80,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29T09:41:59.640Z
-Stopped at: Phase 33 Plan 01 완료 — GUI 일관성 개선
+Last session: 2026-03-29T14:53:51.987Z
+Stopped at: Completed 34-whisper-01-PLAN.md
 Resume file: None
