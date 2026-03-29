@@ -104,6 +104,14 @@ class SettingsViewModel @Inject constructor(
             initialValue = 0L
         )
 
+    /** 기본 커스텀 프롬프트 텍스트 */
+    val defaultCustomPrompt: StateFlow<String> = userPreferencesRepository.defaultCustomPrompt
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = ""
+        )
+
     /** Google 인증 상태 */
     val authState: StateFlow<AuthState> = googleAuthRepository.authState
 
@@ -156,6 +164,13 @@ class SettingsViewModel @Inject constructor(
     /** Whisper 모델을 삭제한다. */
     fun deleteWhisperModel() {
         whisperModelManager.deleteModel()
+    }
+
+    /** 기본 커스텀 프롬프트를 저장한다. */
+    fun setDefaultCustomPrompt(prompt: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.setDefaultCustomPrompt(prompt)
+        }
     }
 
     /** 기본 프롬프트 템플릿을 변경한다. */

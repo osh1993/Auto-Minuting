@@ -7,7 +7,6 @@ import android.util.Log
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import com.autominuting.domain.model.MinutesFormat
 import com.autominuting.worker.MinutesGenerationWorker
 
 /**
@@ -24,8 +23,7 @@ class PipelineActionReceiver : BroadcastReceiver() {
             ACTION_GENERATE_MINUTES -> {
                 val meetingId = intent.getLongExtra("meetingId", -1L)
                 val transcriptPath = intent.getStringExtra("transcriptPath") ?: return
-                val minutesFormat = intent.getStringExtra("minutesFormat")
-                    ?: MinutesFormat.STRUCTURED.name
+                val customPrompt = intent.getStringExtra("customPrompt")
 
                 Log.d(TAG, "회의록 생성 요청: meetingId=$meetingId")
 
@@ -34,7 +32,7 @@ class PipelineActionReceiver : BroadcastReceiver() {
                         workDataOf(
                             MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
                             MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath,
-                            MinutesGenerationWorker.KEY_MINUTES_FORMAT to minutesFormat
+                            MinutesGenerationWorker.KEY_CUSTOM_PROMPT to customPrompt
                         )
                     )
                     .build()

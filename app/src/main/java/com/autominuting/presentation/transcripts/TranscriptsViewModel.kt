@@ -99,11 +99,18 @@ class TranscriptsViewModel @Inject constructor(
     fun generateMinutes(meetingId: Long) {
         viewModelScope.launch {
             val templateId = userPreferencesRepository.getDefaultTemplateIdOnce()
-            if (templateId > 0) {
+            if (templateId == UserPreferencesRepository.CUSTOM_PROMPT_MODE_ID) {
+                // 직접 입력 모드: 저장된 커스텀 프롬프트로 생성
+                val customPrompt = userPreferencesRepository.getDefaultCustomPromptOnce()
+                enqueueMinutesWorker(
+                    meetingId,
+                    customPrompt = customPrompt.ifBlank { null }
+                )
+            } else if (templateId > 0) {
                 // 기본 템플릿이 설정되어 있으면 바로 생성
                 enqueueMinutesWorker(meetingId, templateId = templateId)
             } else {
-                // 기본 템플릿 미설정 → 기존 minutesFormat 폴백으로 바로 생성
+                // 매번 선택 모드 → 기본 폴백으로 바로 생성
                 enqueueMinutesWorker(meetingId)
             }
         }

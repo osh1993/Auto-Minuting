@@ -119,7 +119,8 @@ object PipelineNotificationHelper {
         context: Context,
         meetingId: Long,
         transcriptPath: String,
-        minutesFormat: String = MinutesFormat.STRUCTURED.name
+        minutesFormat: String = MinutesFormat.STRUCTURED.name,
+        customPrompt: String? = null
     ) {
         // 회의록 생성 시작 액션 Intent
         val generateIntent = Intent().apply {
@@ -127,6 +128,7 @@ object PipelineNotificationHelper {
             putExtra("meetingId", meetingId)
             putExtra("transcriptPath", transcriptPath)
             putExtra("minutesFormat", minutesFormat)
+            customPrompt?.let { putExtra("customPrompt", it) }
         }
         val generatePendingIntent = PendingIntent.getBroadcast(
             context,

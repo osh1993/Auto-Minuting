@@ -107,12 +107,25 @@ class DashboardViewModel @Inject constructor(
 
     /**
      * 하이브리드 모드에서 전사 완료 후 회의록 생성을 시작한다.
-     * 기본 템플릿이 설정되어 있으면 해당 templateId를 전달한다.
+     * 기본 템플릿이 설정되어 있으면 해당 templateId를 전달하고,
+     * 직접 입력 모드이면 저장된 커스텀 프롬프트를 전달한다.
      */
     fun generateMinutesForPipeline(meetingId: Long) {
         viewModelScope.launch {
             val templateId = userPreferencesRepository.getDefaultTemplateIdOnce()
-            enqueueMinutesWorker(meetingId, templateId = if (templateId > 0) templateId else null)
+            if (templateId == UserPreferencesRepository.CUSTOM_PROMPT_MODE_ID) {
+                // 직접 입력 모드: 저장된 커스텀 프롬프트로 생성
+                val customPrompt = userPreferencesRepository.getDefaultCustomPromptOnce()
+                enqueueMinutesWorker(
+                    meetingId,
+                    customPrompt = customPrompt.ifBlank { null }
+                )
+            } else if (templateId > 0) {
+                enqueueMinutesWorker(meetingId, templateId = templateId)
+            } else {
+                // 매번 선택 모드 → templateId/customPrompt 없이 enqueue (기본 폴백)
+                enqueueMinutesWorker(meetingId)
+            }
         }
     }
 
