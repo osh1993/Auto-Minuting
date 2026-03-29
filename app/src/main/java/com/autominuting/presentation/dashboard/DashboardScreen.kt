@@ -20,12 +20,15 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +57,7 @@ import com.autominuting.util.NotebookLmHelper
  * 앱의 메인 홈 화면으로, 진행 중인 파이프라인이 있으면 상단 배너로 상태를 표시한다.
  * URL 입력으로 음성 파일을 다운로드하여 전사 파이프라인에 진입시킬 수 있다.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel()
@@ -71,9 +75,17 @@ fun DashboardScreen(
     // 하이브리드 모드에서 템플릿 선택 다이얼로그 표시 여부
     var showPipelineTemplateDialog by remember { mutableStateOf(false) }
 
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Auto Minuting") }
+            )
+        }
+    ) { innerPadding ->
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(innerPadding)
             .verticalScroll(rememberScrollState())
     ) {
         // 진행 중인 파이프라인 배너
@@ -197,18 +209,11 @@ fun DashboardScreen(
             }
         }
 
-        // 대시보드 타이틀
-        Text(
-            text = "Auto Minuting",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp)
-        )
-
         Text(
             text = "녹음에서 회의록까지, 자동으로.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -397,6 +402,7 @@ fun DashboardScreen(
         // 하단 여백
         Spacer(modifier = Modifier.height(16.dp))
     }
+    } // Scaffold
 
     // 하이브리드 모드 템플릿 선택 다이얼로그
     if (showPipelineTemplateDialog) {

@@ -27,14 +27,17 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -64,6 +67,7 @@ import java.time.format.DateTimeFormatter
  * @param viewModel 전사 목록 상태를 관리하는 ViewModel
  * @param onEditClick 전사 편집 화면으로 이동하는 콜백 (meetingId 전달)
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TranscriptsScreen(
     viewModel: TranscriptsViewModel = hiltViewModel(),
@@ -92,22 +96,43 @@ fun TranscriptsScreen(
         pendingRetranscribeId = null
     }
 
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("전사 목록") }
+            )
+        }
+    ) { innerPadding ->
     if (meetings.isEmpty()) {
         // 빈 목록 안내
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "전사된 항목이 없습니다",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.TextSnippet,
+                    contentDescription = "빈 목록",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = "전사된 항목이 없습니다",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     } else {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(innerPadding)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -153,6 +178,7 @@ fun TranscriptsScreen(
             }
         }
     }
+    } // Scaffold
 
     // 이름 편집 대화상자
     meetingToRename?.let { meeting ->

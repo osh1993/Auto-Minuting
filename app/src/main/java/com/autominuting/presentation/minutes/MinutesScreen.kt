@@ -500,6 +500,6 @@ private fun DeleteConfirmationDialog(
     )
 }
 
-/** 녹음 시각 포맷터 (yyyy-MM-dd HH:mm) */
+/** 녹음 시각 포맷터 (yyyy.MM.dd HH:mm) */
 private val DATE_TIME_FORMATTER: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+    DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
