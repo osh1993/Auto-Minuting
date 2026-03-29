@@ -85,10 +85,10 @@ Requirements for v4.0 milestone. Each maps to roadmap phases.
 
 ### GUI 개선 (GUI)
 
-- [ ] **GUI-01**: DashboardScreen과 TranscriptsScreen에 TopAppBar가 추가된다
-- [ ] **GUI-02**: 모든 아이콘에 적절한 contentDescription이 설정된다
-- [ ] **GUI-03**: 전사 목록과 회의록 목록의 빈 상태가 아이콘+텍스트로 통일된다
-- [ ] **GUI-04**: 전사 목록과 회의록 목록의 날짜 포맷이 통일된다 (yyyy.MM.dd HH:mm)
+- [x] **GUI-01**: DashboardScreen과 TranscriptsScreen에 TopAppBar가 추가된다
+- [x] **GUI-02**: 모든 아이콘에 적절한 contentDescription이 설정된다
+- [x] **GUI-03**: 전사 목록과 회의록 목록의 빈 상태가 아이콘+텍스트로 통일된다
+- [x] **GUI-04**: 전사 목록과 회의록 목록의 날짜 포맷이 통일된다 (yyyy.MM.dd HH:mm)
 
 ## Future Requirements
 
@@ -140,10 +140,10 @@ Deferred to future release.
 | QUOTA-01 | Phase 31 | Complete |
 | QUOTA-02 | Phase 31 | Complete |
 | SHARE-01 | Phase 32 | Complete |
-| GUI-01 | Phase 33 | Pending |
-| GUI-02 | Phase 33 | Pending |
-| GUI-03 | Phase 33 | Pending |
-| GUI-04 | Phase 33 | Pending |
+| GUI-01 | Phase 33 | Complete |
+| GUI-02 | Phase 33 | Complete |
+| GUI-03 | Phase 33 | Complete |
+| GUI-04 | Phase 33 | Complete |
 
 **Coverage:**
 

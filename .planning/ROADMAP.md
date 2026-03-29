@@ -228,7 +228,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 33-01-PLAN.md — TopAppBar 추가 + contentDescription + 빈 상태 통일 + 날짜 포맷 통일
+- [x] 33-01-PLAN.md — TopAppBar 추가 + contentDescription + 빈 상태 통일 + 날짜 포맷 통일
 
 **UI hint**: yes
 
@@ -254,4 +254,4 @@ Plans:
 | 30. 프롬프트 템플릿 선택 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 31. Gemini 쿼터 관리 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 32. Plaud 공유 링크 수신 | v4.0 | 1/1 | Complete    | 2026-03-29 |
-| 33. GUI 일관성 개선 | v4.0 | 0/1 | Not started | - |
+| 33. GUI 일관성 개선 | v4.0 | 1/1 | Complete   | 2026-03-29 |
