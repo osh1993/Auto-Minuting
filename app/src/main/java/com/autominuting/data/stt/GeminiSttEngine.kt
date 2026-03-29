@@ -1,15 +1,20 @@
 package com.autominuting.data.stt
 
+import android.util.Base64
 import android.util.Log
 import com.autominuting.BuildConfig
 import com.autominuting.data.security.SecureApiKeyRepository
-import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.QuotaExceededException
-import com.google.ai.client.generativeai.type.content
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -100,25 +105,74 @@ class GeminiSttEngine @Inject constructor(
                     Log.w(TAG, "파일 크기 ${fileSize / 1024 / 1024}MB — 인라인 blob 제한(20MB) 초과 가능성")
                 }
 
-                val model = GenerativeModel(
-                    modelName = MODEL_NAME,
-                    apiKey = apiKey
-                )
-
                 val audioBytes = audioFile.readBytes()
+                val audioBase64 = Base64.encodeToString(audioBytes, Base64.NO_WRAP)
+
+                // Gemini REST API 직접 호출 (OkHttp — 타임아웃 완전 제어)
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(60, TimeUnit.SECONDS)
+                    .writeTimeout(5, TimeUnit.MINUTES)
+                    .readTimeout(5, TimeUnit.MINUTES)
+                    .build()
+
+                val requestJson = JSONObject().apply {
+                    put("contents", JSONArray().put(JSONObject().apply {
+                        put("parts", JSONArray().apply {
+                            put(JSONObject().apply {
+                                put("inline_data", JSONObject().apply {
+                                    put("mime_type", mimeType)
+                                    put("data", audioBase64)
+                                })
+                            })
+                            put(JSONObject().apply {
+                                put("text", TRANSCRIPTION_PROMPT)
+                            })
+                        })
+                    }))
+                }
+
+                val apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/$MODEL_NAME:generateContent?key=$apiKey"
 
                 // 할당량 초과 시 자동 재시도
                 var lastException: Exception? = null
                 for (attempt in 1..MAX_RETRIES) {
                     try {
-                        val response = model.generateContent(
-                            content {
-                                blob(mimeType, audioBytes)
-                                text(TRANSCRIPTION_PROMPT)
-                            }
-                        )
+                        val httpRequest = Request.Builder()
+                            .url(apiUrl)
+                            .post(requestJson.toString().toRequestBody("application/json".toMediaType()))
+                            .build()
 
-                        val text = response.text?.trim()
+                        Log.d(TAG, "Gemini REST API 호출 (시도 $attempt/$MAX_RETRIES)")
+                        val response = client.newCall(httpRequest).execute()
+                        val responseBody = response.body?.string()
+
+                        if (response.code == 429) {
+                            // 할당량 초과
+                            lastException = GeminiSttException("할당량 초과 (HTTP 429)")
+                            if (attempt < MAX_RETRIES) {
+                                Log.w(TAG, "할당량 초과, ${RETRY_DELAY_MS / 1000}초 후 재시도 ($attempt/$MAX_RETRIES)")
+                                delay(RETRY_DELAY_MS)
+                                continue
+                            }
+                            break
+                        }
+
+                        if (!response.isSuccessful || responseBody == null) {
+                            return@withContext Result.failure(
+                                GeminiSttException("Gemini API 오류: HTTP ${response.code} — ${responseBody?.take(200)}")
+                            )
+                        }
+
+                        // 응답에서 텍스트 추출
+                        val json = JSONObject(responseBody)
+                        val text = json.optJSONArray("candidates")
+                            ?.optJSONObject(0)
+                            ?.optJSONObject("content")
+                            ?.optJSONArray("parts")
+                            ?.optJSONObject(0)
+                            ?.optString("text")
+                            ?.trim()
+
                         if (text.isNullOrBlank()) {
                             return@withContext Result.failure(
                                 GeminiSttException("Gemini 전사 결과가 비어있습니다")
@@ -127,17 +181,17 @@ class GeminiSttEngine @Inject constructor(
 
                         Log.d(TAG, "Gemini STT 전사 완료: ${text.length}자 (시도 $attempt)")
                         return@withContext Result.success(text)
-                    } catch (e: QuotaExceededException) {
+                    } catch (e: java.net.SocketTimeoutException) {
                         lastException = e
                         if (attempt < MAX_RETRIES) {
-                            Log.w(TAG, "할당량 초과, ${RETRY_DELAY_MS / 1000}초 후 재시도 ($attempt/$MAX_RETRIES)")
+                            Log.w(TAG, "타임아웃, ${RETRY_DELAY_MS / 1000}초 후 재시도 ($attempt/$MAX_RETRIES)")
                             delay(RETRY_DELAY_MS)
                         }
                     }
                 }
 
                 Result.failure(GeminiSttException(
-                    "Gemini API 할당량 초과 (${MAX_RETRIES}회 재시도 실패)", lastException
+                    "Gemini API 요청 실패 (${MAX_RETRIES}회 재시도)", lastException
                 ))
             } catch (e: Exception) {
                 Log.e(TAG, "Gemini STT 전사 중 오류: ${e.message}", e)

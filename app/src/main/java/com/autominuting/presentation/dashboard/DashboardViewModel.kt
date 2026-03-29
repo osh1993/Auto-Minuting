@@ -129,6 +129,8 @@ class DashboardViewModel @Inject constructor(
     sealed interface DownloadState {
         /** 대기 중 */
         data object Idle : DownloadState
+        /** Plaud 공유 링크에서 오디오 URL 추출 중 */
+        data object ExtractingAudioUrl : DownloadState
         /** 다운로드 진행 중 */
         data class Downloading(val progress: Float) : DownloadState
         /** 파이프라인 진입 중 */
@@ -148,6 +150,44 @@ class DashboardViewModel @Inject constructor(
      *
      * @param url 음성 파일의 HTTP/HTTPS URL
      */
+    /** Plaud 공유 링크인지 판별한다. */
+    private fun isPlaudShareUrl(url: String): Boolean =
+        url.contains("web.plaud.ai/s/") || url.contains("web.plaud.ai/nshare/")
+
+    /**
+     * Plaud 공유 링크에서 WebView로 오디오 URL을 추출한다.
+     * WebView가 S3 presigned URL 요청을 인터셉트하여 실제 오디오 URL을 반환한다.
+     * Main 스레드에서 호출되어야 한다 (WebView 제약).
+     */
+    fun extractPlaudAudio(url: String) {
+        if (_downloadState.value is DownloadState.ExtractingAudioUrl ||
+            _downloadState.value is DownloadState.Downloading) return
+
+        _downloadState.value = DownloadState.ExtractingAudioUrl
+        _plaudAudioUrl.value = null
+        _plaudShareUrl.value = url
+    }
+
+    /** Plaud WebView에서 추출된 오디오 URL */
+    private val _plaudAudioUrl = MutableStateFlow<String?>(null)
+    private val _plaudShareUrl = MutableStateFlow<String?>(null)
+    val plaudShareUrl: StateFlow<String?> = _plaudShareUrl.asStateFlow()
+
+    /** Plaud WebView에서 오디오 URL이 추출되었을 때 호출 */
+    fun onPlaudAudioUrlExtracted(audioUrl: String) {
+        Log.d(TAG, "Plaud 오디오 URL 추출됨: ${audioUrl.take(100)}...")
+        _plaudShareUrl.value = null
+        // 추출된 S3 URL로 직접 다운로드 진행
+        downloadDirectUrl(audioUrl)
+    }
+
+    /** Plaud WebView 추출 실패/타임아웃 시 호출 */
+    fun onPlaudExtractionFailed(error: String) {
+        Log.w(TAG, "Plaud 오디오 추출 실패: $error")
+        _plaudShareUrl.value = null
+        _downloadState.value = DownloadState.Error("Plaud 오디오 추출 실패: $error")
+    }
+
     fun downloadFromUrl(url: String) {
         // URL 유효성 검증
         if (url.isBlank()) {
@@ -158,7 +198,21 @@ class DashboardViewModel @Inject constructor(
             _downloadState.value = DownloadState.Error("올바른 URL을 입력해주세요")
             return
         }
+
+        // Plaud 공유 링크 감지 → WebView 추출 경로
+        if (isPlaudShareUrl(url)) {
+            extractPlaudAudio(url)
+            return
+        }
+
         // 중복 실행 방지
+        if (_downloadState.value is DownloadState.Downloading) return
+
+        downloadDirectUrl(url)
+    }
+
+    /** 직접 URL에서 오디오 파일을 다운로드한다. */
+    private fun downloadDirectUrl(url: String) {
         if (_downloadState.value is DownloadState.Downloading) return
 
         viewModelScope.launch(Dispatchers.IO) {

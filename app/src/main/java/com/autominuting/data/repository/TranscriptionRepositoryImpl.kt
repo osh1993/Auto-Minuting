@@ -55,30 +55,21 @@ class TranscriptionRepositoryImpl @Inject constructor(
             _isTranscribing.value = true
             try {
                 val selectedEngine = userPreferencesRepository.getSttEngineTypeOnce()
-                Log.d(TAG, "전사 파이프라인 시작: $audioFilePath (엔진: $selectedEngine)")
+                Log.d(TAG, "전사 파이프라인 시작: $audioFilePath (선택 엔진: $selectedEngine)")
 
-                val (primary, fallback) = when (selectedEngine) {
-                    SttEngineType.GEMINI -> geminiSttEngine to whisperEngine
-                    SttEngineType.WHISPER -> whisperEngine to geminiSttEngine
+                // 선택된 엔진으로만 전사 (폴백 없음 — 사용자 설정 존중)
+                val engine: SttEngine = when (selectedEngine) {
+                    SttEngineType.GEMINI -> geminiSttEngine
+                    SttEngineType.WHISPER -> whisperEngine
                 }
 
-                // 1차: 선택된 엔진 시도
-                val primaryResult = tryEngine(primary, audioFilePath)
-                if (primaryResult.isSuccess) return@withContext primaryResult
+                val result = tryEngine(engine, audioFilePath)
+                if (result.isSuccess) return@withContext result
 
-                Log.w(TAG, "${primary.engineName()} 실패, ${fallback.engineName()} 폴백 전환")
+                val errorMessage = "전사 실패 — ${engine.engineName()}: ${result.exceptionOrNull()?.message}"
+                Log.e(TAG, errorMessage)
 
-                // 2차: 폴백 엔진 시도
-                val fallbackResult = tryEngine(fallback, audioFilePath)
-                if (fallbackResult.isSuccess) return@withContext fallbackResult
-
-                // 양쪽 모두 실패
-                val combinedMessage =
-                    "전사 실패 — ${primary.engineName()}: ${primaryResult.exceptionOrNull()?.message}, " +
-                        "${fallback.engineName()}: ${fallbackResult.exceptionOrNull()?.message}"
-                Log.e(TAG, combinedMessage)
-
-                Result.failure(TranscriptionException(combinedMessage, fallbackResult.exceptionOrNull()))
+                Result.failure(TranscriptionException(errorMessage, result.exceptionOrNull()))
             } finally {
                 _isTranscribing.value = false
             }

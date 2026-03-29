@@ -153,12 +153,19 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
             val errorMessage = error?.message ?: "알 수 없는 전사 오류"
             Log.e(TAG, "전사 실패: $errorMessage", error)
 
-            // 재전사 실패 시: 기존 전사 파일이 있으면 이전 상태로 복원
+            // 재전사 실패 시: 기존 전사 파일이 있으면 안정 상태로 복원
             if (!previousTranscriptPath.isNullOrBlank() && java.io.File(previousTranscriptPath).exists()) {
-                Log.d(TAG, "재전사 실패 — 기존 전사 파일 보존, 이전 상태($previousStatus)로 복원")
+                // 진행 중 상태(TRANSCRIBING, GENERATING_MINUTES)로는 복원하지 않음
+                val safeStatus = when (previousStatus) {
+                    PipelineStatus.TRANSCRIBING.name,
+                    PipelineStatus.GENERATING_MINUTES.name -> PipelineStatus.TRANSCRIBED.name
+                    null -> PipelineStatus.TRANSCRIBED.name
+                    else -> previousStatus
+                }
+                Log.d(TAG, "재전사 실패 — 기존 전사 파일 보존, 상태 복원: $safeStatus")
                 meetingDao.updatePipelineStatus(
                     id = meetingId,
-                    status = previousStatus ?: PipelineStatus.TRANSCRIBED.name,
+                    status = safeStatus,
                     errorMessage = "재전사 실패: $errorMessage",
                     updatedAt = System.currentTimeMillis()
                 )

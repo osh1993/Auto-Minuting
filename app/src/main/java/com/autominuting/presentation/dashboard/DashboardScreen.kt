@@ -27,9 +27,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import android.annotation.SuppressLint
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -50,6 +56,7 @@ fun DashboardScreen(
     val testStatus by viewModel.testStatus.collectAsStateWithLifecycle()
     val isTestingGemini by viewModel.isTestingGemini.collectAsStateWithLifecycle()
     val downloadState by viewModel.downloadState.collectAsStateWithLifecycle()
+    val plaudShareUrl by viewModel.plaudShareUrl.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     var urlText by remember { mutableStateOf("") }
@@ -178,10 +185,11 @@ fun DashboardScreen(
                     value = urlText,
                     onValueChange = { urlText = it },
                     label = { Text("음성 파일 URL") },
-                    placeholder = { Text("https://example.com/audio.m4a") },
+                    placeholder = { Text("URL 또는 Plaud 공유 링크") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     enabled = downloadState !is DashboardViewModel.DownloadState.Downloading
+                        && downloadState !is DashboardViewModel.DownloadState.ExtractingAudioUrl
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -194,6 +202,14 @@ fun DashboardScreen(
                         ) {
                             Text("다운로드 시작")
                         }
+                    }
+                    is DashboardViewModel.DownloadState.ExtractingAudioUrl -> {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Plaud 공유 링크에서 오디오 추출 중...",
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                     is DashboardViewModel.DownloadState.Downloading -> {
                         LinearProgressIndicator(
@@ -229,6 +245,15 @@ fun DashboardScreen(
                     }
                 }
             }
+        }
+
+        // Plaud 공유 링크 오디오 추출용 숨겨진 WebView
+        plaudShareUrl?.let { shareUrl ->
+            PlaudAudioExtractorWebView(
+                url = shareUrl,
+                onAudioUrlFound = { audioUrl -> viewModel.onPlaudAudioUrlExtracted(audioUrl) },
+                onError = { error -> viewModel.onPlaudExtractionFailed(error) }
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -296,4 +321,97 @@ fun DashboardScreen(
         // 하단 여백
         Spacer(modifier = Modifier.height(16.dp))
     }
+}
+
+/**
+ * Plaud 공유 링크에서 오디오 URL을 추출하는 숨겨진 WebView.
+ *
+ * WebView가 공유 페이지를 로드하면 내부적으로 S3 presigned URL을 요청한다.
+ * shouldInterceptRequest에서 amazonaws.com/audiofiles/ 패턴의 요청을 감지하여
+ * 오디오 URL을 콜백으로 반환한다.
+ */
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+private fun PlaudAudioExtractorWebView(
+    url: String,
+    onAudioUrlFound: (String) -> Unit,
+    onError: (String) -> Unit
+) {
+    var audioFound by remember { mutableStateOf(false) }
+
+    // 30초 타임아웃
+    androidx.compose.runtime.LaunchedEffect(url) {
+        kotlinx.coroutines.delay(30_000)
+        if (!audioFound) {
+            onError("오디오 URL 추출 타임아웃 (30초)")
+        }
+    }
+
+    // 0dp 크기의 숨겨진 WebView
+    AndroidView(
+        modifier = Modifier.size(0.dp),
+        factory = { ctx ->
+            WebView(ctx).apply {
+                settings.javaScriptEnabled = true
+                settings.domStorageEnabled = true
+                settings.mediaPlaybackRequiresUserGesture = false
+
+                webViewClient = object : WebViewClient() {
+                    override fun shouldInterceptRequest(
+                        view: WebView?,
+                        request: WebResourceRequest?
+                    ): WebResourceResponse? {
+                        val requestUrl = request?.url?.toString() ?: return null
+
+                        // S3 presigned URL 패턴 감지 (amazonaws.com/audiofiles/)
+                        if (requestUrl.contains("amazonaws.com") &&
+                            requestUrl.contains("audiofiles/") &&
+                            !audioFound
+                        ) {
+                            audioFound = true
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                onAudioUrlFound(requestUrl)
+                            }
+                        }
+                        return null
+                    }
+
+                    override fun onPageFinished(view: WebView?, pageUrl: String?) {
+                        super.onPageFinished(view, pageUrl)
+                        // 재생 버튼 자동 클릭 시도 (오디오 URL 요청 유도)
+                        view?.evaluateJavascript(
+                            """
+                            (function() {
+                                var audios = document.querySelectorAll('audio');
+                                for (var i = 0; i < audios.length; i++) {
+                                    audios[i].play().catch(function(){});
+                                }
+                                var buttons = document.querySelectorAll('button, [role="button"], .play-btn, svg');
+                                for (var i = 0; i < buttons.length; i++) {
+                                    buttons[i].click();
+                                }
+                            })();
+                            """.trimIndent(),
+                            null
+                        )
+                    }
+
+                    override fun onReceivedError(
+                        view: WebView?,
+                        request: WebResourceRequest?,
+                        error: android.webkit.WebResourceError?
+                    ) {
+                        if (request?.isForMainFrame == true && !audioFound) {
+                            audioFound = true
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                onError("페이지 로드 실패: ${error?.description}")
+                            }
+                        }
+                    }
+                }
+
+                loadUrl(url)
+            }
+        }
+    )
 }
