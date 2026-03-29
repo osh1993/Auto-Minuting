@@ -63,6 +63,33 @@ Requirements for v3.1 milestone. Each maps to roadmap phases.
 - [x] **UX-01**: 회의록 목록에서 삭제, 공유 액션 메뉴를 사용할 수 있다
 - [x] **UX-02**: 설정 메뉴가 정리되고 테스트 도구(spike) 코드가 삭제된다
 
+## v4.0 Requirements
+
+Requirements for v4.0 milestone. Each maps to roadmap phases.
+
+### 파이프라인 (Pipeline)
+
+- [ ] **PIPE-01**: 하이브리드 모드에서 전사 완료 시 대시보드에 "회의록 생성" 확인 버튼이 표시된다
+- [ ] **PIPE-02**: 전사 카드의 "회의록 작성/재생성" 버튼이 MoreVert 드롭다운 메뉴 안으로 이동한다
+- [ ] **PIPE-03**: 회의록 생성 시 프롬프트 템플릿을 선택할 수 있는 다이얼로그가 표시된다
+- [ ] **PIPE-04**: 설정에서 기본 프롬프트 템플릿을 지정하면 선택 없이 자동으로 해당 템플릿으로 생성된다
+
+### 쿼터 관리 (Quota)
+
+- [ ] **QUOTA-01**: 대시보드에 Gemini Free 쿼터 사용량이 표시된다
+- [ ] **QUOTA-02**: 쿼터 사용량이 90%를 초과하면 알림이 표시된다
+
+### 공유 수신 (Share)
+
+- [ ] **SHARE-01**: 다른 앱에서 Plaud 공유 링크(web.plaud.ai)를 공유하면 오디오를 자동 추출하여 전사 파이프라인에 진입한다
+
+### GUI 개선 (GUI)
+
+- [ ] **GUI-01**: DashboardScreen과 TranscriptsScreen에 TopAppBar가 추가된다
+- [ ] **GUI-02**: 모든 아이콘에 적절한 contentDescription이 설정된다
+- [ ] **GUI-03**: 전사 목록과 회의록 목록의 빈 상태가 아이콘+텍스트로 통일된다
+- [ ] **GUI-04**: 전사 목록과 회의록 목록의 날짜 포맷이 통일된다 (yyyy.MM.dd HH:mm)
+
 ## Future Requirements
 
 Deferred to future release.
@@ -106,12 +133,23 @@ Deferred to future release.
 | UX-01 | Phase 26 | Complete |
 | DL-01 | Phase 27 | Complete |
 | UX-02 | Phase 28 | Complete |
+| PIPE-01 | TBD | Pending |
+| PIPE-02 | TBD | Pending |
+| PIPE-03 | TBD | Pending |
+| PIPE-04 | TBD | Pending |
+| QUOTA-01 | TBD | Pending |
+| QUOTA-02 | TBD | Pending |
+| SHARE-01 | TBD | Pending |
+| GUI-01 | TBD | Pending |
+| GUI-02 | TBD | Pending |
+| GUI-03 | TBD | Pending |
+| GUI-04 | TBD | Pending |
 
 **Coverage:**
 
-- v3.1 requirements: 10 total
-- Mapped to phases: 10/10
-- Unmapped: 0
+- v4.0 requirements: 11 total
+- Mapped to phases: 0 (roadmap pending)
+- Unmapped: 11
 
 ---
 
