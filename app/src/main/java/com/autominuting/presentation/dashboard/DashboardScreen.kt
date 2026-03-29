@@ -46,15 +46,13 @@ import com.autominuting.util.NotebookLmHelper
 /**
  * 대시보드 화면.
  * 앱의 메인 홈 화면으로, 진행 중인 파이프라인이 있으면 상단 배너로 상태를 표시한다.
- * 디버그 모드에서 테스트 데이터 삽입 및 Gemini API 테스트 버튼을 제공한다.
+ * URL 입력으로 음성 파일을 다운로드하여 전사 파이프라인에 진입시킬 수 있다.
  */
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val activePipeline by viewModel.activePipeline.collectAsStateWithLifecycle()
-    val testStatus by viewModel.testStatus.collectAsStateWithLifecycle()
-    val isTestingGemini by viewModel.isTestingGemini.collectAsStateWithLifecycle()
     val downloadState by viewModel.downloadState.collectAsStateWithLifecycle()
     val plaudShareUrl by viewModel.plaudShareUrl.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -254,68 +252,6 @@ fun DashboardScreen(
                 onAudioUrlFound = { audioUrl -> viewModel.onPlaudAudioUrlExtracted(audioUrl) },
                 onError = { error -> viewModel.onPlaudExtractionFailed(error) }
             )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 테스트 도구 섹션
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "테스트 도구",
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // 테스트 데이터 삽입 버튼
-                Button(
-                    onClick = { viewModel.insertTestData() },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("더미 회의록 3건 삽입")
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Gemini API 테스트 버튼
-                OutlinedButton(
-                    onClick = { viewModel.testGeminiApi() },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isTestingGemini
-                ) {
-                    if (isTestingGemini) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    Text(if (isTestingGemini) "Gemini API 호출 중..." else "Gemini API로 회의록 생성 테스트")
-                }
-
-                // 상태 메시지
-                if (testStatus.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = testStatus,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (testStatus.startsWith("✓"))
-                            MaterialTheme.colorScheme.primary
-                        else if (testStatus.startsWith("✗"))
-                            MaterialTheme.colorScheme.error
-                        else
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
         }
 
         // 하단 여백
