@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: verifying
 stopped_at: Phase 29 Plan 01 완료 — 전사 카드 UX 개선
-last_updated: "2026-03-29T09:00:38.390Z"
+last_updated: "2026-03-29T09:01:08.762Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 33
@@ -24,8 +24,8 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 
 ## Current Position
 
-Phase: 29 (전사 카드 UX 개선) — EXECUTING
-Plan: 1 of 1
+Phase: 30
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-03-29
 
