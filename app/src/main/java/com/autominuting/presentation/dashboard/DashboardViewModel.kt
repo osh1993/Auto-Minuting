@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.UUID
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -90,6 +91,13 @@ class DashboardViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = QuotaUsage(0, 0, GeminiQuotaTracker.DAILY_LIMIT, "")
         )
+
+    /** Whisper 전사 진행률 (0.0~1.0). 0이면 indeterminate. */
+    private val _transcriptionProgress = MutableStateFlow(0f)
+    val transcriptionProgress: StateFlow<Float> = _transcriptionProgress.asStateFlow()
+
+    /** 현재 관찰 중인 전사 Worker ID */
+    private var currentTranscriptionWorkId: UUID? = null
 
     /** 사용자가 "무시"한 파이프라인 ID 세트 */
     private val _dismissedPipelineIds = MutableStateFlow<Set<Long>>(emptySet())
@@ -152,6 +160,32 @@ class DashboardViewModel @Inject constructor(
      */
     fun dismissPipeline(meetingId: Long) {
         _dismissedPipelineIds.value = _dismissedPipelineIds.value + meetingId
+    }
+
+    /**
+     * WorkManager의 WorkInfo를 관찰하여 전사 진행률을 추출한다.
+     * Whisper 엔진은 0~100% 진행률을 보고하고, Gemini 엔진은 0으로 유지된다.
+     */
+    private fun observeTranscriptionProgress(workId: UUID) {
+        currentTranscriptionWorkId = workId
+        viewModelScope.launch {
+            WorkManager.getInstance(context)
+                .getWorkInfoByIdFlow(workId)
+                .collect { workInfo ->
+                    if (workInfo != null) {
+                        val progress = workInfo.progress.getInt(
+                            TranscriptionTriggerWorker.KEY_PROGRESS, 0
+                        )
+                        _transcriptionProgress.value = progress / 100f
+
+                        // 완료/실패 시 진행률 초기화
+                        if (workInfo.state.isFinished) {
+                            _transcriptionProgress.value = 0f
+                            currentTranscriptionWorkId = null
+                        }
+                    }
+                }
+        }
     }
 
     // --- URL 다운로드 기능 ---
@@ -351,6 +385,7 @@ class DashboardViewModel @Inject constructor(
                     )
                     .build()
                 WorkManager.getInstance(context).enqueue(workRequest)
+                observeTranscriptionProgress(workRequest.id)
 
                 Log.d(TAG, "URL 다운로드 파이프라인 진입: meetingId=$meetingId, source=URL_DOWNLOAD")
 

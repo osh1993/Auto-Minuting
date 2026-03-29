@@ -69,6 +69,7 @@ fun DashboardScreen(
     val downloadState by viewModel.downloadState.collectAsStateWithLifecycle()
     val plaudShareUrl by viewModel.plaudShareUrl.collectAsStateWithLifecycle()
     val quotaUsage by viewModel.quotaUsage.collectAsStateWithLifecycle()
+    val transcriptionProgress by viewModel.transcriptionProgress.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     var urlText by remember { mutableStateOf("") }
@@ -94,7 +95,11 @@ fun DashboardScreen(
                 && automationMode == AutomationMode.HYBRID
             val statusText = when (meeting.pipelineStatus) {
                 PipelineStatus.AUDIO_RECEIVED -> "오디오 수신됨"
-                PipelineStatus.TRANSCRIBING -> "전사 중..."
+                PipelineStatus.TRANSCRIBING -> if (transcriptionProgress > 0f) {
+                    "전사 중 ${(transcriptionProgress * 100).toInt()}%"
+                } else {
+                    "전사 중..."
+                }
                 PipelineStatus.TRANSCRIBED -> {
                     if (automationMode == AutomationMode.HYBRID) {
                         "전사 완료"
@@ -141,6 +146,19 @@ fun DashboardScreen(
                                     text = statusText,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                        // 전사 중 프로그레스바
+                        if (meeting.pipelineStatus == PipelineStatus.TRANSCRIBING) {
+                            if (transcriptionProgress > 0f) {
+                                LinearProgressIndicator(
+                                    progress = { transcriptionProgress },
+                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                )
+                            } else {
+                                LinearProgressIndicator(
+                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                                 )
                             }
                         }

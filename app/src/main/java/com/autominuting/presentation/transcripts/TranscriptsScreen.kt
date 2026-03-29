@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.TextSnippet
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -457,41 +458,60 @@ private fun FileTypeIcon(meeting: Meeting) {
 
 /**
  * 전사 상태 배지.
- * TRANSCRIBING -> "전사 중", transcriptPath != null -> "전사 완료", else -> "전사 미완료"
+ * TRANSCRIBING -> CircularProgressIndicator + "전사 중", transcriptPath != null -> "전사 완료", else -> "전사 미완료"
  */
 @Composable
 private fun TranscriptionStatusBadge(meeting: Meeting) {
-    val (label, containerColor, labelColor) = when {
-        meeting.pipelineStatus == PipelineStatus.TRANSCRIBING -> Triple(
-            "전사 중",
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer
-        )
-        meeting.transcriptPath != null -> Triple(
-            "전사 완료",
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.onPrimaryContainer
-        )
-        else -> Triple(
-            "전사 미완료",
-            MaterialTheme.colorScheme.surfaceVariant,
-            MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-
-    SuggestionChip(
-        onClick = {},
-        label = {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall
+    when {
+        meeting.pipelineStatus == PipelineStatus.TRANSCRIBING -> {
+            // 전사 중: 스피너 + 텍스트
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+                Text(
+                    text = "전사 중",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+            }
+        }
+        meeting.transcriptPath != null -> {
+            SuggestionChip(
+                onClick = {},
+                label = {
+                    Text(
+                        text = "전사 완료",
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                },
+                colors = SuggestionChipDefaults.suggestionChipColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    labelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             )
-        },
-        colors = SuggestionChipDefaults.suggestionChipColors(
-            containerColor = containerColor,
-            labelColor = labelColor
-        )
-    )
+        }
+        else -> {
+            SuggestionChip(
+                onClick = {},
+                label = {
+                    Text(
+                        text = "전사 미완료",
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                },
+                colors = SuggestionChipDefaults.suggestionChipColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            )
+        }
+    }
 }
 
 /**
