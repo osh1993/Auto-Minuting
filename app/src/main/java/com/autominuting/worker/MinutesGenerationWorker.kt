@@ -11,6 +11,7 @@ import com.autominuting.data.repository.MinutesRepositoryImpl
 import com.autominuting.domain.model.MinutesFormat
 import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.domain.repository.MinutesRepository
+import com.autominuting.domain.repository.PromptTemplateRepository
 import com.autominuting.service.PipelineNotificationHelper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -30,7 +31,8 @@ class MinutesGenerationWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val meetingDao: MeetingDao,
-    private val minutesRepository: MinutesRepository
+    private val minutesRepository: MinutesRepository,
+    private val promptTemplateRepository: PromptTemplateRepository
 ) : CoroutineWorker(appContext, workerParams) {
 
     /**
@@ -58,7 +60,21 @@ class MinutesGenerationWorker @AssistedInject constructor(
                 File(applicationContext.filesDir, "transcripts/${meetingId}.txt").absolutePath
             }
 
-        // inputData에서 형식 설정 읽기
+        // inputData에서 템플릿 ID와 커스텀 프롬프트 읽기
+        val templateId = inputData.getLong(KEY_TEMPLATE_ID, 0L)
+        val customPrompt = inputData.getString(KEY_CUSTOM_PROMPT)
+
+        // 프롬프트 해결: templateId > customPrompt > minutesFormat 폴백
+        val resolvedPrompt: String? = when {
+            customPrompt != null -> customPrompt
+            templateId > 0 -> {
+                val template = promptTemplateRepository.getById(templateId)
+                template?.promptText
+            }
+            else -> null
+        }
+
+        // inputData에서 형식 설정 읽기 (하위 호환 폴백)
         val minutesFormatName = inputData.getString(KEY_MINUTES_FORMAT)
             ?: MinutesFormat.STRUCTURED.name
         val minutesFormat = try {
@@ -67,7 +83,7 @@ class MinutesGenerationWorker @AssistedInject constructor(
             MinutesFormat.STRUCTURED
         }
 
-        Log.d(TAG, "회의록 생성 시작: meetingId=$meetingId, transcriptPath=$transcriptPath, format=$minutesFormat")
+        Log.d(TAG, "회의록 생성 시작: meetingId=$meetingId, transcriptPath=$transcriptPath, templateId=$templateId, format=$minutesFormat")
 
         // 전사 텍스트 파일 읽기
         val transcriptFile = File(transcriptPath)
@@ -105,8 +121,8 @@ class MinutesGenerationWorker @AssistedInject constructor(
         // 회의록 생성 중 알림
         PipelineNotificationHelper.updateProgress(applicationContext, "회의록 생성 중...")
 
-        // 회의록 생성 (Gemini API 1차) — 형식 전달
-        val generateResult = minutesRepository.generateMinutes(transcriptText, minutesFormat)
+        // 회의록 생성 (Gemini API 1차) — 템플릿 프롬프트 우선, 없으면 형식 폴백
+        val generateResult = minutesRepository.generateMinutes(transcriptText, minutesFormat, resolvedPrompt)
 
         return if (generateResult.isSuccess) {
             val minutesText = generateResult.getOrThrow()
@@ -179,6 +195,10 @@ class MinutesGenerationWorker @AssistedInject constructor(
         const val KEY_TRANSCRIPT_PATH = "transcriptPath"
         const val KEY_MINUTES_PATH = "minutesPath"
         const val KEY_MINUTES_FORMAT = "minutesFormat"
+        /** 프롬프트 템플릿 ID (0이면 미지정 → minutesFormat 폴백) */
+        const val KEY_TEMPLATE_ID = "templateId"
+        /** 커스텀 프롬프트 텍스트 (templateId보다 우선) */
+        const val KEY_CUSTOM_PROMPT = "customPrompt"
         private const val TAG = "MinutesGeneration"
     }
 }

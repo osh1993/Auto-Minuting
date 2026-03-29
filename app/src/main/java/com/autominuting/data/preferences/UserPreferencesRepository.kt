@@ -3,6 +3,7 @@ package com.autominuting.data.preferences
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.autominuting.data.auth.AuthMode
 import com.autominuting.domain.model.AutomationMode
@@ -43,6 +44,9 @@ class UserPreferencesRepository @Inject constructor(
 
         /** STT 엔진 유형 설정 키 */
         val STT_ENGINE_KEY = stringPreferencesKey("stt_engine")
+
+        /** 기본 프롬프트 템플릿 ID 설정 키 (0 = 미설정, 매번 선택) */
+        val DEFAULT_TEMPLATE_ID_KEY = longPreferencesKey("default_template_id")
     }
 
     /** 현재 회의록 형식 설정을 관찰한다. 기본값: STRUCTURED */
@@ -67,6 +71,11 @@ class UserPreferencesRepository @Inject constructor(
     val sttEngineType: Flow<SttEngineType> = dataStore.data.map { prefs ->
         val name = prefs[STT_ENGINE_KEY] ?: SttEngineType.GEMINI.name
         SttEngineType.valueOf(name)
+    }
+
+    /** 기본 프롬프트 템플릿 ID를 관찰한다. 기본값: 0L (미설정, 매번 선택) */
+    val defaultTemplateId: Flow<Long> = dataStore.data.map { prefs ->
+        prefs[DEFAULT_TEMPLATE_ID_KEY] ?: 0L
     }
 
     /** 저장된 Google 계정 이메일을 관찰한다. */
@@ -167,4 +176,21 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.data.first().let { prefs ->
             SttEngineType.valueOf(prefs[STT_ENGINE_KEY] ?: SttEngineType.GEMINI.name)
         }
+
+    /**
+     * 기본 프롬프트 템플릿 ID를 변경한다.
+     * @param id 템플릿 ID (0이면 미설정 = 매번 선택)
+     */
+    suspend fun setDefaultTemplateId(id: Long) {
+        dataStore.edit { prefs ->
+            prefs[DEFAULT_TEMPLATE_ID_KEY] = id
+        }
+    }
+
+    /**
+     * 현재 기본 프롬프트 템플릿 ID를 즉시 조회한다.
+     * @return 저장된 기본 템플릿 ID. 기본값: 0L (미설정)
+     */
+    suspend fun getDefaultTemplateIdOnce(): Long =
+        dataStore.data.first()[DEFAULT_TEMPLATE_ID_KEY] ?: 0L
 }

@@ -56,6 +56,7 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
             ?: AutomationMode.FULL_AUTO.name
         val minutesFormat = inputData.getString(KEY_MINUTES_FORMAT)
             ?: MinutesFormat.STRUCTURED.name
+        val templateId = inputData.getLong(KEY_TEMPLATE_ID, 0L)
 
         // meetingId가 없으면 audioFilePath로 DB에서 조회 (기존 호환성)
         val meetingId = inputData.getLong(KEY_MEETING_ID, -1L).let { id ->
@@ -129,7 +130,8 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
                         workDataOf(
                             MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
                             MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath,
-                            MinutesGenerationWorker.KEY_MINUTES_FORMAT to minutesFormat
+                            MinutesGenerationWorker.KEY_MINUTES_FORMAT to minutesFormat,
+                            MinutesGenerationWorker.KEY_TEMPLATE_ID to templateId
                         )
                     )
                     .build()
@@ -189,6 +191,8 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
         const val KEY_TRANSCRIPT_PATH = "transcriptPath"
         const val KEY_AUTOMATION_MODE = "automationMode"
         const val KEY_MINUTES_FORMAT = "minutesFormat"
+        /** 프롬프트 템플릿 ID (FULL_AUTO 체이닝 시 MinutesGenerationWorker에 전달) */
+        const val KEY_TEMPLATE_ID = "templateId"
         private const val TAG = "TranscriptionTrigger"
     }
 }
