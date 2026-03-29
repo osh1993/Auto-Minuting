@@ -76,8 +76,8 @@ Requirements for v4.0 milestone. Each maps to roadmap phases.
 
 ### 쿼터 관리 (Quota)
 
-- [ ] **QUOTA-01**: 대시보드에 Gemini Free 쿼터 사용량이 표시된다
-- [ ] **QUOTA-02**: 쿼터 사용량이 90%를 초과하면 알림이 표시된다
+- [x] **QUOTA-01**: 대시보드에 Gemini Free 쿼터 사용량이 표시된다
+- [x] **QUOTA-02**: 쿼터 사용량이 90%를 초과하면 알림이 표시된다
 
 ### 공유 수신 (Share)
 
@@ -137,8 +137,8 @@ Deferred to future release.
 | PIPE-02 | Phase 29 | Complete |
 | PIPE-03 | Phase 30 | Complete |
 | PIPE-04 | Phase 30 | Complete |
-| QUOTA-01 | Phase 31 | Pending |
-| QUOTA-02 | Phase 31 | Pending |
+| QUOTA-01 | Phase 31 | Complete |
+| QUOTA-02 | Phase 31 | Complete |
 | SHARE-01 | Phase 32 | Pending |
 | GUI-01 | Phase 33 | Pending |
 | GUI-02 | Phase 33 | Pending |
