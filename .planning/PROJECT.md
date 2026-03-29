@@ -85,18 +85,20 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 | AnnotatedString Markdown 렌더링 | 외부 라이브러리 없이 직접 구현 | ✓ v1.0 |
 | Room LIKE 검색 | v1 데이터 규모에 FTS 불필요 | ✓ v1.0 |
 
-## Current Milestone: v3.1 UX 개선 및 정보 표시 강화
+## Current Milestone: v4.0 파이프라인 고도화 및 GUI 품질 개선
 
-**Goal:** 전사/회의록 목록 카드의 정보 가시성과 관리 편의성을 높이고, URL 기반 음성 다운로드를 추가한다.
+**Goal:** 회의록 생성 워크플로우를 정밀화하고, Gemini 쿼터 관리와 Plaud 공유 수신을 추가하며, GUI 일관성과 접근성을 개선한다.
 
 **Target features:**
-- 전사 카드 정보 표시 개선 (파일 종류, 전사/회의록 상태 뱃지)
-- 전사 카드 이름 관리 (공유 파일명 사용 + 이름 편집)
-- 회의록 카드 자동 제목 (생성 시 내용 기반)
-- 회의록 카드 이름 편집
-- URL 입력으로 음성 파일 다운로드 → 전사 파이프라인 진입
-- 회의록 목록 액션 메뉴 (삭제, 공유) *(v3.0에서 이관)*
-- 설정 메뉴 및 테스트 도구 이동 *(v3.0에서 이관)*
+- 하이브리드 모드 UX 개선 (전사 완료 후 확인 → 회의록 생성)
+- 회의록 재작성 버튼을 MoreVert 메뉴로 이동
+- 회의록 생성 시 프롬프트 템플릿 선택 (수동/자동 설정)
+- Gemini Free 쿼터 대시보드 표시 + 90% 알림
+- Plaud 공유 링크 수신 처리 (다른 앱에서 공유 시)
+- TopAppBar 일관성 (DashboardScreen, TranscriptsScreen)
+- 아이콘 접근성 (contentDescription)
+- Empty State 디자인 통일
+- 날짜 포맷 통일
 
 ## Evolution
 
@@ -119,4 +121,4 @@ This document evolves at phase transitions and milestone boundaries.
 **v1.0 Roadmap archived to:** `.planning/milestones/v1.0-ROADMAP.md`
 
 ---
-*Last updated: 2026-03-29 — Milestone v3.1 완료 + Whisper NDK 빌드 완료*
+*Last updated: 2026-03-29 — Milestone v4.0 시작*

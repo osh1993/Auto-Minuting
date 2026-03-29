@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: v3.1
-milestone_name: UX 개선 및 정보 표시 강화
-status: Milestone complete
-stopped_at: v3.1 마일스톤 완료 — Phase 24-28 전체 완료
-last_updated: "2026-03-29T08:30:00.000Z"
+milestone: v4.0
+milestone_name: 파이프라인 고도화 및 GUI 품질 개선
+status: Defining requirements
+stopped_at: Milestone v4.0 시작
+last_updated: "2026-03-29T09:00:00.000Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 28
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다.
-**Current focus:** v3.1 마일스톤 완료 — 다음 마일스톤 대기
+**Current focus:** v4.0 마일스톤 시작 — 요구사항 정의 중
 
 ## Current Position
 
-Phase: 28 (v3.1 마지막)
-Plan: All complete
-Status: v3.1 마일스톤 완료
-Last activity: 2026-03-29 — Phase 28 완료 + Whisper NDK 빌드 완료
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-29 — Milestone v4.0 시작
 
 ## Performance Metrics
 
@@ -82,6 +82,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-29T08:30:00.000Z
-Stopped at: v3.1 마일스톤 완료 + GSD 맥락 동기화
+Last session: 2026-03-29T09:00:00.000Z
+Stopped at: Milestone v4.0 시작 — 요구사항 정의 중
 Resume file: None
