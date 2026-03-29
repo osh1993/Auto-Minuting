@@ -259,13 +259,35 @@ class ShareReceiverActivity : ComponentActivity() {
 
         // 4. 회의록 자동 생성 시도 (실패해도 전사 데이터는 이미 DB에 보존됨)
         try {
-            val workRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
-                .setInputData(
+            val templateId = userPreferencesRepository.getDefaultTemplateIdOnce()
+            val workData = when {
+                templateId == UserPreferencesRepository.CUSTOM_PROMPT_MODE_ID -> {
+                    // 직접 입력 모드: 저장된 커스텀 프롬프트로 생성
+                    val customPrompt = userPreferencesRepository.getDefaultCustomPromptOnce()
+                    workDataOf(
+                        MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
+                        MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath,
+                        MinutesGenerationWorker.KEY_CUSTOM_PROMPT to customPrompt.ifBlank { null }
+                    )
+                }
+                templateId > 0 -> {
+                    workDataOf(
+                        MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
+                        MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath,
+                        MinutesGenerationWorker.KEY_TEMPLATE_ID to templateId
+                    )
+                }
+                else -> {
+                    // 매번 선택 또는 기본 → templateId/customPrompt 없이 enqueue (STRUCTURED 폴백)
                     workDataOf(
                         MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
                         MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath
                     )
-                )
+                }
+            }
+
+            val workRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
+                .setInputData(workData)
                 .build()
             WorkManager.getInstance(this@ShareReceiverActivity).enqueue(workRequest)
 

@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.autominuting.R
+import com.autominuting.domain.model.MinutesFormat
 
 /**
  * 파이프라인 진행 상태 알림을 관리하는 유틸리티 객체.
@@ -52,26 +53,18 @@ object PipelineNotificationHelper {
      * @param text 알림에 표시할 상태 텍스트
      * @param ongoing true이면 사용자가 스와이프로 제거할 수 없는 지속 알림
      */
-    /**
-     * @param progress 진행률 (0~100). -1이면 indeterminate 프로그레스바 표시.
-     */
-    fun updateProgress(context: Context, text: String, ongoing: Boolean = true, progress: Int = -1) {
-        val builder = NotificationCompat.Builder(context, PIPELINE_CHANNEL_ID)
+    fun updateProgress(context: Context, text: String, ongoing: Boolean = true) {
+        val notification = NotificationCompat.Builder(context, PIPELINE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("Auto Minuting")
             .setContentText(text)
             .setOngoing(ongoing)
             .setSilent(true)
-
-        if (progress >= 0) {
-            builder.setProgress(100, progress, false)
-        } else {
-            builder.setProgress(0, 0, true) // indeterminate
-        }
+            .build()
 
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(PIPELINE_NOTIFICATION_ID, builder.build())
+        notificationManager.notify(PIPELINE_NOTIFICATION_ID, notification)
     }
 
     /**
@@ -125,13 +118,17 @@ object PipelineNotificationHelper {
     fun notifyTranscriptionComplete(
         context: Context,
         meetingId: Long,
-        transcriptPath: String
+        transcriptPath: String,
+        minutesFormat: String = MinutesFormat.STRUCTURED.name,
+        customPrompt: String? = null
     ) {
         // 회의록 생성 시작 액션 Intent
         val generateIntent = Intent().apply {
             action = "com.autominuting.action.GENERATE_MINUTES"
             putExtra("meetingId", meetingId)
             putExtra("transcriptPath", transcriptPath)
+            putExtra("minutesFormat", minutesFormat)
+            customPrompt?.let { putExtra("customPrompt", it) }
         }
         val generatePendingIntent = PendingIntent.getBroadcast(
             context,

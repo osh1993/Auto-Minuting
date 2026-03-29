@@ -23,6 +23,7 @@ class PipelineActionReceiver : BroadcastReceiver() {
             ACTION_GENERATE_MINUTES -> {
                 val meetingId = intent.getLongExtra("meetingId", -1L)
                 val transcriptPath = intent.getStringExtra("transcriptPath") ?: return
+                val customPrompt = intent.getStringExtra("customPrompt")
 
                 Log.d(TAG, "회의록 생성 요청: meetingId=$meetingId")
 
@@ -30,7 +31,8 @@ class PipelineActionReceiver : BroadcastReceiver() {
                     .setInputData(
                         workDataOf(
                             MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
-                            MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath
+                            MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath,
+                            MinutesGenerationWorker.KEY_CUSTOM_PROMPT to customPrompt
                         )
                     )
                     .build()

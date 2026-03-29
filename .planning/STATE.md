@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 35 Plan 01 완료 — MinutesFormat 제거 및 설정 구조 개편
-last_updated: "2026-03-29T18:57:36.434Z"
+stopped_at: Phase 35 Plan 02 완료 — 직접 입력 프롬프트 기본 설정
+last_updated: "2026-03-29T19:06:52.431Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 35
   completed_phases: 29
   total_plans: 55
-  completed_plans: 51
+  completed_plans: 53
 ---
 
 # Project State
@@ -71,6 +71,7 @@ Recent decisions affecting current work:
 - [Phase 34]: Worker setProgress + 알림 동시 업데이트로 코드 중복 방지
 - [Phase 35]: MinutesFormat enum 전면 제거, PromptTemplate 시스템이 완전 대체
 - [Phase 35]: 자동모드 Switch를 회의록 설정 섹션으로 이동 (의미적 일관성)
+- [Phase 35]: CUSTOM_PROMPT_MODE_ID(-1L)를 특수 templateId로 사용하여 직접 입력 모드 표현
 
 ### Roadmap Evolution
 
@@ -88,6 +89,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29T18:57:36.427Z
-Stopped at: Phase 35 Plan 01 완료 — MinutesFormat 제거 및 설정 구조 개편
+Last session: 2026-03-29T19:06:52.423Z
+Stopped at: Phase 35 Plan 02 완료 — 직접 입력 프롬프트 기본 설정
 Resume file: None

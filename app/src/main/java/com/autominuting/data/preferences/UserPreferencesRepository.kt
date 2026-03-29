@@ -43,6 +43,12 @@ class UserPreferencesRepository @Inject constructor(
 
         /** 기본 프롬프트 템플릿 ID 설정 키 (0 = 미설정, 매번 선택) */
         val DEFAULT_TEMPLATE_ID_KEY = longPreferencesKey("default_template_id")
+
+        /** 직접 입력 모드를 나타내는 특수 템플릿 ID */
+        const val CUSTOM_PROMPT_MODE_ID = -1L
+
+        /** 직접 입력 기본 프롬프트 키 */
+        val DEFAULT_CUSTOM_PROMPT_KEY = stringPreferencesKey("default_custom_prompt")
     }
 
     /** 현재 자동화 모드 설정을 관찰한다. 기본값: FULL_AUTO */
@@ -66,6 +72,11 @@ class UserPreferencesRepository @Inject constructor(
     /** 기본 프롬프트 템플릿 ID를 관찰한다. 기본값: 0L (미설정, 매번 선택) */
     val defaultTemplateId: Flow<Long> = dataStore.data.map { prefs ->
         prefs[DEFAULT_TEMPLATE_ID_KEY] ?: 0L
+    }
+
+    /** 기본 커스텀 프롬프트 텍스트를 관찰한다. 기본값: 빈 문자열 */
+    val defaultCustomPrompt: Flow<String> = dataStore.data.map { prefs ->
+        prefs[DEFAULT_CUSTOM_PROMPT_KEY] ?: ""
     }
 
     /** 저장된 Google 계정 이메일을 관찰한다. */
@@ -164,4 +175,15 @@ class UserPreferencesRepository @Inject constructor(
      */
     suspend fun getDefaultTemplateIdOnce(): Long =
         dataStore.data.first()[DEFAULT_TEMPLATE_ID_KEY] ?: 0L
+
+    /** 기본 커스텀 프롬프트 텍스트를 저장한다. */
+    suspend fun setDefaultCustomPrompt(prompt: String) {
+        dataStore.edit { prefs ->
+            prefs[DEFAULT_CUSTOM_PROMPT_KEY] = prompt
+        }
+    }
+
+    /** 현재 기본 커스텀 프롬프트를 즉시 조회한다. */
+    suspend fun getDefaultCustomPromptOnce(): String =
+        dataStore.data.first()[DEFAULT_CUSTOM_PROMPT_KEY] ?: ""
 }

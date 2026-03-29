@@ -11,6 +11,8 @@ import androidx.work.workDataOf
 import com.autominuting.data.local.dao.MeetingDao
 import com.autominuting.data.repository.TranscriptionRepositoryImpl
 import com.autominuting.domain.model.AutomationMode
+import com.autominuting.domain.model.MinutesFormat
+import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.domain.repository.TranscriptionRepository
 import com.autominuting.service.PipelineNotificationHelper
@@ -31,7 +33,8 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val meetingDao: MeetingDao,
-    private val transcriptionRepository: TranscriptionRepository
+    private val transcriptionRepository: TranscriptionRepository,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : CoroutineWorker(appContext, workerParams) {
 
     /**
@@ -53,7 +56,12 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
         // inputData에서 설정값 읽기
         val automationMode = inputData.getString(KEY_AUTOMATION_MODE)
             ?: AutomationMode.FULL_AUTO.name
-        val templateId = inputData.getLong(KEY_TEMPLATE_ID, 0L)
+        val minutesFormat = inputData.getString(KEY_MINUTES_FORMAT)
+            ?: MinutesFormat.STRUCTURED.name
+        // templateId: inputData에서 전달되지 않으면 UserPreferences에서 기본값 조회
+        val templateId = inputData.getLong(KEY_TEMPLATE_ID, 0L).let { id ->
+            if (id == 0L) userPreferencesRepository.getDefaultTemplateIdOnce() else id
+        }
 
         // meetingId가 없으면 audioFilePath로 DB에서 조회 (기존 호환성)
         val meetingId = inputData.getLong(KEY_MEETING_ID, -1L).let { id ->
@@ -84,23 +92,11 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
             updatedAt = now
         )
 
-        // 전사 시작 알림 (indeterminate 프로그레스바)
-        PipelineNotificationHelper.updateProgress(applicationContext, "전사 중...", progress = -1)
+        // 전사 시작 알림
+        PipelineNotificationHelper.updateProgress(applicationContext, "전사 중...")
 
-        // 전사 수행 (Whisper 1차 -> ML Kit 2차 폴백) — 진행률 콜백 연결
-        val transcribeResult = transcriptionRepository.transcribe(audioFilePath) { progress ->
-            // progress: Float 0.0~1.0
-            val percent = (progress * 100).toInt()
-            // Worker progress 업데이트 (WorkManager WorkInfo에서 관찰 가능)
-            setProgress(workDataOf(KEY_PROGRESS to percent))
-            // 알림 업데이트
-            PipelineNotificationHelper.updateProgress(
-                applicationContext,
-                "전사 중 $percent%",
-                ongoing = true,
-                progress = percent
-            )
-        }
+        // 전사 수행 (Whisper 1차 -> ML Kit 2차 폴백)
+        val transcribeResult = transcriptionRepository.transcribe(audioFilePath)
 
         return if (transcribeResult.isSuccess) {
             val transcriptText = transcribeResult.getOrThrow()
@@ -131,6 +127,11 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
 
             Log.d(TAG, "전사 파이프라인 완료: $transcriptPath")
 
+            // 직접 입력 모드인 경우 커스텀 프롬프트 조회
+            val resolvedCustomPrompt: String? = if (templateId == UserPreferencesRepository.CUSTOM_PROMPT_MODE_ID) {
+                userPreferencesRepository.getDefaultCustomPromptOnce().ifBlank { null }
+            } else null
+
             // 자동화 모드에 따라 분기
             if (automationMode == AutomationMode.FULL_AUTO.name) {
                 // 완전 자동: 회의록 생성 Worker 자동 체이닝
@@ -139,7 +140,9 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
                         workDataOf(
                             MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
                             MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath,
-                            MinutesGenerationWorker.KEY_TEMPLATE_ID to templateId
+                            MinutesGenerationWorker.KEY_MINUTES_FORMAT to minutesFormat,
+                            MinutesGenerationWorker.KEY_TEMPLATE_ID to templateId,
+                            MinutesGenerationWorker.KEY_CUSTOM_PROMPT to resolvedCustomPrompt
                         )
                     )
                     .build()
@@ -149,7 +152,8 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
             } else {
                 // 하이브리드: 알림만 표시, 사용자 확인 대기
                 PipelineNotificationHelper.notifyTranscriptionComplete(
-                    applicationContext, meetingId, transcriptPath
+                    applicationContext, meetingId, transcriptPath, minutesFormat,
+                    customPrompt = resolvedCustomPrompt
                 )
                 Log.d(TAG, "하이브리드 모드: 전사 완료 알림 표시, 사용자 확인 대기")
             }
@@ -198,10 +202,9 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
         const val KEY_MEETING_ID = "meetingId"
         const val KEY_TRANSCRIPT_PATH = "transcriptPath"
         const val KEY_AUTOMATION_MODE = "automationMode"
+        const val KEY_MINUTES_FORMAT = "minutesFormat"
         /** 프롬프트 템플릿 ID (FULL_AUTO 체이닝 시 MinutesGenerationWorker에 전달) */
         const val KEY_TEMPLATE_ID = "templateId"
-        /** 전사 진행률 (0~100). WorkInfo.progress에서 관찰 가능. */
-        const val KEY_PROGRESS = "progress"
         private const val TAG = "TranscriptionTrigger"
     }
 }
