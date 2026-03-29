@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: verifying
-stopped_at: Completed 28-01-PLAN.md
-last_updated: "2026-03-29T07:59:47.469Z"
+milestone: v3.1
+milestone_name: UX 개선 및 정보 표시 강화
+status: Milestone complete
+stopped_at: v3.1 마일스톤 완료 — Phase 24-28 전체 완료
+last_updated: "2026-03-29T08:30:00.000Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 28
-  completed_phases: 23
+  completed_phases: 24
   total_plans: 46
-  completed_plans: 44
+  completed_plans: 46
 ---
 
 # Project State
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다.
-**Current focus:** Phase 28 — 설정 정리
+**Current focus:** v3.1 마일스톤 완료 — 다음 마일스톤 대기
 
 ## Current Position
 
-Phase: 28
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-29
+Phase: 28 (v3.1 마지막)
+Plan: All complete
+Status: v3.1 마일스톤 완료
+Last activity: 2026-03-29 — Phase 28 완료 + Whisper NDK 빌드 완료
 
 ## Performance Metrics
 
@@ -66,10 +66,14 @@ Recent decisions affecting current work:
 - [Phase 26]: 카드 제목 클릭으로 이름 편집 다이얼로그 진입 (Phase 25 패턴 재사용)
 - [Phase 27]: source = URL_DOWNLOAD로 출처 구분하여 기존 PLAUD_BLE, SAMSUNG_SHARE와 병렬 추적
 - [Phase 28]: 설정 섹션 3분류 (회의록 설정/전사 설정/인증) + 테스트 도구 제거로 프로덕션 품질 정리
+- [GSD 외부]: Gemini SDK → REST API 직접 호출 (타임아웃 5분 제어)
+- [GSD 외부]: Plaud 공유 링크 WebView 오디오 URL 추출 (S3 presigned URL 인터셉트)
+- [GSD 외부]: Whisper NDK 빌드 완료 (whisper.cpp submodule + CMake + JNI 브릿지)
+- [GSD 외부]: 재전사 실패 시 진행 중 상태(TRANSCRIBING) 복원 방지 → TRANSCRIBED로 안전 복원
 
 ### Pending Todos
 
-- Whisper NDK 빌드 미완료 (area: stt) — libwhisper.so + JNI 브릿지 구현 필요
+- ~~Whisper NDK 빌드 미완료 (area: stt)~~ → 완료 (2026-03-29, libwhisper.so + JNI 브릿지)
 
 ### Blockers/Concerns
 
@@ -78,6 +82,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-29T07:56:59.750Z
-Stopped at: Completed 28-01-PLAN.md
+Last session: 2026-03-29T08:30:00.000Z
+Stopped at: v3.1 마일스톤 완료 + GSD 맥락 동기화
 Resume file: None

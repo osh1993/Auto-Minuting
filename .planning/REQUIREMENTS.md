@@ -70,7 +70,7 @@ Deferred to future release.
 - **PLUD-F01**: Plaud 리버스 엔지니어링 결과에 따른 연결 본구현
 - **SREC-F01**: 삼성 녹음앱 자동 감지 본구현 (v2.0 스파이크 Partial Go)
 - **NLMK-F01**: MCP 서버 API 본구현 (REST API 미존재 — 대기)
-- **STT-03**: Whisper 온디바이스 전사 NDK 빌드
+- ~~**STT-03**: Whisper 온디바이스 전사 NDK 빌드~~ → 완료 (2026-03-29)
 
 ## Out of Scope
 

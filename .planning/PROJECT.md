@@ -16,8 +16,10 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 **Phase 10 완료** (2026-03-26) — NotebookLM 반자동 연동
 **Phase 20 완료** (2026-03-27) — 전사 목록 액션 메뉴 (삭제, 재전사, 공유)
 **Phase 23 완료** (2026-03-28) — STT 엔진 선택 (Gemini 클라우드 / Whisper 온디바이스)
+**v3.1 완료** (2026-03-29) — 카드 정보 표시, 이름 관리, 회의록 제목/액션, URL 다운로드, 설정 정리
+**Whisper NDK 빌드 완료** (2026-03-29) — whisper.cpp submodule + CMake + JNI, 온디바이스 전사 동작 확인
 
-- 60+ Kotlin 파일, 6,000+ LOC
+- 65+ Kotlin 파일, 7,000+ LOC
 - Tech stack: Kotlin 2.3.20, Jetpack Compose (BOM 2026.03), Hilt 2.56, Room 2.8.4, WorkManager
 - 파이프라인: Plaud SDK BLE → STT (Gemini 클라우드 / Whisper 온디바이스 선택) → Gemini 2.5 Flash → Markdown 회의록
 - UI: Material 3 Dynamic Color, Bottom Navigation 4탭, Markdown 뷰어, 아카이브 검색
@@ -117,4 +119,4 @@ This document evolves at phase transitions and milestone boundaries.
 **v1.0 Roadmap archived to:** `.planning/milestones/v1.0-ROADMAP.md`
 
 ---
-*Last updated: 2026-03-28 — Milestone v3.1 시작*
+*Last updated: 2026-03-29 — Milestone v3.1 완료 + Whisper NDK 빌드 완료*
