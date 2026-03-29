@@ -90,6 +90,12 @@ Requirements for v4.0 milestone. Each maps to roadmap phases.
 - [x] **GUI-03**: 전사 목록과 회의록 목록의 빈 상태가 아이콘+텍스트로 통일된다
 - [x] **GUI-04**: 전사 목록과 회의록 목록의 날짜 포맷이 통일된다 (yyyy.MM.dd HH:mm)
 
+### 설정 구조 개편 (Settings)
+
+- [ ] **SET-01**: MinutesFormat enum과 회의록 형식 드롭다운이 코드베이스에서 완전히 제거된다
+- [ ] **SET-02**: 자동모드 Switch가 전사 설정에서 회의록 설정 섹션으로 이동한다
+- [ ] **SET-03**: 기본 프롬프트 드롭다운에서 "직접 입력"을 선택하여 커스텀 프롬프트를 기본으로 설정할 수 있다
+
 ## Future Requirements
 
 Deferred to future release.
@@ -144,13 +150,16 @@ Deferred to future release.
 | GUI-02 | Phase 33 | Complete |
 | GUI-03 | Phase 33 | Complete |
 | GUI-04 | Phase 33 | Complete |
+| SET-01 | Phase 35 | Pending |
+| SET-02 | Phase 35 | Pending |
+| SET-03 | Phase 35 | Pending |
 
 **Coverage:**
 
-- v4.0 requirements: 11 total
-- Mapped to phases: 11
+- v4.0 requirements: 14 total
+- Mapped to phases: 14
 - Unmapped: 0
 
 ---
 
-*Requirements defined: 2026-03-26, v3.1 추가: 2026-03-28, v4.0 추가: 2026-03-29*
+*Requirements defined: 2026-03-26, v3.1 추가: 2026-03-28, v4.0 추가: 2026-03-29, Phase 35 추가: 2026-03-29*
