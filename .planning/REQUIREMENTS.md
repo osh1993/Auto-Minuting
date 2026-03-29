@@ -81,7 +81,7 @@ Requirements for v4.0 milestone. Each maps to roadmap phases.
 
 ### 공유 수신 (Share)
 
-- [ ] **SHARE-01**: 다른 앱에서 Plaud 공유 링크(web.plaud.ai)를 공유하면 오디오를 자동 추출하여 전사 파이프라인에 진입한다
+- [x] **SHARE-01**: 다른 앱에서 Plaud 공유 링크(web.plaud.ai)를 공유하면 오디오를 자동 추출하여 전사 파이프라인에 진입한다
 
 ### GUI 개선 (GUI)
 
@@ -139,7 +139,7 @@ Deferred to future release.
 | PIPE-04 | Phase 30 | Complete |
 | QUOTA-01 | Phase 31 | Complete |
 | QUOTA-02 | Phase 31 | Complete |
-| SHARE-01 | Phase 32 | Pending |
+| SHARE-01 | Phase 32 | Complete |
 | GUI-01 | Phase 33 | Pending |
 | GUI-02 | Phase 33 | Pending |
 | GUI-03 | Phase 33 | Pending |

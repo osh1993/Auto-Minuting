@@ -214,7 +214,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 32-01-PLAN.md — Plaud 공유 링크 수신 + WebView 오디오 추출 + 전사 파이프라인 진입
+- [x] 32-01-PLAN.md — Plaud 공유 링크 수신 + WebView 오디오 추출 + 전사 파이프라인 진입
 
 ### Phase 33: GUI 일관성 개선
 **Goal**: 앱 전반의 GUI가 일관되고 접근성 표준을 준수한다
@@ -253,5 +253,5 @@ Plans:
 | 29. 전사 카드 UX 개선 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 30. 프롬프트 템플릿 선택 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 31. Gemini 쿼터 관리 | v4.0 | 1/1 | Complete    | 2026-03-29 |
-| 32. Plaud 공유 링크 수신 | v4.0 | 0/1 | Not started | - |
+| 32. Plaud 공유 링크 수신 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 33. GUI 일관성 개선 | v4.0 | 0/1 | Not started | - |
