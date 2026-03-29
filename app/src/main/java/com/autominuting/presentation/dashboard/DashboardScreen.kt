@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Card
@@ -63,6 +64,7 @@ fun DashboardScreen(
     val defaultTemplateId by viewModel.defaultTemplateId.collectAsStateWithLifecycle()
     val downloadState by viewModel.downloadState.collectAsStateWithLifecycle()
     val plaudShareUrl by viewModel.plaudShareUrl.collectAsStateWithLifecycle()
+    val quotaUsage by viewModel.quotaUsage.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     var urlText by remember { mutableStateOf("") }
@@ -158,6 +160,43 @@ fun DashboardScreen(
             }
         }
 
+        // 90% 쿼터 경고 배너
+        if (quotaUsage.isOverThreshold) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "쿼터 경고",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Gemini 쿼터 경고",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Text(
+                            text = "일일 사용량이 90%를 초과했습니다 (${quotaUsage.totalCount}/${quotaUsage.dailyLimit})",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
+            }
+        }
+
         // 대시보드 타이틀
         Text(
             text = "Auto Minuting",
@@ -204,6 +243,56 @@ fun DashboardScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("NotebookLM 열기")
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Gemini API 쿼터 사용량 카드
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "Gemini API 사용량",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    progress = { quotaUsage.usagePercent.coerceIn(0f, 1f) },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = when {
+                        quotaUsage.usagePercent >= 0.9f -> MaterialTheme.colorScheme.error
+                        quotaUsage.usagePercent >= 0.7f -> MaterialTheme.colorScheme.tertiary
+                        else -> MaterialTheme.colorScheme.primary
+                    }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "${quotaUsage.totalCount} / ${quotaUsage.dailyLimit} (잔여 ${quotaUsage.remaining})",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "전사(STT): ${quotaUsage.sttCount}회",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "회의록: ${quotaUsage.minutesCount}회",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }

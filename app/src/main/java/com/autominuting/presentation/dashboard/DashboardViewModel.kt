@@ -8,6 +8,8 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.autominuting.data.preferences.UserPreferencesRepository
+import com.autominuting.data.quota.GeminiQuotaTracker
+import com.autominuting.data.quota.QuotaUsage
 import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.Meeting
 import com.autominuting.domain.model.PipelineStatus
@@ -45,6 +47,7 @@ class DashboardViewModel @Inject constructor(
     private val meetingRepository: MeetingRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val promptTemplateRepository: PromptTemplateRepository,
+    private val quotaTracker: GeminiQuotaTracker,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -78,6 +81,14 @@ class DashboardViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = 0L
+        )
+
+    /** Gemini API 쿼터 사용량 (STT/Minutes 구분, 일일 한도 대비) */
+    val quotaUsage: StateFlow<QuotaUsage> = quotaTracker.usage
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = QuotaUsage(0, 0, GeminiQuotaTracker.DAILY_LIMIT, "")
         )
 
     /** 사용자가 "무시"한 파이프라인 ID 세트 */
