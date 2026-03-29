@@ -3,7 +3,6 @@ package com.autominuting.data.minutes
 import android.util.Log
 import com.autominuting.BuildConfig
 import com.autominuting.data.security.SecureApiKeyRepository
-import com.autominuting.domain.model.MinutesFormat
 import com.google.ai.client.generativeai.GenerativeModel
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,7 +23,7 @@ class GeminiEngine @Inject constructor(
         private const val TAG = "GeminiEngine"
         private const val MODEL_NAME = "gemini-2.5-flash"
 
-        /** 구조화된 회의록 프롬프트 (POC gemini-test.py에서 변환) */
+        /** 구조화된 회의록 프롬프트 (POC gemini-test.py에서 변환) — customPrompt null 시 기본 폴백 */
         private val STRUCTURED_PROMPT = """
             |당신은 전문 회의록 작성자입니다. 아래 회의 전사 텍스트를 읽고, 다음 형식에 맞춰 구조화된 회의록을 작성해주세요.
             |
@@ -57,58 +56,17 @@ class GeminiEngine @Inject constructor(
             |## 회의 전사 텍스트
             |
         """.trimMargin()
-
-        /** 핵심 내용 요약 프롬프트 */
-        private val SUMMARY_PROMPT = """
-            |당신은 전문 회의록 작성자입니다. 아래 회의 전사 텍스트를 읽고, 핵심 내용을 3~5줄로 간결하게 요약해주세요.
-            |
-            |## 작성 지침
-            |- 가장 중요한 결정 사항과 논의 결과를 중심으로 요약한다
-            |- 불필요한 세부사항은 제외한다
-            |- 한국어로 작성한다
-            |
-            |---
-            |
-            |## 회의 전사 텍스트
-            |
-        """.trimMargin()
-
-        /** 액션 아이템 중심 프롬프트 */
-        private val ACTION_ITEMS_PROMPT = """
-            |당신은 전문 회의록 작성자입니다. 아래 회의 전사 텍스트에서 결정 사항과 액션 아이템만 추출해주세요.
-            |
-            |## 출력 형식
-            |
-            |### 결정 사항
-            |(번호를 매겨 명확하게 나열)
-            |
-            |### 액션 아이템
-            || 담당자 | 할 일 | 기한 |
-            ||--------|--------|------|
-            |(테이블 형식으로 정리)
-            |
-            |## 작성 지침
-            |- 결정 사항과 할 일만 포함한다. 논의 과정은 제외한다
-            |- 담당자가 불분명하면 "미정"으로 표시한다
-            |- 한국어로 작성한다
-            |
-            |---
-            |
-            |## 회의 전사 텍스트
-            |
-        """.trimMargin()
     }
 
     /**
      * 전사 텍스트를 Gemini API에 전달하여 구조화된 회의록을 생성한다.
      *
      * @param transcriptText 전사된 회의 텍스트
-     * @param format 회의록 출력 형식 (기본값: STRUCTURED)
+     * @param customPrompt 사용자 정의 프롬프트 (null이면 STRUCTURED_PROMPT 기본 사용)
      * @return 성공 시 Markdown 형식의 회의록, 실패 시 예외를 포함한 Result
      */
     override suspend fun generate(
         transcriptText: String,
-        format: MinutesFormat,
         customPrompt: String?
     ): Result<String> {
         // 사용자 설정 API 키 우선, 없으면 BuildConfig 폴백
@@ -132,11 +90,7 @@ class GeminiEngine @Inject constructor(
             val prompt = if (customPrompt != null) {
                 customPrompt + "\n\n---\n\n## 회의 전사 텍스트\n\n" + transcriptText
             } else {
-                when (format) {
-                    MinutesFormat.STRUCTURED -> STRUCTURED_PROMPT
-                    MinutesFormat.SUMMARY -> SUMMARY_PROMPT
-                    MinutesFormat.ACTION_ITEMS -> ACTION_ITEMS_PROMPT
-                } + transcriptText
+                STRUCTURED_PROMPT + transcriptText
             }
             val response = model.generateContent(prompt)
             val minutesText = response.text

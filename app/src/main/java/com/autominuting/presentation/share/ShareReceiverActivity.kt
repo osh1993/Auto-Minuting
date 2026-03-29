@@ -259,14 +259,11 @@ class ShareReceiverActivity : ComponentActivity() {
 
         // 4. 회의록 자동 생성 시도 (실패해도 전사 데이터는 이미 DB에 보존됨)
         try {
-            val minutesFormat = userPreferencesRepository.getMinutesFormatOnce()
-
             val workRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
                 .setInputData(
                     workDataOf(
                         MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
-                        MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath,
-                        MinutesGenerationWorker.KEY_MINUTES_FORMAT to minutesFormat.name
+                        MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath
                     )
                 )
                 .build()

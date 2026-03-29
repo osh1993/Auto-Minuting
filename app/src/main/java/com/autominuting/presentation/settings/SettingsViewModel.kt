@@ -12,7 +12,6 @@ import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.data.security.SecureApiKeyRepository
 import com.autominuting.data.stt.WhisperModelManager
 import com.autominuting.domain.model.AutomationMode
-import com.autominuting.domain.model.MinutesFormat
 import com.autominuting.domain.model.PromptTemplate
 import com.autominuting.domain.model.SttEngineType
 import com.autominuting.domain.repository.PromptTemplateRepository
@@ -51,14 +50,6 @@ class SettingsViewModel @Inject constructor(
     companion object {
         private const val TAG = "SettingsViewModel"
     }
-
-    /** 현재 선택된 회의록 형식 */
-    val minutesFormat: StateFlow<MinutesFormat> = userPreferencesRepository.minutesFormat
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = MinutesFormat.STRUCTURED
-        )
 
     /** 현재 선택된 STT 엔진 유형 */
     val sttEngineType: StateFlow<SttEngineType> = userPreferencesRepository.sttEngineType
@@ -131,13 +122,6 @@ class SettingsViewModel @Inject constructor(
         // 저장된 Google 인증 상태 복원
         viewModelScope.launch {
             googleAuthRepository.restoreAuthState()
-        }
-    }
-
-    /** 회의록 형식을 변경한다. */
-    fun setMinutesFormat(format: MinutesFormat) {
-        viewModelScope.launch {
-            userPreferencesRepository.setMinutesFormat(format)
         }
     }
 
