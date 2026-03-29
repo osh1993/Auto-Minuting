@@ -11,12 +11,18 @@ android {
     namespace = "com.autominuting"
     compileSdk = 36
 
+    ndkVersion = "27.2.12479018"
+
     defaultConfig {
         applicationId = "com.autominuting"
         minSdk = 31
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+
+        ndk {
+            abiFilters += "arm64-v8a"
+        }
 
         // Gemini API 인증 키 (local.properties에서 읽음)
         val localProps = Properties()
@@ -39,6 +45,13 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     buildFeatures {
