@@ -1,10 +1,18 @@
 package com.autominuting.presentation.share
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,10 +29,15 @@ import com.autominuting.service.PipelineNotificationHelper
 import com.autominuting.worker.MinutesGenerationWorker
 import com.autominuting.worker.TranscriptionTriggerWorker
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
 import android.provider.OpenableColumns
 import java.io.File
+import java.io.IOException
 import java.time.Instant
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 /**
@@ -128,6 +141,17 @@ class ShareReceiverActivity : ComponentActivity() {
                 recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
             return
+        }
+
+        // Plaud 공유 링크 감지 (텍스트 공유 처리 이전에 체크)
+        val sharedTextRaw = intent.getStringExtra(Intent.EXTRA_TEXT)
+        if (!sharedTextRaw.isNullOrBlank() && isPlaudShareUrl(sharedTextRaw)) {
+            val plaudUrl = extractPlaudUrl(sharedTextRaw)
+            if (plaudUrl != null) {
+                Log.d(TAG, "Plaud 공유 링크 감지: $plaudUrl")
+                processPlaudShareLink(plaudUrl)
+                return
+            }
         }
 
         // 텍스트 공유 처리 (기존 경로)
@@ -425,6 +449,201 @@ class ShareReceiverActivity : ComponentActivity() {
         val text = String(bytes, offset, bytes.size - offset, charset)
         Log.d(TAG, "디코딩 완료: ${text.length}자 (charset=$charset, rawBytes=${bytes.size})")
         return text
+    }
+
+    /** Plaud 공유 링크인지 판별한다. */
+    private fun isPlaudShareUrl(text: String): Boolean =
+        text.contains("web.plaud.ai/s/") || text.contains("web.plaud.ai/nshare/")
+
+    /** 텍스트 내에서 web.plaud.ai URL을 추출한다. (텍스트에 URL 외 다른 내용이 포함될 수 있음) */
+    private fun extractPlaudUrl(text: String): String? {
+        val regex = Regex("""https?://web\.plaud\.ai/(s|nshare)/[^\s]+""")
+        return regex.find(text)?.value
+    }
+
+    /**
+     * Plaud 공유 링크에서 WebView로 S3 오디오 URL을 추출하고 다운로드 파이프라인에 진입한다.
+     * WebView를 투명 0dp 크기로 Activity에 추가하여 S3 presigned URL 요청을 인터셉트한다.
+     */
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun processPlaudShareLink(plaudUrl: String) {
+        Toast.makeText(this, "Plaud 오디오 추출 중...", Toast.LENGTH_SHORT).show()
+
+        var audioFound = false
+        val webView = WebView(this).apply {
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.mediaPlaybackRequiresUserGesture = false
+        }
+
+        // 0dp 크기로 숨겨서 추가
+        val params = android.widget.FrameLayout.LayoutParams(0, 0)
+        addContentView(webView, params)
+
+        // 30초 타임아웃
+        val timeoutHandler = Handler(Looper.getMainLooper())
+        val timeoutRunnable = Runnable {
+            if (!audioFound) {
+                Log.w(TAG, "Plaud 오디오 URL 추출 타임아웃")
+                Toast.makeText(this, "오디오 추출 타임아웃", Toast.LENGTH_SHORT).show()
+                webView.destroy()
+                finish()
+            }
+        }
+        timeoutHandler.postDelayed(timeoutRunnable, 30_000)
+
+        webView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(
+                view: WebView?,
+                request: WebResourceRequest?
+            ): WebResourceResponse? {
+                val requestUrl = request?.url?.toString() ?: return null
+                // S3 presigned URL 패턴 감지 (amazonaws.com/audiofiles/)
+                if (requestUrl.contains("amazonaws.com") &&
+                    requestUrl.contains("audiofiles/") &&
+                    !audioFound
+                ) {
+                    audioFound = true
+                    timeoutHandler.removeCallbacks(timeoutRunnable)
+                    Handler(Looper.getMainLooper()).post {
+                        Log.d(TAG, "Plaud S3 오디오 URL 추출: ${requestUrl.take(100)}...")
+                        webView.destroy()
+                        lifecycleScope.launch { downloadAndStartPipeline(requestUrl) }
+                    }
+                }
+                return null
+            }
+
+            override fun onPageFinished(view: WebView?, pageUrl: String?) {
+                super.onPageFinished(view, pageUrl)
+                // 재생 버튼 자동 클릭 (DashboardScreen과 동일 JS — 오디오 URL 요청 유도)
+                view?.evaluateJavascript(
+                    """
+                    (function() {
+                        var audios = document.querySelectorAll('audio');
+                        for (var i = 0; i < audios.length; i++) { audios[i].play().catch(function(){}); }
+                        var buttons = document.querySelectorAll('button, [role="button"], .play-btn, svg');
+                        for (var i = 0; i < buttons.length; i++) { buttons[i].click(); }
+                    })();
+                    """.trimIndent(),
+                    null
+                )
+            }
+
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                error: WebResourceError?
+            ) {
+                if (request?.isForMainFrame == true && !audioFound) {
+                    audioFound = true
+                    timeoutHandler.removeCallbacks(timeoutRunnable)
+                    Log.e(TAG, "Plaud 페이지 로드 실패: ${error?.description}")
+                    Toast.makeText(
+                        this@ShareReceiverActivity,
+                        "Plaud 페이지 로드 실패",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    webView.destroy()
+                    finish()
+                }
+            }
+        }
+        webView.loadUrl(plaudUrl)
+    }
+
+    /**
+     * S3 presigned URL에서 OkHttp로 오디오를 다운로드하고 전사 파이프라인에 진입한다.
+     * DashboardViewModel.downloadDirectUrl()과 동일 패턴.
+     */
+    private suspend fun downloadAndStartPipeline(audioUrl: String) {
+        try {
+            val now = System.currentTimeMillis()
+            val audioDir = File(filesDir, "audio")
+            audioDir.mkdirs()
+
+            // OkHttp로 S3 URL 직접 다운로드
+            val client = OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(120, TimeUnit.SECONDS)
+                .build()
+
+            val request = okhttp3.Request.Builder().url(audioUrl).build()
+
+            withContext(Dispatchers.IO) {
+                val response = client.newCall(request).execute()
+                if (!response.isSuccessful) {
+                    throw IOException("다운로드 실패: HTTP ${response.code}")
+                }
+                val body = response.body ?: throw IOException("응답 본문이 비어있습니다")
+
+                // 확장자 추출 (URL 또는 Content-Type 기반)
+                val rawFileName = audioUrl.substringAfterLast("/").substringBefore("?")
+                val extractedExt = rawFileName.substringAfterLast(".", "m4a")
+                val extension = if (extractedExt in listOf("m4a", "mp4", "wav", "mp3", "ogg", "flac")) {
+                    extractedExt
+                } else {
+                    val contentType = response.header("Content-Type") ?: ""
+                    when {
+                        contentType.contains("m4a") || contentType.contains("mp4") -> "m4a"
+                        contentType.contains("wav") -> "wav"
+                        contentType.contains("mp3") || contentType.contains("mpeg") -> "mp3"
+                        else -> "m4a"
+                    }
+                }
+
+                val audioFile = File(audioDir, "plaud_${now}.$extension")
+                body.byteStream().use { input ->
+                    audioFile.outputStream().use { output -> input.copyTo(output) }
+                }
+                response.close()
+
+                Log.d(TAG, "Plaud 오디오 다운로드 완료: ${audioFile.absolutePath} (${audioFile.length()} bytes)")
+
+                // MeetingEntity 생성 (AUDIO_RECEIVED)
+                val instantNow = Instant.ofEpochMilli(now)
+                val meeting = Meeting(
+                    title = "Plaud 공유 회의",
+                    recordedAt = instantNow,
+                    audioFilePath = audioFile.absolutePath,
+                    pipelineStatus = PipelineStatus.AUDIO_RECEIVED,
+                    source = "PLAUD_SHARE",
+                    createdAt = instantNow,
+                    updatedAt = instantNow
+                )
+                val meetingId = meetingRepository.insertMeeting(meeting)
+
+                // TranscriptionTriggerWorker enqueue
+                val workRequest = OneTimeWorkRequestBuilder<TranscriptionTriggerWorker>()
+                    .setInputData(
+                        workDataOf(
+                            TranscriptionTriggerWorker.KEY_AUDIO_FILE_PATH to audioFile.absolutePath,
+                            TranscriptionTriggerWorker.KEY_MEETING_ID to meetingId
+                        )
+                    )
+                    .build()
+                WorkManager.getInstance(this@ShareReceiverActivity).enqueue(workRequest)
+
+                Log.d(TAG, "Plaud 전사 파이프라인 진입: meetingId=$meetingId")
+
+                withContext(Dispatchers.Main) {
+                    PipelineNotificationHelper.updateProgress(
+                        this@ShareReceiverActivity,
+                        "Plaud 음성 전사 중..."
+                    )
+                    Toast.makeText(
+                        this@ShareReceiverActivity,
+                        "Plaud 음성 전사 중...",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Plaud 오디오 다운로드/파이프라인 진입 실패", e)
+            Toast.makeText(this, "Plaud 오디오 처리 실패: ${e.message}", Toast.LENGTH_LONG).show()
+        } finally {
+            finish()
+        }
     }
 
     companion object {
