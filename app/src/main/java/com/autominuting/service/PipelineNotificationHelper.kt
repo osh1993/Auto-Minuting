@@ -53,18 +53,26 @@ object PipelineNotificationHelper {
      * @param text 알림에 표시할 상태 텍스트
      * @param ongoing true이면 사용자가 스와이프로 제거할 수 없는 지속 알림
      */
-    fun updateProgress(context: Context, text: String, ongoing: Boolean = true) {
-        val notification = NotificationCompat.Builder(context, PIPELINE_CHANNEL_ID)
+    /**
+     * @param progress 진행률 (0~100). -1이면 indeterminate 프로그레스바 표시.
+     */
+    fun updateProgress(context: Context, text: String, ongoing: Boolean = true, progress: Int = -1) {
+        val builder = NotificationCompat.Builder(context, PIPELINE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("Auto Minuting")
             .setContentText(text)
             .setOngoing(ongoing)
             .setSilent(true)
-            .build()
+
+        if (progress >= 0) {
+            builder.setProgress(100, progress, false)
+        } else {
+            builder.setProgress(0, 0, true) // indeterminate
+        }
 
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(PIPELINE_NOTIFICATION_ID, notification)
+        notificationManager.notify(PIPELINE_NOTIFICATION_ID, builder.build())
     }
 
     /**

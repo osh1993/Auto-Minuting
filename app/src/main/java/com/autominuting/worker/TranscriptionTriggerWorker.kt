@@ -87,11 +87,23 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
             updatedAt = now
         )
 
-        // 전사 시작 알림
-        PipelineNotificationHelper.updateProgress(applicationContext, "전사 중...")
+        // 전사 시작 알림 (indeterminate 프로그레스바)
+        PipelineNotificationHelper.updateProgress(applicationContext, "전사 중...", progress = -1)
 
-        // 전사 수행 (Whisper 1차 -> ML Kit 2차 폴백)
-        val transcribeResult = transcriptionRepository.transcribe(audioFilePath)
+        // 전사 수행 (Whisper 1차 -> ML Kit 2차 폴백) — 진행률 콜백 연결
+        val transcribeResult = transcriptionRepository.transcribe(audioFilePath) { progress ->
+            // progress: Float 0.0~1.0
+            val percent = (progress * 100).toInt()
+            // Worker progress 업데이트 (WorkManager WorkInfo에서 관찰 가능)
+            setProgress(workDataOf(KEY_PROGRESS to percent))
+            // 알림 업데이트
+            PipelineNotificationHelper.updateProgress(
+                applicationContext,
+                "전사 중 $percent%",
+                ongoing = true,
+                progress = percent
+            )
+        }
 
         return if (transcribeResult.isSuccess) {
             val transcriptText = transcribeResult.getOrThrow()
@@ -193,6 +205,8 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
         const val KEY_MINUTES_FORMAT = "minutesFormat"
         /** 프롬프트 템플릿 ID (FULL_AUTO 체이닝 시 MinutesGenerationWorker에 전달) */
         const val KEY_TEMPLATE_ID = "templateId"
+        /** 전사 진행률 (0~100). WorkInfo.progress에서 관찰 가능. */
+        const val KEY_PROGRESS = "progress"
         private const val TAG = "TranscriptionTrigger"
     }
 }
