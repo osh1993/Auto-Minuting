@@ -65,7 +65,10 @@ class MlKitEngine @Inject constructor(
      * 파일 기반 전사는 EXTRA_AUDIO_SOURCE를 통해 시도한다.
      * 지원되지 않는 기기에서는 Result.failure()를 반환한다.
      */
-    override suspend fun transcribe(audioFilePath: String): Result<String> {
+    override suspend fun transcribe(
+        audioFilePath: String,
+        onProgress: (Float) -> Unit
+    ): Result<String> {
         return try {
             if (!isAvailable()) {
                 return Result.failure(

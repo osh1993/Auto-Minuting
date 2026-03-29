@@ -11,9 +11,13 @@ interface SttEngine {
     /**
      * 오디오 파일을 텍스트로 전사한다.
      * @param audioFilePath 전사할 오디오 파일의 절대 경로
+     * @param onProgress 전사 진행률 콜백 (0.0~1.0). Whisper만 실제 진행률 제공, 나머지 엔진은 미호출.
      * @return 성공 시 전사된 텍스트, 실패 시 예외를 포함한 Result
      */
-    suspend fun transcribe(audioFilePath: String): Result<String>
+    suspend fun transcribe(
+        audioFilePath: String,
+        onProgress: (Float) -> Unit = {}
+    ): Result<String>
 
     /**
      * 현재 엔진이 사용 가능한 상태인지 확인한다.
