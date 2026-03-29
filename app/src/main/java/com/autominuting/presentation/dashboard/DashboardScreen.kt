@@ -11,8 +11,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -40,6 +43,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.ui.platform.LocalContext
+import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.util.NotebookLmHelper
 
@@ -53,6 +57,7 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val activePipeline by viewModel.activePipeline.collectAsStateWithLifecycle()
+    val automationMode by viewModel.automationMode.collectAsStateWithLifecycle()
     val downloadState by viewModel.downloadState.collectAsStateWithLifecycle()
     val plaudShareUrl by viewModel.plaudShareUrl.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -66,10 +71,18 @@ fun DashboardScreen(
     ) {
         // 진행 중인 파이프라인 배너
         activePipeline?.let { meeting ->
+            val isHybridTranscribed = meeting.pipelineStatus == PipelineStatus.TRANSCRIBED
+                && automationMode == AutomationMode.HYBRID
             val statusText = when (meeting.pipelineStatus) {
                 PipelineStatus.AUDIO_RECEIVED -> "오디오 수신됨"
                 PipelineStatus.TRANSCRIBING -> "전사 중..."
-                PipelineStatus.TRANSCRIBED -> "전사 완료 — 회의록 생성 대기"
+                PipelineStatus.TRANSCRIBED -> {
+                    if (automationMode == AutomationMode.HYBRID) {
+                        "전사 완료"
+                    } else {
+                        "전사 완료 — 회의록 생성 대기"
+                    }
+                }
                 PipelineStatus.GENERATING_MINUTES -> "회의록 생성 중..."
                 else -> null
             }
@@ -82,25 +95,52 @@ fun DashboardScreen(
                         containerColor = MaterialTheme.colorScheme.primaryContainer
                     )
                 ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = meeting.title,
-                                style = MaterialTheme.typography.titleSmall
-                            )
-                            Text(
-                                text = statusText,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (isHybridTranscribed) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "전사 완료",
+                                    modifier = Modifier.size(24.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            } else {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = meeting.title,
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                                Text(
+                                    text = statusText,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                        // 하이브리드 모드 + 전사 완료: 확인/무시 버튼
+                        if (isHybridTranscribed) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TextButton(onClick = { viewModel.dismissPipeline(meeting.id) }) {
+                                    Text("무시")
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Button(onClick = { viewModel.generateMinutesForPipeline(meeting.id) }) {
+                                    Text("회의록 생성")
+                                }
+                            }
                         }
                     }
                 }

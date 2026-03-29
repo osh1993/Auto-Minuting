@@ -7,9 +7,12 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import com.autominuting.data.preferences.UserPreferencesRepository
+import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.Meeting
 import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.domain.repository.MeetingRepository
+import com.autominuting.worker.MinutesGenerationWorker
 import com.autominuting.worker.TranscriptionTriggerWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -18,6 +21,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -36,6 +41,7 @@ import javax.inject.Inject
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val meetingRepository: MeetingRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -47,16 +53,55 @@ class DashboardViewModel @Inject constructor(
         PipelineStatus.GENERATING_MINUTES
     )
 
-    /** 현재 진행 중인 파이프라인의 회의 정보 (없으면 null) */
+    /** 현재 자동화 모드 (FULL_AUTO 또는 HYBRID) */
+    val automationMode: StateFlow<AutomationMode> = userPreferencesRepository.automationMode
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = AutomationMode.FULL_AUTO
+        )
+
+    /** 사용자가 "무시"한 파이프라인 ID 세트 */
+    private val _dismissedPipelineIds = MutableStateFlow<Set<Long>>(emptySet())
+
+    /** 현재 진행 중인 파이프라인의 회의 정보 (없으면 null). dismissed된 ID는 필터링 */
     val activePipeline: StateFlow<Meeting?> = meetingRepository.getMeetings()
-        .map { meetings ->
-            meetings.firstOrNull { it.pipelineStatus in activeStatuses }
+        .combine(_dismissedPipelineIds) { meetings, dismissed ->
+            meetings.firstOrNull { it.pipelineStatus in activeStatuses && it.id !in dismissed }
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = null
         )
+
+    /**
+     * 하이브리드 모드에서 전사 완료 후 회의록 생성을 시작한다.
+     * MinutesGenerationWorker를 enqueue한다.
+     */
+    fun generateMinutesForPipeline(meetingId: Long) {
+        viewModelScope.launch {
+            val meeting = meetingRepository.getMeetingById(meetingId).first() ?: return@launch
+            if (meeting.transcriptPath == null) return@launch
+            val minutesFormat = userPreferencesRepository.getMinutesFormatOnce()
+            val workRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
+                .setInputData(workDataOf(
+                    MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
+                    MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to meeting.transcriptPath,
+                    MinutesGenerationWorker.KEY_MINUTES_FORMAT to minutesFormat.name
+                ))
+                .build()
+            WorkManager.getInstance(context).enqueue(workRequest)
+        }
+    }
+
+    /**
+     * 하이브리드 모드에서 파이프라인 배너를 닫는다.
+     * 전사 상태는 유지하되 배너에서만 제거한다.
+     */
+    fun dismissPipeline(meetingId: Long) {
+        _dismissedPipelineIds.value = _dismissedPipelineIds.value + meetingId
+    }
 
     // --- URL 다운로드 기능 ---
 
