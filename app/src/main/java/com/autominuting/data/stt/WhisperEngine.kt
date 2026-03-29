@@ -52,6 +52,19 @@ class WhisperEngine @Inject constructor(
         }
     }
 
+    /** 현재 전사의 진행률 콜백 (JNI 콜백에서 참조) */
+    @Volatile
+    private var currentProgressCallback: ((Float) -> Unit)? = null
+
+    /**
+     * JNI에서 직접 호출하는 진행률 콜백 메서드.
+     * whisper_progress_cb -> JNI CallVoidMethod -> 이 메서드 호출.
+     * progress 범위: 0~100 (정수) → 0.0~1.0 (Float)으로 변환하여 전달.
+     */
+    fun onNativeProgress(progress: Int) {
+        currentProgressCallback?.invoke(progress / 100f)
+    }
+
     /** 모델 파일의 절대 경로 */
     private val modelPath: String
         get() = File(context.filesDir, "$MODEL_DIR/$MODEL_FILE").absolutePath
@@ -82,9 +95,14 @@ class WhisperEngine @Inject constructor(
      * 2. JNI를 통해 whisper.cpp 전사 호출
      * 3. 네이티브 라이브러리 미로드 시 Result.failure() 반환
      */
-    override suspend fun transcribe(audioFilePath: String): Result<String> =
+    override suspend fun transcribe(
+        audioFilePath: String,
+        onProgress: (Float) -> Unit
+    ): Result<String> =
         withContext(Dispatchers.IO) {
             try {
+                currentProgressCallback = onProgress
+
                 if (!isAvailable()) {
                     return@withContext Result.failure(
                         WhisperNotAvailableException(
@@ -100,12 +118,13 @@ class WhisperEngine @Inject constructor(
                 val cacheDir = File(context.cacheDir, "whisper_tmp").absolutePath
                 val wavPath = audioConverter.convertToWhisperFormat(audioFilePath, cacheDir)
 
-                // JNI를 통한 Whisper 전사
+                // JNI를 통한 Whisper 전사 (progressListener로 this를 전달하여 진행률 수신)
                 val result = nativeTranscribe(
                     modelPath = modelPath,
                     audioPath = wavPath,
                     language = LANGUAGE,
-                    temperature = TEMPERATURE
+                    temperature = TEMPERATURE,
+                    progressListener = this@WhisperEngine
                 )
 
                 if (result.isNullOrBlank()) {
@@ -124,6 +143,8 @@ class WhisperEngine @Inject constructor(
             } catch (e: Exception) {
                 Log.e(TAG, "전사 중 오류 발생: ${e.message}", e)
                 Result.failure(e)
+            } finally {
+                currentProgressCallback = null
             }
         }
 
@@ -137,7 +158,8 @@ class WhisperEngine @Inject constructor(
         modelPath: String,
         audioPath: String,
         language: String,
-        temperature: Float
+        temperature: Float,
+        progressListener: Any?
     ): String?
 }
 

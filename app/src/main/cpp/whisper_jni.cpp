@@ -9,11 +9,36 @@
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 
+// 진행률 콜백 데이터 구조체 — JNI를 통해 Kotlin으로 진행률 전달
+struct ProgressCallbackData {
+    JNIEnv *env;
+    jobject callback_obj;   // WhisperEngine 인스턴스 (같은 스레드이므로 Global Ref 불필요)
+    jmethodID method_id;    // onNativeProgress(int) 메서드 ID
+    int last_progress;      // 이전 진행률 (1% 이상 변경 시만 콜백)
+};
+
+// whisper.cpp progress_callback에 등록할 정적 함수
+static void whisper_progress_cb(
+    struct whisper_context *ctx,
+    struct whisper_state *state,
+    int progress,
+    void *user_data
+) {
+    (void)ctx;
+    (void)state;
+    auto *data = (ProgressCallbackData *)user_data;
+    if (progress - data->last_progress >= 1) {
+        data->env->CallVoidMethod(data->callback_obj, data->method_id, (jint)progress);
+        data->last_progress = progress;
+    }
+}
+
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_autominuting_data_stt_WhisperEngine_nativeTranscribe(
-    JNIEnv *env, jobject /* this */,
+    JNIEnv *env, jobject thiz,
     jstring modelPath, jstring audioPath,
-    jstring language, jfloat temperature) {
+    jstring language, jfloat temperature,
+    jobject progressListener) {
 
     const char *model_path = env->GetStringUTFChars(modelPath, nullptr);
     const char *audio_path = env->GetStringUTFChars(audioPath, nullptr);
@@ -93,6 +118,21 @@ Java_com_autominuting_data_stt_WhisperEngine_nativeTranscribe(
     params.print_timestamps = false;
     params.no_context = true;
     params.single_segment = false;
+
+    // 진행률 콜백 설정
+    ProgressCallbackData cb_data = {nullptr, nullptr, nullptr, 0};
+    if (progressListener != nullptr) {
+        jclass listenerClass = env->GetObjectClass(progressListener);
+        jmethodID onProgress = env->GetMethodID(listenerClass, "onNativeProgress", "(I)V");
+        if (onProgress != nullptr) {
+            cb_data.env = env;
+            cb_data.callback_obj = progressListener;
+            cb_data.method_id = onProgress;
+            params.progress_callback = whisper_progress_cb;
+            params.progress_callback_user_data = &cb_data;
+            LOGD("진행률 콜백 등록 완료");
+        }
+    }
 
     LOGD("전사 시작 (samples=%zu, threads=%d)", pcmf32.size(), params.n_threads);
 
