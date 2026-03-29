@@ -92,8 +92,8 @@ Requirements for v4.0 milestone. Each maps to roadmap phases.
 
 ### 설정 구조 개편 (Settings)
 
-- [ ] **SET-01**: MinutesFormat enum과 회의록 형식 드롭다운이 코드베이스에서 완전히 제거된다
-- [ ] **SET-02**: 자동모드 Switch가 전사 설정에서 회의록 설정 섹션으로 이동한다
+- [x] **SET-01**: MinutesFormat enum과 회의록 형식 드롭다운이 코드베이스에서 완전히 제거된다
+- [x] **SET-02**: 자동모드 Switch가 전사 설정에서 회의록 설정 섹션으로 이동한다
 - [ ] **SET-03**: 기본 프롬프트 드롭다운에서 "직접 입력"을 선택하여 커스텀 프롬프트를 기본으로 설정할 수 있다
 
 ## Future Requirements
@@ -150,8 +150,8 @@ Deferred to future release.
 | GUI-02 | Phase 33 | Complete |
 | GUI-03 | Phase 33 | Complete |
 | GUI-04 | Phase 33 | Complete |
-| SET-01 | Phase 35 | Pending |
-| SET-02 | Phase 35 | Pending |
+| SET-01 | Phase 35 | Complete |
+| SET-02 | Phase 35 | Complete |
 | SET-03 | Phase 35 | Pending |
 
 **Coverage:**

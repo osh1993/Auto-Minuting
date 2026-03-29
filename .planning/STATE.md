@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 35 Plan 02 완료 — 직접 입력 프롬프트 기본 설정
-last_updated: "2026-03-29T19:06:52.431Z"
+stopped_at: Phase 35 Plan 03 완료 — MinutesFormat 참조 전면 제거 및 빌드 성공
+last_updated: "2026-03-29T19:33:34.519Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 35
-  completed_phases: 29
-  total_plans: 55
-  completed_plans: 53
+  completed_phases: 30
+  total_plans: 56
+  completed_plans: 54
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Phase: 35 (회의록 설정 구조 개편) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 35
-Last activity: 2026-03-29 -- Phase 35 execution started
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-03-29
 
 ## Performance Metrics
 
@@ -72,6 +72,8 @@ Recent decisions affecting current work:
 - [Phase 35]: MinutesFormat enum 전면 제거, PromptTemplate 시스템이 완전 대체
 - [Phase 35]: 자동모드 Switch를 회의록 설정 섹션으로 이동 (의미적 일관성)
 - [Phase 35]: CUSTOM_PROMPT_MODE_ID(-1L)를 특수 templateId로 사용하여 직접 입력 모드 표현
+- [Phase 35]: MinutesFormat enum 참조 4개 파일에서 전면 제거, assembleDebug 빌드 성공 (35-03)
+- [Phase 35]: 자동모드 Switch를 회의록 설정 섹션 상단으로 이동 완료 (35-03)
 
 ### Roadmap Evolution
 
@@ -89,6 +91,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29T19:06:52.423Z
-Stopped at: Phase 35 Plan 02 완료 — 직접 입력 프롬프트 기본 설정
+Last session: 2026-03-29T19:33:34.511Z
+Stopped at: Phase 35 Plan 03 완료 — MinutesFormat 참조 전면 제거 및 빌드 성공
 Resume file: None
