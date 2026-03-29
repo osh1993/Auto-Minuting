@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.automirrored.filled.TextSnippet
@@ -26,11 +27,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
@@ -285,6 +284,33 @@ private fun TranscriptMeetingCard(
                                 }
                             )
                         }
+                        // 회의록 작성: TRANSCRIBED 또는 (FAILED + transcriptPath 있음)일 때 표시
+                        if (meeting.pipelineStatus == PipelineStatus.TRANSCRIBED ||
+                            (meeting.pipelineStatus == PipelineStatus.FAILED && meeting.transcriptPath != null)) {
+                            DropdownMenuItem(
+                                text = { Text("회의록 작성") },
+                                onClick = {
+                                    showMenu = false
+                                    onGenerateMinutes(meeting.id)
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Description, contentDescription = null)
+                                }
+                            )
+                        }
+                        // 회의록 재생성: COMPLETED일 때 표시
+                        if (meeting.pipelineStatus == PipelineStatus.COMPLETED) {
+                            DropdownMenuItem(
+                                text = { Text("회의록 재생성") },
+                                onClick = {
+                                    showMenu = false
+                                    onRegenerateMinutes(meeting)
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Refresh, contentDescription = null)
+                                }
+                            )
+                        }
                         // 공유: transcriptPath가 있을 때만 표시
                         if (meeting.transcriptPath != null) {
                             DropdownMenuItem(
@@ -353,53 +379,7 @@ private fun TranscriptMeetingCard(
                 }
             }
 
-            // 회의록 작성/재생성 버튼 (TRANSCRIBING, GENERATING_MINUTES 상태에서는 미표시)
-            // FAILED 상태에서도 transcriptPath가 있어야 회의록 작성 가능
-            when (meeting.pipelineStatus) {
-                PipelineStatus.TRANSCRIBED -> {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        FilledTonalButton(
-                            onClick = { onGenerateMinutes(meeting.id) }
-                        ) {
-                            Text("회의록 작성")
-                        }
-                    }
-                }
-                PipelineStatus.FAILED -> {
-                    // 전사 파일이 있는 경우에만 회의록 작성 버튼 표시
-                    if (meeting.transcriptPath != null) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            FilledTonalButton(
-                                onClick = { onGenerateMinutes(meeting.id) }
-                            ) {
-                                Text("회의록 작성")
-                            }
-                        }
-                    }
-                }
-                PipelineStatus.COMPLETED -> {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        OutlinedButton(
-                            onClick = { onRegenerateMinutes(meeting) }
-                        ) {
-                            Text("회의록 재생성")
-                        }
-                    }
-                }
-                else -> Unit
-            }
+            // 회의록 작성/재생성 버튼은 MoreVert 드롭다운 메뉴로 이동됨
         }
     }
 }
