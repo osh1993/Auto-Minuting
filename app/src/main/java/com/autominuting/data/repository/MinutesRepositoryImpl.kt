@@ -3,6 +3,8 @@ package com.autominuting.data.repository
 import android.content.Context
 import android.util.Log
 import com.autominuting.data.minutes.MinutesEngine
+import com.autominuting.data.quota.GeminiQuotaTracker
+import com.autominuting.data.quota.QuotaCategory
 import com.autominuting.domain.model.MinutesFormat
 import com.autominuting.domain.repository.MinutesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,7 +27,8 @@ import javax.inject.Singleton
 @Singleton
 class MinutesRepositoryImpl @Inject constructor(
     private val minutesEngine: MinutesEngine,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val quotaTracker: GeminiQuotaTracker
 ) : MinutesRepository {
 
     companion object {
@@ -68,6 +71,8 @@ class MinutesRepositoryImpl @Inject constructor(
                 if (result.isSuccess) {
                     val minutesText = result.getOrThrow()
                     Log.d(TAG, "회의록 생성 성공: ${minutesText.length}자")
+                    // 쿼터 사용량 기록 (성공한 호출만 카운트)
+                    quotaTracker.recordUsage(QuotaCategory.MINUTES)
                     return@withContext Result.success(minutesText)
                 }
 

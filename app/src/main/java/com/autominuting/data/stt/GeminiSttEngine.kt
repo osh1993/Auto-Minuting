@@ -3,6 +3,8 @@ package com.autominuting.data.stt
 import android.util.Base64
 import android.util.Log
 import com.autominuting.BuildConfig
+import com.autominuting.data.quota.GeminiQuotaTracker
+import com.autominuting.data.quota.QuotaCategory
 import com.autominuting.data.security.SecureApiKeyRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -28,7 +30,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class GeminiSttEngine @Inject constructor(
-    private val secureApiKeyRepository: SecureApiKeyRepository
+    private val secureApiKeyRepository: SecureApiKeyRepository,
+    private val quotaTracker: GeminiQuotaTracker
 ) : SttEngine {
 
     companion object {
@@ -180,6 +183,8 @@ class GeminiSttEngine @Inject constructor(
                         }
 
                         Log.d(TAG, "Gemini STT 전사 완료: ${text.length}자 (시도 $attempt)")
+                        // 쿼터 사용량 기록 (성공한 호출만 카운트)
+                        quotaTracker.recordUsage(QuotaCategory.STT)
                         return@withContext Result.success(text)
                     } catch (e: java.net.SocketTimeoutException) {
                         lastException = e
