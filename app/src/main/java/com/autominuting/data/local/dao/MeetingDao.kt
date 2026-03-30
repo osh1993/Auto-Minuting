@@ -91,6 +91,24 @@ interface MeetingDao {
     @Query("UPDATE meetings SET audioFilePath = '', transcriptPath = NULL, pipelineStatus = 'MINUTES_ONLY', updatedAt = :updatedAt WHERE id = :id")
     suspend fun markMinutesOnly(id: Long, updatedAt: Long)
 
+    /**
+     * 진행 중 상태(TRANSCRIBING, GENERATING_MINUTES)로 남아있는 회의를 FAILED로 복구한다.
+     * 앱 시작 시 호출하여 Worker 비정상 종료로 인한 영구 hang 상태를 방지한다.
+     *
+     * @return 복구된 회의 수
+     */
+    @Query(
+        """UPDATE meetings
+           SET pipelineStatus = 'FAILED',
+               errorMessage = :errorMessage,
+               updatedAt = :updatedAt
+           WHERE pipelineStatus IN ('TRANSCRIBING', 'GENERATING_MINUTES')"""
+    )
+    suspend fun recoverStaleInProgressMeetings(
+        errorMessage: String,
+        updatedAt: Long
+    ): Int
+
     /** 회의를 삭제한다. */
     @Query("DELETE FROM meetings WHERE id = :id")
     suspend fun delete(id: Long)

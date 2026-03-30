@@ -1,15 +1,20 @@
 package com.autominuting.worker
 
 import android.content.Context
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.BackoffPolicy
+import androidx.work.ForegroundInfo
 import androidx.work.OneTimeWorkRequestBuilder
 import java.util.concurrent.TimeUnit
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.autominuting.R
 import com.autominuting.data.local.dao.MeetingDao
 import com.autominuting.data.repository.TranscriptionRepositoryImpl
 import com.autominuting.domain.model.AutomationMode
@@ -39,8 +44,37 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
 ) : CoroutineWorker(appContext, workerParams) {
 
     /**
+     * Foreground Service 알림 정보를 생성한다.
+     * Long-running Worker로 동작하기 위해 필요하며,
+     * WorkManager 10분 실행 제한을 우회한다.
+     */
+    private fun createForegroundInfo(progressText: String): ForegroundInfo {
+        val notification = NotificationCompat.Builder(
+            applicationContext,
+            PipelineNotificationHelper.PIPELINE_CHANNEL_ID
+        )
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Auto Minuting")
+            .setContentText(progressText)
+            .setOngoing(true)
+            .setSilent(true)
+            .build()
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            ForegroundInfo(
+                FOREGROUND_NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            )
+        } else {
+            ForegroundInfo(FOREGROUND_NOTIFICATION_ID, notification)
+        }
+    }
+
+    /**
      * 전사 파이프라인 진입점.
      *
+     * Foreground Worker로 승격하여 WorkManager 10분 실행 제한을 우회한 뒤,
      * inputData에서 오디오 파일 경로와 회의 ID를 읽어 전사를 수행한다.
      * 성공 시 전사 텍스트를 파일로 저장하고 PipelineStatus를 TRANSCRIBED로 업데이트한다.
      * 실패 시 PipelineStatus를 FAILED로 업데이트한다.
@@ -48,6 +82,14 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
      * @return Result.success() 또는 Result.failure()
      */
     override suspend fun doWork(): Result {
+        // Foreground Worker로 승격 — 10분 실행 제한 해제
+        try {
+            setForeground(createForegroundInfo("전사 준비 중..."))
+        } catch (e: Exception) {
+            // Foreground 승격 실패 시에도 전사는 시도 (10분 제한 내에 완료될 수 있음)
+            Log.w(TAG, "Foreground 승격 실패 (전사는 계속 진행): ${e.message}")
+        }
+
         val audioFilePath = inputData.getString(KEY_AUDIO_FILE_PATH)
             ?: run {
                 Log.e(TAG, "오디오 파일 경로가 전달되지 않았습니다")
@@ -205,6 +247,8 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
         const val KEY_TEMPLATE_ID = "templateId"
         /** 전사 진행률 키 (0-100 정수, DashboardViewModel에서 관찰) */
         const val KEY_PROGRESS = "progress"
+        /** Foreground Service 알림 ID (PipelineNotificationHelper와 별도) */
+        private const val FOREGROUND_NOTIFICATION_ID = 3001
         private const val TAG = "TranscriptionTrigger"
     }
 }

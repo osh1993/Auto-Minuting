@@ -1,11 +1,16 @@
 package com.autominuting.worker
 
 import android.content.Context
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.autominuting.R
 import com.autominuting.data.local.dao.MeetingDao
 import com.autominuting.data.repository.MinutesRepositoryImpl
 import com.autominuting.domain.model.PipelineStatus
@@ -36,8 +41,37 @@ class MinutesGenerationWorker @AssistedInject constructor(
 ) : CoroutineWorker(appContext, workerParams) {
 
     /**
+     * Foreground Service 알림 정보를 생성한다.
+     * Long-running Worker로 동작하기 위해 필요하며,
+     * WorkManager 10분 실행 제한을 우회한다.
+     */
+    private fun createForegroundInfo(progressText: String): ForegroundInfo {
+        val notification = NotificationCompat.Builder(
+            applicationContext,
+            PipelineNotificationHelper.PIPELINE_CHANNEL_ID
+        )
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Auto Minuting")
+            .setContentText(progressText)
+            .setOngoing(true)
+            .setSilent(true)
+            .build()
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            ForegroundInfo(
+                FOREGROUND_NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            )
+        } else {
+            ForegroundInfo(FOREGROUND_NOTIFICATION_ID, notification)
+        }
+    }
+
+    /**
      * 회의록 생성 파이프라인 진입점.
      *
+     * Foreground Worker로 승격하여 WorkManager 10분 실행 제한을 우회한 뒤,
      * inputData에서 회의 ID와 전사 파일 경로를 읽어 회의록 생성을 수행한다.
      * 성공 시 회의록을 Markdown 파일로 저장하고 PipelineStatus를 COMPLETED로 업데이트한다.
      * 실패 시 PipelineStatus를 FAILED로 업데이트한다.
@@ -45,6 +79,13 @@ class MinutesGenerationWorker @AssistedInject constructor(
      * @return Result.success() 또는 Result.failure()
      */
     override suspend fun doWork(): Result {
+        // Foreground Worker로 승격 — 10분 실행 제한 해제
+        try {
+            setForeground(createForegroundInfo("회의록 생성 준비 중..."))
+        } catch (e: Exception) {
+            Log.w(TAG, "Foreground 승격 실패 (회의록 생성은 계속 진행): ${e.message}")
+        }
+
         val meetingId = inputData.getLong(KEY_MEETING_ID, -1L)
         if (meetingId <= 0) {
             Log.e(TAG, "회의 ID가 전달되지 않았습니다")
@@ -199,6 +240,8 @@ class MinutesGenerationWorker @AssistedInject constructor(
         const val KEY_TEMPLATE_ID = "templateId"
         /** 커스텀 프롬프트 텍스트 (templateId보다 우선) */
         const val KEY_CUSTOM_PROMPT = "customPrompt"
+        /** Foreground Service 알림 ID (TranscriptionTriggerWorker와 별도) */
+        private const val FOREGROUND_NOTIFICATION_ID = 3002
         private const val TAG = "MinutesGeneration"
     }
 }
