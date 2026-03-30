@@ -4,11 +4,13 @@ import com.autominuting.data.minutes.MinutesEngine
 import com.autominuting.data.minutes.MinutesEngineSelector
 import com.autominuting.data.repository.AudioRepositoryImpl
 import com.autominuting.data.repository.MeetingRepositoryImpl
+import com.autominuting.data.repository.MinutesDataRepositoryImpl
 import com.autominuting.data.repository.MinutesRepositoryImpl
 import com.autominuting.data.repository.PromptTemplateRepositoryImpl
 import com.autominuting.data.repository.TranscriptionRepositoryImpl
 import com.autominuting.domain.repository.AudioRepository
 import com.autominuting.domain.repository.MeetingRepository
+import com.autominuting.domain.repository.MinutesDataRepository
 import com.autominuting.domain.repository.MinutesRepository
 import com.autominuting.domain.repository.PromptTemplateRepository
 import com.autominuting.domain.repository.TranscriptionRepository
@@ -69,6 +71,15 @@ abstract class RepositoryModule {
     abstract fun bindMinutesEngine(
         impl: MinutesEngineSelector
     ): MinutesEngine
+
+    /**
+     * MinutesDataRepository 인터페이스를 MinutesDataRepositoryImpl 구현체에 바인딩한다.
+     * 회의록 데이터 CRUD 전용 (생성 API 호출은 MinutesRepository가 담당).
+     */
+    @Binds
+    abstract fun bindMinutesDataRepository(
+        impl: MinutesDataRepositoryImpl
+    ): MinutesDataRepository
 
     /**
      * PromptTemplateRepository 인터페이스를 PromptTemplateRepositoryImpl 구현체에 바인딩한다.

@@ -50,40 +50,9 @@ class MeetingRepositoryImpl @Inject constructor(
         }
 
     override suspend fun deleteMeeting(id: Long) {
-        // 1. 파일 경로 조회 (삭제 전에 Entity에서 가져와야 함)
         val entity = meetingDao.getMeetingByIdOnce(id) ?: return
 
-        // 2. 연관 파일 삭제 (실패해도 DB 삭제 진행 -- 고아 파일 > 고아 레코드)
-        listOfNotNull(
-            entity.audioFilePath,
-            entity.transcriptPath,
-            entity.minutesPath
-        ).forEach { path ->
-            try { File(path).delete() } catch (_: Exception) { }
-        }
-
-        // 3. DB 레코드 삭제
-        meetingDao.delete(id)
-    }
-
-    override suspend fun deleteMinutesOnly(id: Long) {
-        // 1. Entity 조회
-        val entity = meetingDao.getMeetingByIdOnce(id) ?: return
-
-        // 2. 회의록 파일만 삭제 (실패해도 진행 — 고아 파일 > 고아 레코드 원칙)
-        entity.minutesPath?.let { path ->
-            try { File(path).delete() } catch (_: Exception) { }
-        }
-
-        // 3. 회의록 경로 초기화 + 상태를 TRANSCRIBED로 되돌림 (전사 파일 보존)
-        meetingDao.clearMinutesPath(id, Instant.now().toEpochMilli())
-    }
-
-    override suspend fun deleteTranscript(id: Long) {
-        // 1. Entity 조회
-        val entity = meetingDao.getMeetingByIdOnce(id) ?: return
-
-        // 2. 오디오 파일과 전사 파일을 삭제한다. 회의록 파일(.md)은 보존한다.
+        // 오디오/전사 파일만 삭제 (Minutes 파일은 FK SET_NULL로 Minutes Row가 고아로 보존되므로 유지)
         listOfNotNull(
             entity.audioFilePath.takeIf { it.isNotBlank() },
             entity.transcriptPath
@@ -91,20 +60,6 @@ class MeetingRepositoryImpl @Inject constructor(
             try { File(path).delete() } catch (_: Exception) { }
         }
 
-        // 3. 회의록이 있으면 MINUTES_ONLY 상태로 변경 (전사 목록에서 숨기고 회의록은 보존)
-        //    회의록이 없으면 row 자체를 삭제
-        if (entity.minutesPath != null) {
-            meetingDao.markMinutesOnly(id, Instant.now().toEpochMilli())
-        } else {
-            meetingDao.delete(id)
-        }
-    }
-
-    override suspend fun archiveAsMinutesOnly(id: Long) {
-        meetingDao.markMinutesOnly(id, Instant.now().toEpochMilli())
-    }
-
-    override suspend fun updateMinutesTitle(id: Long, title: String) {
-        meetingDao.updateMinutesTitle(id, title, System.currentTimeMillis())
+        meetingDao.delete(id)
     }
 }

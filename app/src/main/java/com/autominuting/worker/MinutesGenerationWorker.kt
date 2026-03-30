@@ -12,6 +12,8 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.autominuting.R
 import com.autominuting.data.local.dao.MeetingDao
+import com.autominuting.data.local.dao.MinutesDao
+import com.autominuting.data.local.entity.MinutesEntity
 import com.autominuting.data.repository.MinutesRepositoryImpl
 import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.domain.repository.MinutesRepository
@@ -36,6 +38,7 @@ class MinutesGenerationWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val meetingDao: MeetingDao,
+    private val minutesDao: MinutesDao,
     private val minutesRepository: MinutesRepository,
     private val promptTemplateRepository: PromptTemplateRepository
 ) : CoroutineWorker(appContext, workerParams) {
@@ -184,13 +187,21 @@ class MinutesGenerationWorker @AssistedInject constructor(
                 ?.take(100) // 제목 최대 100자 제한
             Log.d(TAG, "회의록 제목 추출: $minutesTitle")
 
-            // DB 업데이트: minutesPath + minutesTitle + COMPLETED 상태
+            // Minutes 테이블에 새 Row 삽입 + Meeting 상태를 COMPLETED로 업데이트
             val completedAt = System.currentTimeMillis()
-            meetingDao.updateMinutes(
-                id = meetingId,
+            val minutesEntity = MinutesEntity(
+                meetingId = meetingId,
                 minutesPath = minutesPath,
                 minutesTitle = minutesTitle,
+                templateId = templateId.takeIf { it > 0 },
+                createdAt = completedAt,
+                updatedAt = completedAt
+            )
+            minutesDao.insert(minutesEntity)
+            meetingDao.updatePipelineStatus(
+                id = meetingId,
                 status = PipelineStatus.COMPLETED.name,
+                errorMessage = null,
                 updatedAt = completedAt
             )
 

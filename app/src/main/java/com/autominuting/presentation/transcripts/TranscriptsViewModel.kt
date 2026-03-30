@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
-import java.time.Instant
 import javax.inject.Inject
 
 /**
@@ -84,12 +83,12 @@ class TranscriptsViewModel @Inject constructor(
     }
 
     /**
-     * 전사 파일만 삭제한다. 회의록은 보존된다.
-     * Meeting 행 자체는 유지하고 transcriptPath만 초기화한다.
+     * 전사 항목을 삭제한다.
+     * Meeting Row를 삭제하며, FK SET_NULL로 연관 Minutes Row는 보존된다.
      */
     fun deleteTranscript(id: Long) {
         viewModelScope.launch {
-            meetingRepository.deleteTranscript(id)
+            meetingRepository.deleteMeeting(id)
         }
     }
 
@@ -135,11 +134,10 @@ class TranscriptsViewModel @Inject constructor(
     }
 
     /**
-     * 기존 회의록을 삭제하고 새 회의록을 생성한다 (재생성 전용).
+     * 회의록을 재생성한다.
      *
-     * 기존 minutesPath 파일을 삭제하고 상태를 TRANSCRIBED로 되돌린 뒤,
-     * MinutesGenerationWorker를 enqueue하여 새 파일로 회의록을 생성한다.
-     * 파일명에 타임스탬프가 포함되어 있으므로 이전 파일과 충돌하지 않는다.
+     * 기존 Meeting Row를 유지하고, Worker가 새 Minutes Row를 INSERT한다.
+     * 파일명에 타임스탬프가 포함되어 이전 파일과 충돌하지 않는다.
      *
      * @param meetingId 재생성할 Meeting의 ID
      */
@@ -150,42 +148,8 @@ class TranscriptsViewModel @Inject constructor(
                 Log.w(TAG, "전사 파일 없음, 회의록 재생성 불가: meetingId=$meetingId")
                 return@launch
             }
-
-            // 원본 row는 그대로 보존 (기존 회의록 유지).
-            // 전사 파일(transcriptPath)만 공유하여 새 Meeting row를 생성한다.
-            val now = Instant.now()
-            val newMeeting = original.copy(
-                id = 0,
-                minutesPath = null,
-                minutesTitle = null,
-                pipelineStatus = PipelineStatus.TRANSCRIBED,
-                createdAt = now,
-                updatedAt = now
-            )
-            val newMeetingId = meetingRepository.insertMeeting(newMeeting)
-
-            // 새 row에 대해 회의록 생성 Worker를 직접 enqueue
-            // (DB 재조회 없이 original.transcriptPath를 직접 사용 — 타이밍 문제 방지)
-            val templateId = userPreferencesRepository.getDefaultTemplateIdOnce()
-            val customPrompt = if (templateId == UserPreferencesRepository.CUSTOM_PROMPT_MODE_ID) {
-                userPreferencesRepository.getDefaultCustomPromptOnce().ifBlank { null }
-            } else null
-            val effectiveTemplateId = if (templateId > 0 &&
-                templateId != UserPreferencesRepository.CUSTOM_PROMPT_MODE_ID) templateId else null
-
-            val workRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
-                .setInputData(
-                    workDataOf(
-                        MinutesGenerationWorker.KEY_MEETING_ID to newMeetingId,
-                        MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to original.transcriptPath,
-                        MinutesGenerationWorker.KEY_TEMPLATE_ID to (effectiveTemplateId ?: 0L),
-                        MinutesGenerationWorker.KEY_CUSTOM_PROMPT to customPrompt
-                    )
-                )
-                .setBackoffCriteria(BackoffPolicy.LINEAR, 60L, TimeUnit.SECONDS)
-                .build()
-            WorkManager.getInstance(context).enqueue(workRequest)
-            Log.d(TAG, "회의록 재생성 Worker enqueue: newMeetingId=$newMeetingId, templateId=$templateId")
+            // 기존 Meeting Row를 유지하고, Worker가 새 Minutes Row를 INSERT한다
+            enqueueMinutesWorker(meetingId)
         }
     }
 
