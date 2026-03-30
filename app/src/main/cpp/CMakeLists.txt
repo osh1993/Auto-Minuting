@@ -32,6 +32,10 @@ set(GGML_SOURCES
     ${GGML_VULKAN_DIR}/ggml-vulkan.cpp
 )
 
+# Vulkan 셰이더 SPIR-V 임베딩 소스 (vulkan-shaders-gen으로 사전 컴파일)
+file(GLOB VULKAN_SHADER_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/vulkan-shaders/*.cpp)
+list(APPEND GGML_SOURCES ${VULKAN_SHADER_SOURCES})
+
 # whisper 소스
 set(WHISPER_SOURCES
     ${WHISPER_DIR}/src/whisper.cpp
@@ -49,7 +53,7 @@ target_include_directories(whisper_lib PUBLIC
     ${WHISPER_DIR}/ggml/src/ggml-cpu/arch/arm
     ${WHISPER_DIR}/src
     ${GGML_VULKAN_DIR}
-    # vulkan.hpp (SDK에서 복사한 C++ wrapper — NDK sysroot보다 우선)
+    # vulkan-hpp/ : vulkan.hpp(C++ wrapper) + vk_video(av1 포함) — NDK sysroot보다 우선
     ${CMAKE_CURRENT_SOURCE_DIR}/vulkan-hpp
     # ggml-vulkan-shaders.hpp (vulkan-shaders-gen으로 생성된 SPIR-V 임베딩)
     ${CMAKE_CURRENT_SOURCE_DIR}
