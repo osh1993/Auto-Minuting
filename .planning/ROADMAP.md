@@ -266,7 +266,12 @@ Plans:
   3. 같은 전사에서 회의록을 다시 생성하면 기존 회의록 Row는 유지되고 새 Row가 추가된다
   4. 기존 데이터(minutesPath/minutesTitle)가 v5 마이그레이션으로 Minutes 테이블에 이관된다
   5. Meeting 테이블에서 minutesPath/minutesTitle 컬럼이 제거되고 MINUTES_ONLY 워크어라운드가 정리된다
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 36-01-PLAN.md — MinutesEntity/MinutesDao/Minutes 도메인 모델 신설 + Room DB v5 마이그레이션 + MeetingEntity/MeetingDao/PipelineStatus 정리
+- [ ] 36-02-PLAN.md — MinutesDataRepository 신설 + MeetingRepository 정리 + MinutesGenerationWorker/TranscriptsViewModel 로직 교체
+- [ ] 36-03-PLAN.md — MinutesViewModel/MinutesDetailViewModel + Screen/Navigation을 Minutes 테이블 기반으로 교체 + 빌드 검증
 
 ### Phase 37: 전사-회의록 독립 삭제
 **Goal**: 전사와 회의록을 각각 독립적으로 삭제하거나 재생성해도 상대방에 영향이 없다
@@ -316,6 +321,6 @@ Plans:
 | 33. GUI 일관성 개선 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 34. Whisper 전사 진행률 | v4.0 | 2/2 | Complete    | 2026-03-30 |
 | 35. 회의록 설정 구조 개편 | v4.0 | 3/3 | Complete    | 2026-03-30 |
-| 36. Minutes 데이터 모델 분리 | v5.0 | 0/? | Not started | - |
+| 36. Minutes 데이터 모델 분리 | v5.0 | 0/3 | Not started | - |
 | 37. 전사-회의록 독립 삭제 | v5.0 | 0/? | Not started | - |
 | 38. 독립 아키텍처 UI 반영 | v5.0 | 0/? | Not started | - |
