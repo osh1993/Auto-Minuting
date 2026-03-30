@@ -5,7 +5,6 @@
 #include <mutex>
 #include <android/log.h>
 #include "whisper.h"
-#include "ggml-vulkan.h"
 
 #define TAG "WhisperJNI"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
@@ -15,7 +14,6 @@
 static whisper_context *g_ctx = nullptr;
 static std::string g_cached_model_path;
 static std::mutex g_ctx_mutex;
-static bool g_use_vulkan = false;
 
 // 진행률 콜백 데이터 구조체 — JNI를 통해 Kotlin으로 진행률 전달
 struct ProgressCallbackData {
@@ -57,18 +55,6 @@ Java_com_autominuting_data_stt_WhisperEngine_nativeTranscribe(
     // P0: mutex로 동시 접근 보호
     std::lock_guard<std::mutex> lock(g_ctx_mutex);
 
-    // P4: Vulkan 백엔드 가용성 확인 (최초 1회)
-    if (!g_use_vulkan) {
-        g_use_vulkan = (ggml_backend_vk_get_device_count() > 0);
-        if (g_use_vulkan) {
-            char desc[256];
-            ggml_backend_vk_get_device_description(0, desc, sizeof(desc));
-            LOGD("Vulkan 백엔드 활성화: %s", desc);
-        } else {
-            LOGD("Vulkan 불가 — CPU 폴백");
-        }
-    }
-
     // P0: 모델 싱글톤 캐싱 — 동일 모델 경로면 재사용, 다른 경로면 교체
     std::string model_path_str(model_path);
     if (g_ctx != nullptr && g_cached_model_path == model_path_str) {
@@ -81,10 +67,6 @@ Java_com_autominuting_data_stt_WhisperEngine_nativeTranscribe(
         }
 
         struct whisper_context_params cparams = whisper_context_default_params();
-        // Vulkan 백엔드 사용 시 GPU 디바이스 설정
-        if (g_use_vulkan) {
-            cparams.gpu_device = 0;
-        }
         g_ctx = whisper_init_from_file_with_params(model_path, cparams);
 
         if (g_ctx == nullptr) {
