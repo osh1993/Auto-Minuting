@@ -7,7 +7,8 @@
 - ✅ **v2.1 안정화** — Phases 14-18 (shipped 2026-03-26)
 - ✅ **v3.0 기능 확장 및 UX 개선** — Phases 19-23 (shipped 2026-03-28)
 - ✅ **v3.1 UX 개선 및 정보 표시 강화** — Phases 24-28 (shipped 2026-03-29)
-- **v4.0 파이프라인 고도화 및 GUI 품질 개선** — Phases 29-33
+- ✅ **v4.0 파이프라인 고도화 및 GUI 품질 개선** — Phases 29-35 (shipped 2026-03-30)
+- **v5.0 전사-회의록 독립 아키텍처** — Phases 36-38
 
 ## Phases
 
@@ -232,6 +233,64 @@ Plans:
 
 **UI hint**: yes
 
+### Phase 34: Whisper 전사 진행률 표시 — completed 2026-03-30
+**Goal**: Whisper 온디바이스 전사 시 진행률이 알림과 UI에 실시간 표시된다
+**Requirements**: (v4.0 추가)
+**Depends on**: Phase 33
+**Plans**: 2/2 plans complete
+
+Plans:
+- [x] 34-01-PLAN.md — JNI progress_callback + Worker 진행률 + 알림 표시
+- [x] 34-02-PLAN.md — DashboardScreen/TranscriptsScreen 진행률 UI
+
+### Phase 35: 회의록 설정 구조 개편 — completed 2026-03-30
+**Goal**: 설정 화면의 회의록 관련 설정이 논리적으로 재배치되고, 레거시 코드가 제거되며, 직접 입력 프롬프트를 기본으로 설정할 수 있다
+**Requirements**: SET-01, SET-02, SET-03
+**Depends on**: Phase 34
+**Plans**: 3/3 plans complete
+
+Plans:
+- [x] 35-01-PLAN.md — MinutesFormat 전면 제거 + 자동모드 회의록 설정 이동
+- [x] 35-02-PLAN.md — 직접 입력 커스텀 프롬프트 기본 설정 기능
+- [x] 35-03-PLAN.md — MinutesFormat 참조 제거 및 자동모드 Switch 이동 (gap closure)
+
+## Phase Details (v5.0)
+
+### Phase 36: Minutes 데이터 모델 분리
+**Goal**: 회의록이 전사(Meeting)와 독립된 테이블에 저장되어 1:N 관계로 관리된다
+**Depends on**: Nothing (데이터 레이어 리팩토링, 기존 기능 위에 작업)
+**Requirements**: DATA-01, DATA-02
+**Success Criteria** (what must be TRUE):
+  1. Room DB에 Minutes 테이블이 존재하고 meetingId FK로 Meeting과 연결된다
+  2. 하나의 전사에서 회의록을 생성하면 Minutes 테이블에 별도 Row로 저장된다
+  3. 같은 전사에서 회의록을 다시 생성하면 기존 회의록 Row는 유지되고 새 Row가 추가된다
+  4. 기존 데이터(minutesPath/minutesTitle)가 v5 마이그레이션으로 Minutes 테이블에 이관된다
+  5. Meeting 테이블에서 minutesPath/minutesTitle 컬럼이 제거되고 MINUTES_ONLY 워크어라운드가 정리된다
+**Plans**: TBD
+
+### Phase 37: 전사-회의록 독립 삭제
+**Goal**: 전사와 회의록을 각각 독립적으로 삭제하거나 재생성해도 상대방에 영향이 없다
+**Depends on**: Phase 36 (Minutes 테이블이 분리되어야 독립 삭제 로직 구현 가능)
+**Requirements**: IND-01, IND-02, IND-03
+**Success Criteria** (what must be TRUE):
+  1. 전사를 삭제하면 Meeting Row와 오디오/전사 파일이 삭제되지만 연결된 Minutes Row와 회의록 파일은 그대로 남아있다
+  2. 회의록을 삭제하면 해당 Minutes Row와 회의록 파일만 삭제되고 Meeting 상태와 전사 파일은 변경되지 않는다
+  3. 전사에서 회의록을 재생성하면 기존 회의록 목록에 새 회의록이 추가되어 여러 버전이 공존한다
+  4. 모든 회의록을 삭제한 전사가 정상적으로 전사 목록에 표시되고 다시 회의록을 생성할 수 있다
+**Plans**: TBD
+
+### Phase 38: 독립 아키텍처 UI 반영
+**Goal**: 전사-회의록 1:N 독립 구조가 화면에 반영되어 사용자가 관계를 직관적으로 파악할 수 있다
+**Depends on**: Phase 37 (독립 삭제/재생성 로직이 완성된 후 UI 반영)
+**Requirements**: UI5-01, UI5-02
+**Success Criteria** (what must be TRUE):
+  1. 회의록 목록 화면에서 각 회의록이 독립 카드로 표시되며 출처 전사 이름이 표기된다
+  2. 같은 전사에서 생성된 여러 회의록이 각각 별도 카드로 나열된다
+  3. 전사 목록 화면의 카드에 연결된 회의록 수가 badge로 표시된다 (0개면 badge 미표시)
+  4. 회의록 카드에서 출처 전사를 탭하면 해당 전사 상세로 이동할 수 있다
+**Plans**: TBD
+**UI hint**: yes
+
 ## Milestone Details
 
 - v1.0 (Phases 1-7): `.planning/milestones/v1.0-ROADMAP.md`
@@ -255,25 +314,8 @@ Plans:
 | 31. Gemini 쿼터 관리 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 32. Plaud 공유 링크 수신 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 33. GUI 일관성 개선 | v4.0 | 1/1 | Complete    | 2026-03-29 |
-
-### Phase 34: Whisper 전사 진행률 표시
-
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 33
-**Plans:** 2/2 plans complete
-
-Plans:
-- [x] TBD (run /gsd:plan-phase 34 to break down) (completed 2026-03-29)
-
-### Phase 35: 회의록 설정 구조 개편 (자동모드 이동, 직접 입력, 형식 제거)
-
-**Goal:** 설정 화면의 회의록 관련 설정이 논리적으로 재배치되고, 레거시 코드가 제거되며, 직접 입력 프롬프트를 기본으로 설정할 수 있다
-**Requirements**: SET-01, SET-02, SET-03
-**Depends on:** Phase 34
-**Plans:** 3/3 plans complete
-
-Plans:
-- [x] 35-01-PLAN.md — MinutesFormat 전면 제거 + 자동모드 회의록 설정 이동
-- [x] 35-02-PLAN.md — 직접 입력 커스텀 프롬프트 기본 설정 기능
-- [x] 35-03-PLAN.md — MinutesFormat 참조 제거 및 자동모드 Switch 이동 (gap closure)
+| 34. Whisper 전사 진행률 | v4.0 | 2/2 | Complete    | 2026-03-30 |
+| 35. 회의록 설정 구조 개편 | v4.0 | 3/3 | Complete    | 2026-03-30 |
+| 36. Minutes 데이터 모델 분리 | v5.0 | 0/? | Not started | - |
+| 37. 전사-회의록 독립 삭제 | v5.0 | 0/? | Not started | - |
+| 38. 독립 아키텍처 UI 반영 | v5.0 | 0/? | Not started | - |

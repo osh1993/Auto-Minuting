@@ -87,20 +87,19 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 | AnnotatedString Markdown 렌더링 | 외부 라이브러리 없이 직접 구현 | ✓ v1.0 |
 | Room LIKE 검색 | v1 데이터 규모에 FTS 불필요 | ✓ v1.0 |
 
-## Current Milestone: v4.0 파이프라인 고도화 및 GUI 품질 개선
+## Current Milestone: v5.0 전사-회의록 독립 아키텍처
 
-**Goal:** 회의록 생성 워크플로우를 정밀화하고, Gemini 쿼터 관리와 Plaud 공유 수신을 추가하며, GUI 일관성과 접근성을 개선한다.
+**Goal:** 전사 파일과 회의록 파일을 완전히 독립된 엔티티로 분리하여, 하나를 삭제하거나 재생성해도 다른 쪽에 영향이 없도록 데이터 모델을 재설계한다.
 
 **Target features:**
-- 하이브리드 모드 UX 개선 (전사 완료 후 확인 → 회의록 생성)
-- 회의록 재작성 버튼을 MoreVert 메뉴로 이동
-- 회의록 생성 시 프롬프트 템플릿 선택 (수동/자동 설정)
-- Gemini Free 쿼터 대시보드 표시 + 90% 알림
-- Plaud 공유 링크 수신 처리 (다른 앱에서 공유 시)
-- TopAppBar 일관성 (DashboardScreen, TranscriptsScreen)
-- 아이콘 접근성 (contentDescription)
-- Empty State 디자인 통일
-- 날짜 포맷 통일
+
+- Minutes 독립 테이블 신설 — Meeting에서 minutesPath/minutesTitle 분리
+- 전사 1개 → 회의록 N개 관계 (1:N)
+- 전사 삭제 → 연결된 회의록 보존
+- 회의록 삭제 → 전사 파일/상태 무영향
+- 회의록 재생성 → 기존 회의록 보존 + 새 회의록 추가 생성
+- 회의록 목록 화면: 동일 전사에서 생성된 여러 회의록 표시
+- 전사 목록 화면: 연결된 회의록 수 badge 표시
 
 ## Evolution
 

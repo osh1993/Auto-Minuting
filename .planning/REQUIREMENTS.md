@@ -96,6 +96,26 @@ Requirements for v4.0 milestone. Each maps to roadmap phases.
 - [x] **SET-02**: 자동모드 Switch가 전사 설정에서 회의록 설정 섹션으로 이동한다
 - [ ] **SET-03**: 기본 프롬프트 드롭다운에서 "직접 입력"을 선택하여 커스텀 프롬프트를 기본으로 설정할 수 있다
 
+## v5.0 Requirements
+
+Requirements for v5.0 milestone. Each maps to roadmap phases.
+
+### 데이터 모델 분리 (Data)
+
+- [ ] **DATA-01**: Minutes 독립 테이블이 신설되어 회의록이 Meeting과 별도 Row로 저장된다 (Room DB v5 마이그레이션)
+- [ ] **DATA-02**: 하나의 전사(Meeting)에서 여러 회의록(Minutes)을 생성할 수 있다 (1:N 관계)
+
+### 파일 독립성 (Independence)
+
+- [ ] **IND-01**: 전사 파일을 삭제해도 연결된 회의록 파일은 삭제되지 않는다
+- [ ] **IND-02**: 회의록을 삭제해도 전사 파일과 Meeting 상태는 변경되지 않는다
+- [ ] **IND-03**: 전사 파일로 회의록을 재생성하면 기존 회의록은 그대로 유지되고 새 회의록이 추가된다
+
+### UI 업데이트 (UI)
+
+- [ ] **UI5-01**: 회의록 목록 화면에서 각 회의록이 독립 카드로 표시되며 어느 전사에서 왔는지 표기된다
+- [ ] **UI5-02**: 전사 목록 화면의 카드에 연결된 회의록 수(badge)가 표시된다
+
 ## Future Requirements
 
 Deferred to future release.
@@ -153,13 +173,20 @@ Deferred to future release.
 | SET-01 | Phase 35 | Complete |
 | SET-02 | Phase 35 | Complete |
 | SET-03 | Phase 35 | Pending |
+| DATA-01 | Phase 36 | Pending |
+| DATA-02 | Phase 36 | Pending |
+| IND-01 | Phase 37 | Pending |
+| IND-02 | Phase 37 | Pending |
+| IND-03 | Phase 37 | Pending |
+| UI5-01 | Phase 38 | Pending |
+| UI5-02 | Phase 38 | Pending |
 
 **Coverage:**
 
-- v4.0 requirements: 14 total
-- Mapped to phases: 14
+- v5.0 requirements: 7 total
+- Mapped to phases: 7
 - Unmapped: 0
 
 ---
 
-*Requirements defined: 2026-03-26, v3.1 추가: 2026-03-28, v4.0 추가: 2026-03-29, Phase 35 추가: 2026-03-29*
+*Requirements defined: 2026-03-26, v3.1 추가: 2026-03-28, v4.0 추가: 2026-03-29, v5.0 추가: 2026-03-30*
