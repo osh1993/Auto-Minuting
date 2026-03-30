@@ -3,6 +3,8 @@ project(whisper_jni)
 
 set(WHISPER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp)
 
+set(GGML_VULKAN_DIR ${WHISPER_DIR}/ggml/src/ggml-vulkan)
+
 # ggml 핵심 소스
 set(GGML_SOURCES
     ${WHISPER_DIR}/ggml/src/ggml.c
@@ -27,6 +29,8 @@ set(GGML_SOURCES
     ${WHISPER_DIR}/ggml/src/ggml-cpu/arch/arm/cpu-feats.cpp
     ${WHISPER_DIR}/ggml/src/ggml-cpu/arch/arm/quants.c
     ${WHISPER_DIR}/ggml/src/ggml-cpu/arch/arm/repack.cpp
+    # ggml-vulkan
+    ${GGML_VULKAN_DIR}/ggml-vulkan.cpp
 )
 
 # whisper 소스
@@ -45,10 +49,12 @@ target_include_directories(whisper_lib PUBLIC
     ${WHISPER_DIR}/ggml/src/ggml-cpu/arch
     ${WHISPER_DIR}/ggml/src/ggml-cpu/arch/arm
     ${WHISPER_DIR}/src
+    ${GGML_VULKAN_DIR}
 )
 
 target_compile_definitions(whisper_lib PRIVATE
     GGML_USE_CPU
+    GGML_USE_VULKAN
     GGML_VERSION="unknown"
     GGML_COMMIT="unknown"
     WHISPER_VERSION="unknown"
@@ -75,4 +81,5 @@ target_link_libraries(whisper
     whisper_lib
     log
     dl
+    vulkan
 )
