@@ -158,7 +158,7 @@ Java_com_autominuting_data_stt_WhisperEngine_nativeTranscribe(
     params.no_context = true;
     params.single_segment = false;
 
-    // 진행률 콜백 설정 (청크 기반 진행률 직접 관리 — whisper 내부 콜백은 미등록)
+    // 진행률 콜백 설정 — whisper 내부 progress_callback에 등록
     ProgressCallbackData cb_data = {nullptr, nullptr, nullptr, 0};
     if (progressListener != nullptr) {
         jclass listenerClass = env->GetObjectClass(progressListener);
@@ -167,59 +167,42 @@ Java_com_autominuting_data_stt_WhisperEngine_nativeTranscribe(
             cb_data.env = env;
             cb_data.callback_obj = progressListener;
             cb_data.method_id = onProgress;
-            // whisper 내부 progress_callback은 청크 루프에서 직접 관리하므로 등록 불필요
-            LOGD("진행률 콜백 등록 완료 (청크 기반)");
+            params.progress_callback = whisper_progress_cb;
+            params.progress_callback_user_data = &cb_data;
+            LOGD("진행률 콜백 등록 완료");
         }
     }
 
-    // 청크 크기: 30초 × 16000 샘플/초 = 480000 샘플
-    // 긴 파일을 한 번에 처리하면 OOM이 발생하므로 30초 단위로 나눠 처리한다
-    const size_t CHUNK_SAMPLES = 30 * WHISPER_SAMPLE_RATE;
     size_t total_samples = pcmf32.size();
-    size_t chunks = (total_samples + CHUNK_SAMPLES - 1) / CHUNK_SAMPLES;
-    if (chunks < 1) chunks = 1;
+    LOGD("전사 시작 (samples=%zu, threads=%d)", total_samples, params.n_threads);
 
-    LOGD("전사 시작 (samples=%zu, threads=%d, chunks=%zu)", total_samples, params.n_threads, chunks);
-
+    // 전체 오디오를 단일 whisper_full() 호출로 처리한다.
+    // 청크 분할 방식은 동일 컨텍스트에 반복 호출 시 내부 상태가 축적되어
+    // 두 번째 청크부터 이전 청크의 잔존 상태가 간섭하는 문제가 있으므로 사용하지 않는다.
     std::string full_text;
 
-    for (size_t chunk_idx = 0; chunk_idx < chunks; chunk_idx++) {
-        size_t start = chunk_idx * CHUNK_SAMPLES;
-        size_t end = start + CHUNK_SAMPLES;
-        if (end > total_samples) end = total_samples;
-        size_t chunk_size = end - start;
+    int result = whisper_full(g_ctx, params, pcmf32.data(), (int)total_samples);
 
-        // 진행률 콜백: 청크 기반 진행률 전달
-        if (cb_data.env != nullptr) {
-            int chunk_progress = (int)((chunk_idx * 100) / chunks);
-            cb_data.env->CallVoidMethod(cb_data.callback_obj, cb_data.method_id, (jint)chunk_progress);
-        }
-
-        int result = whisper_full(g_ctx, params, pcmf32.data() + start, (int)chunk_size);
-
-        if (result != 0) {
-            LOGE("전사 실패 (chunk %zu/%zu): error code %d", chunk_idx + 1, chunks, result);
-            // P0: 전사 실패 시에도 캐시 유지 — whisper_free 호출 안 함
-            env->ReleaseStringUTFChars(modelPath, model_path);
-            env->ReleaseStringUTFChars(audioPath, audio_path);
-            env->ReleaseStringUTFChars(language, lang);
-            return nullptr;
-        }
-
-        // 이 청크의 결과 텍스트 수집
-        int n_segments = whisper_full_n_segments(g_ctx);
-        for (int i = 0; i < n_segments; i++) {
-            const char *segment_text = whisper_full_get_segment_text(g_ctx, i);
-            if (segment_text) {
-                full_text += segment_text;
-                full_text += "\n";
-            }
-        }
-
-        LOGD("청크 %zu/%zu 완료: %d segments", chunk_idx + 1, chunks, n_segments);
+    if (result != 0) {
+        LOGE("전사 실패: error code %d", result);
+        // P0: 전사 실패 시에도 캐시 유지 — whisper_free 호출 안 함
+        env->ReleaseStringUTFChars(modelPath, model_path);
+        env->ReleaseStringUTFChars(audioPath, audio_path);
+        env->ReleaseStringUTFChars(language, lang);
+        return nullptr;
     }
 
-    LOGD("전사 완료: 전체 %zu 청크 처리", chunks);
+    // 결과 텍스트 수집
+    int n_segments = whisper_full_n_segments(g_ctx);
+    for (int i = 0; i < n_segments; i++) {
+        const char *segment_text = whisper_full_get_segment_text(g_ctx, i);
+        if (segment_text) {
+            full_text += segment_text;
+            full_text += "\n";
+        }
+    }
+
+    LOGD("전사 완료: %d segments", n_segments);
 
     // P0: whisper_free 제거 — 앱 종료 시까지 모델 캐시 유지
 
