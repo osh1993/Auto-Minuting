@@ -23,8 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -36,13 +34,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.autominuting.domain.model.PipelineStatus
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 /**
  * 회의록 상세 읽기 화면.
- * 회의 정보와 회의록 Markdown 내용을 Markdown 렌더링으로 표시한다.
+ * 회의록 정보와 Markdown 내용을 렌더링으로 표시한다.
  * 텍스트 선택이 가능하다.
  *
  * @param onBack 뒤로가기 콜백
@@ -54,7 +51,7 @@ fun MinutesDetailScreen(
     onBack: () -> Unit = {},
     viewModel: MinutesDetailViewModel = hiltViewModel()
 ) {
-    val meeting by viewModel.meeting.collectAsState()
+    val minutes by viewModel.minutes.collectAsState()
     val minutesContent by viewModel.minutesContent.collectAsState()
     val context = LocalContext.current
 
@@ -63,7 +60,7 @@ fun MinutesDetailScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = meeting?.title ?: "회의록",
+                        text = minutes?.minutesTitle ?: "회의록 상세",
                         maxLines = 1
                     )
                 },
@@ -82,7 +79,7 @@ fun MinutesDetailScreen(
                         IconButton(onClick = {
                             NotebookLmHelper.shareToNotebookLm(
                                 context = context,
-                                title = meeting?.title ?: "회의록",
+                                title = minutes?.minutesTitle ?: "회의록",
                                 content = minutesContent
                             )
                         }) {
@@ -95,7 +92,7 @@ fun MinutesDetailScreen(
                         IconButton(onClick = {
                             val sendIntent = Intent().apply {
                                 action = Intent.ACTION_SEND
-                                putExtra(Intent.EXTRA_SUBJECT, meeting?.title ?: "회의록")
+                                putExtra(Intent.EXTRA_SUBJECT, minutes?.minutesTitle ?: "회의록")
                                 putExtra(Intent.EXTRA_TEXT, minutesContent)
                                 type = "text/plain"
                             }
@@ -115,8 +112,8 @@ fun MinutesDetailScreen(
             )
         }
     ) { innerPadding ->
-        if (meeting == null) {
-            // 회의 정보 로딩 중
+        if (minutes == null) {
+            // 회의록 정보 로딩 중
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -126,7 +123,7 @@ fun MinutesDetailScreen(
                 CircularProgressIndicator()
             }
         } else {
-            val currentMeeting = meeting!!
+            val currentMinutes = minutes!!
 
             Column(
                 modifier = Modifier
@@ -134,33 +131,28 @@ fun MinutesDetailScreen(
                     .padding(innerPadding)
                     .verticalScroll(rememberScrollState())
             ) {
-                // 회의 정보 영역
+                // 회의록 정보 영역
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
-                    // 회의 제목
+                    // 회의록 제목
                     Text(
-                        text = currentMeeting.title,
+                        text = currentMinutes.minutesTitle ?: "회의록",
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // 녹음 일시
+                    // 생성 일시
                     Text(
-                        text = currentMeeting.recordedAt.atZone(ZoneId.systemDefault())
+                        text = currentMinutes.createdAt.atZone(ZoneId.systemDefault())
                             .format(DETAIL_DATE_TIME_FORMATTER),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // 상태 칩
-                    DetailPipelineStatusChip(status = currentMeeting.pipelineStatus)
                 }
 
                 HorizontalDivider(
@@ -168,8 +160,8 @@ fun MinutesDetailScreen(
                 )
 
                 // 회의록 내용 영역
-                if (currentMeeting.minutesPath == null) {
-                    // 회의록 미생성 안내
+                if (minutesContent.isBlank()) {
+                    // 회의록 내용 없음 안내
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -177,7 +169,7 @@ fun MinutesDetailScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "회의록이 아직 생성되지 않았습니다",
+                            text = "회의록 내용을 불러올 수 없습니다",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -198,44 +190,6 @@ fun MinutesDetailScreen(
     }
 }
 
-/**
- * 상세 화면용 파이프라인 상태 칩.
- */
-@Composable
-private fun DetailPipelineStatusChip(status: PipelineStatus) {
-    val (label, containerColor, labelColor) = when (status) {
-        PipelineStatus.COMPLETED -> Triple(
-            "회의록 완료",
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.onPrimaryContainer
-        )
-        PipelineStatus.GENERATING_MINUTES -> Triple(
-            "생성 중...",
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer
-        )
-        else -> Triple(
-            status.name,
-            MaterialTheme.colorScheme.surfaceVariant,
-            MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-
-    SuggestionChip(
-        onClick = {},
-        label = {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall
-            )
-        },
-        colors = SuggestionChipDefaults.suggestionChipColors(
-            containerColor = containerColor,
-            labelColor = labelColor
-        )
-    )
-}
-
-/** 상세 화면 녹음 시각 포맷터 (yyyy-MM-dd HH:mm) */
+/** 상세 화면 생성 시각 포맷터 (yyyy-MM-dd HH:mm) */
 private val DETAIL_DATE_TIME_FORMATTER: DateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")

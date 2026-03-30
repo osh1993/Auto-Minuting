@@ -517,7 +517,7 @@ private fun TranscriptionStatusBadge(meeting: Meeting) {
 
 /**
  * 회의록 상태 배지.
- * GENERATING_MINUTES -> "회의록 생성 중", minutesPath != null -> "회의록 완료", else -> "회의록 미작성"
+ * GENERATING_MINUTES -> "회의록 생성 중", COMPLETED -> "회의록 완료", else -> "회의록 미작성"
  */
 @Composable
 private fun MinutesStatusBadge(meeting: Meeting) {
@@ -527,7 +527,7 @@ private fun MinutesStatusBadge(meeting: Meeting) {
             MaterialTheme.colorScheme.tertiaryContainer,
             MaterialTheme.colorScheme.onTertiaryContainer
         )
-        meeting.minutesPath != null -> Triple(
+        meeting.pipelineStatus == PipelineStatus.COMPLETED -> Triple(
             "회의록 완료",
             MaterialTheme.colorScheme.primaryContainer,
             MaterialTheme.colorScheme.onPrimaryContainer

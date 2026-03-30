@@ -52,12 +52,12 @@ sealed class Screen(
 
     /** 회의록 상세 - 회의록 내용 읽기 화면 (Bottom Navigation에 표시되지 않음) */
     data object MinutesDetail : Screen(
-        "minutes/{meetingId}",
+        "minutes/{minutesId}",
         "회의록 상세",
         Icons.Default.Description
     ) {
-        /** meetingId를 포함한 실제 Navigation 경로를 생성한다. */
-        fun createRoute(meetingId: Long) = "minutes/$meetingId"
+        /** minutesId를 포함한 실제 Navigation 경로를 생성한다. */
+        fun createRoute(minutesId: Long) = "minutes/$minutesId"
     }
 
     companion object {

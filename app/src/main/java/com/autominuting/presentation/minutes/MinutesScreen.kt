@@ -32,8 +32,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -49,17 +47,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.autominuting.domain.model.Meeting
-import com.autominuting.domain.model.PipelineStatus
+import com.autominuting.domain.model.Minutes
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 /**
  * 회의록 목록 화면.
  * 상단에 검색바를 제공하며, 생성된 회의록 목록을 Card 형태로 표시한다.
- * 파이프라인 상태를 칩으로 보여주고, 완료된 항목을 탭하면 상세 화면으로 이동한다.
+ * 항목을 탭하면 상세 화면으로 이동한다.
  *
- * @param onMinutesClick 회의록 상세 화면으로 이동하는 콜백 (meetingId 전달)
+ * @param onMinutesClick 회의록 상세 화면으로 이동하는 콜백 (minutesId 전달)
  * @param viewModel 회의록 목록 상태를 관리하는 ViewModel
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,11 +65,11 @@ fun MinutesScreen(
     onMinutesClick: (Long) -> Unit = {},
     viewModel: MinutesViewModel = hiltViewModel()
 ) {
-    val meetings by viewModel.meetings.collectAsState()
+    val minutesList by viewModel.minutes.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val context = LocalContext.current
-    var meetingToDelete by remember { mutableStateOf<Meeting?>(null) }
-    var meetingToRename by remember { mutableStateOf<Meeting?>(null) }
+    var minutesToDelete by remember { mutableStateOf<Minutes?>(null) }
+    var minutesToRename by remember { mutableStateOf<Minutes?>(null) }
     var selectedIds by remember { mutableStateOf(emptySet<Long>()) }
     val isSelectionMode = selectedIds.isNotEmpty()
     var showBatchDeleteDialog by remember { mutableStateOf(false) }
@@ -137,7 +134,7 @@ fun MinutesScreen(
             )
         }
 
-        if (meetings.isEmpty()) {
+        if (minutesList.isEmpty()) {
             // 빈 목록 안내: 검색 결과 없음 vs 전체 목록 비어있음 구분
             Box(
                 modifier = Modifier
@@ -174,35 +171,33 @@ fun MinutesScreen(
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(meetings, key = { it.id }) { meeting ->
-                    MinutesMeetingCard(
-                        meeting = meeting,
+                items(minutesList, key = { it.id }) { minutes ->
+                    MinutesCard(
+                        minutes = minutes,
                         isSelectionMode = isSelectionMode,
-                        isSelected = meeting.id in selectedIds,
+                        isSelected = minutes.id in selectedIds,
                         onClick = {
                             if (isSelectionMode) {
                                 // 선택 모드: toggle 선택
-                                selectedIds = if (meeting.id in selectedIds) {
-                                    selectedIds - meeting.id
+                                selectedIds = if (minutes.id in selectedIds) {
+                                    selectedIds - minutes.id
                                 } else {
-                                    selectedIds + meeting.id
+                                    selectedIds + minutes.id
                                 }
                             } else {
-                                // 일반 모드: 회의록이 있으면 상세 화면으로 이동
-                                if (meeting.minutesPath != null) {
-                                    onMinutesClick(meeting.id)
-                                }
+                                // 일반 모드: 회의록 상세 화면으로 이동
+                                onMinutesClick(minutes.id)
                             }
                         },
                         onLongClick = {
                             if (!isSelectionMode) {
                                 // 선택 모드 진입
-                                selectedIds = setOf(meeting.id)
+                                selectedIds = setOf(minutes.id)
                             }
                         },
-                        onRenameRequest = { m -> meetingToRename = m },
+                        onRenameRequest = { m -> minutesToRename = m },
                         onDeleteRequest = { id ->
-                            meetingToDelete = meetings.find { it.id == id }
+                            minutesToDelete = minutesList.find { it.id == id }
                         },
                         onShare = { id -> viewModel.shareMinutes(id, context) }
                     )
@@ -211,12 +206,12 @@ fun MinutesScreen(
         }
 
         // 이름 편집 대화상자
-        meetingToRename?.let { meeting ->
-            var editedName by remember(meeting.id) {
-                mutableStateOf(meeting.minutesTitle ?: meeting.title)
+        minutesToRename?.let { minutes ->
+            var editedName by remember(minutes.id) {
+                mutableStateOf(minutes.minutesTitle ?: "")
             }
             AlertDialog(
-                onDismissRequest = { meetingToRename = null },
+                onDismissRequest = { minutesToRename = null },
                 title = { Text("회의록 이름 편집") },
                 text = {
                     OutlinedTextField(
@@ -232,27 +227,27 @@ fun MinutesScreen(
                         onClick = {
                             val trimmed = editedName.trim()
                             if (trimmed.isNotBlank()) {
-                                viewModel.updateMinutesTitle(meeting.id, trimmed)
+                                viewModel.updateMinutesTitle(minutes.id, trimmed)
                             }
-                            meetingToRename = null
+                            minutesToRename = null
                         }
                     ) { Text("확인") }
                 },
                 dismissButton = {
-                    TextButton(onClick = { meetingToRename = null }) { Text("취소") }
+                    TextButton(onClick = { minutesToRename = null }) { Text("취소") }
                 }
             )
         }
 
         // 단건 삭제 확인 대화상자
-        meetingToDelete?.let { meeting ->
+        minutesToDelete?.let { minutes ->
             DeleteConfirmationDialog(
-                meetingTitle = meeting.minutesTitle ?: meeting.title,
+                minutesTitle = minutes.minutesTitle ?: "회의록",
                 onConfirm = {
-                    viewModel.deleteMeeting(meeting.id)
-                    meetingToDelete = null
+                    viewModel.deleteMinutes(minutes.id)
+                    minutesToDelete = null
                 },
-                onDismiss = { meetingToDelete = null }
+                onDismiss = { minutesToDelete = null }
             )
         }
 
@@ -281,17 +276,17 @@ fun MinutesScreen(
 
 /**
  * 개별 회의록 항목 카드.
- * 회의 제목, 녹음 시각, 파이프라인 상태를 표시한다.
+ * 회의록 제목과 생성 시각을 표시한다.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun MinutesMeetingCard(
-    meeting: Meeting,
+private fun MinutesCard(
+    minutes: Minutes,
     isSelectionMode: Boolean,
     isSelected: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    onRenameRequest: (Meeting) -> Unit,
+    onRenameRequest: (Minutes) -> Unit,
     onDeleteRequest: (Long) -> Unit,
     onShare: (Long) -> Unit
 ) {
@@ -332,50 +327,23 @@ private fun MinutesMeetingCard(
                         }
                     )
             ) {
-                // 회의록 제목 (minutesTitle 우선, 없으면 title 표시)
+                // 회의록 제목 (minutesTitle, 없으면 "회의록" 표시)
                 Text(
-                    text = meeting.minutesTitle ?: meeting.title,
+                    text = minutes.minutesTitle ?: "회의록",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.clickable { onRenameRequest(meeting) }
+                    modifier = Modifier.clickable { onRenameRequest(minutes) }
                 )
-
-                // 출처 뱃지 (삼성 공유)
-                if (meeting.source == "SAMSUNG_SHARE") {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    SuggestionChip(
-                        onClick = {},
-                        label = {
-                            Text(
-                                text = "삼성 공유",
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        },
-                        colors = SuggestionChipDefaults.suggestionChipColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            labelColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    )
-                }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // 녹음 시각 + 파이프라인 상태 칩
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = meeting.recordedAt.atZone(ZoneId.systemDefault())
-                            .format(DATE_TIME_FORMATTER),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    // 파이프라인 상태 칩
-                    MinutesPipelineStatusChip(status = meeting.pipelineStatus)
-                }
+                // 생성 시각
+                Text(
+                    text = minutes.createdAt.atZone(ZoneId.systemDefault())
+                        .format(DATE_TIME_FORMATTER),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             // MoreVert 액션 메뉴 (선택 모드가 아닐 때만 표시)
@@ -391,25 +359,23 @@ private fun MinutesMeetingCard(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false }
                     ) {
-                        // 공유: minutesPath가 있을 때만 표시
-                        if (meeting.minutesPath != null) {
-                            DropdownMenuItem(
-                                text = { Text("공유") },
-                                onClick = {
-                                    showMenu = false
-                                    onShare(meeting.id)
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Share, contentDescription = "공유")
-                                }
-                            )
-                        }
+                        // 공유: 항상 표시 (Minutes Row가 있으면 minutesPath가 NOT NULL)
+                        DropdownMenuItem(
+                            text = { Text("공유") },
+                            onClick = {
+                                showMenu = false
+                                onShare(minutes.id)
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Share, contentDescription = "공유")
+                            }
+                        )
                         // 삭제: 항상 표시
                         DropdownMenuItem(
                             text = { Text("삭제", color = MaterialTheme.colorScheme.error) },
                             onClick = {
                                 showMenu = false
-                                onDeleteRequest(meeting.id)
+                                onDeleteRequest(minutes.id)
                             },
                             leadingIcon = {
                                 Icon(
@@ -427,73 +393,19 @@ private fun MinutesMeetingCard(
 }
 
 /**
- * 회의록 화면용 파이프라인 상태 칩.
- * 상태별로 색상과 텍스트가 다르게 표시된다.
- */
-@Composable
-private fun MinutesPipelineStatusChip(status: PipelineStatus) {
-    val (label, containerColor, labelColor) = when (status) {
-        PipelineStatus.COMPLETED -> Triple(
-            "회의록 완료",
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.onPrimaryContainer
-        )
-        PipelineStatus.GENERATING_MINUTES -> Triple(
-            "생성 중...",
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer
-        )
-        PipelineStatus.TRANSCRIBED -> Triple(
-            "전사 완료 (대기)",
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer
-        )
-        PipelineStatus.MINUTES_ONLY -> Triple(
-            "회의록 완료",
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.onPrimaryContainer
-        )
-        PipelineStatus.FAILED -> Triple(
-            "실패",
-            MaterialTheme.colorScheme.errorContainer,
-            MaterialTheme.colorScheme.onErrorContainer
-        )
-        else -> Triple(
-            status.name,
-            MaterialTheme.colorScheme.surfaceVariant,
-            MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-
-    SuggestionChip(
-        onClick = {},
-        label = {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall
-            )
-        },
-        colors = SuggestionChipDefaults.suggestionChipColors(
-            containerColor = containerColor,
-            labelColor = labelColor
-        )
-    )
-}
-
-/**
  * 회의록 삭제 확인 대화상자.
- * 삭제 시 관련 오디오, 전사, 회의록 파일이 모두 삭제됨을 안내한다.
+ * 삭제 시 전사 파일은 보존됨을 안내한다.
  */
 @Composable
 private fun DeleteConfirmationDialog(
-    meetingTitle: String,
+    minutesTitle: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("회의록 삭제") },
-        text = { Text("\"$meetingTitle\" 회의록을 삭제할까요?\n전사 파일은 보존됩니다.") },
+        text = { Text("\"$minutesTitle\" 회의록을 삭제할까요?\n전사 파일은 보존됩니다.") },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text("삭제", color = MaterialTheme.colorScheme.error)
@@ -505,6 +417,6 @@ private fun DeleteConfirmationDialog(
     )
 }
 
-/** 녹음 시각 포맷터 (yyyy.MM.dd HH:mm) */
+/** 생성 시각 포맷터 (yyyy.MM.dd HH:mm) */
 private val DATE_TIME_FORMATTER: DateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")

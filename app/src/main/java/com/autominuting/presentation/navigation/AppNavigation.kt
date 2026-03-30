@@ -87,15 +87,15 @@ fun AppNavigation() {
             }
             composable(Screen.Minutes.route) {
                 MinutesScreen(
-                    onMinutesClick = { meetingId ->
-                        navController.navigate(Screen.MinutesDetail.createRoute(meetingId))
+                    onMinutesClick = { minutesId ->
+                        navController.navigate(Screen.MinutesDetail.createRoute(minutesId))
                     }
                 )
             }
             composable(
                 route = Screen.MinutesDetail.route,
                 arguments = listOf(
-                    navArgument("meetingId") { type = NavType.LongType }
+                    navArgument("minutesId") { type = NavType.LongType }
                 )
             ) {
                 MinutesDetailScreen(
