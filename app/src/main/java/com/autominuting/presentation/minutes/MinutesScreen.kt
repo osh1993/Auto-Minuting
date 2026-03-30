@@ -188,8 +188,8 @@ fun MinutesScreen(
                                     selectedIds + meeting.id
                                 }
                             } else {
-                                // 일반 모드: COMPLETED 상태에서만 상세 화면으로 이동
-                                if (meeting.pipelineStatus == PipelineStatus.COMPLETED && meeting.minutesPath != null) {
+                                // 일반 모드: 회의록이 있으면 상세 화면으로 이동
+                                if (meeting.minutesPath != null) {
                                     onMinutesClick(meeting.id)
                                 }
                             }
@@ -447,6 +447,11 @@ private fun MinutesPipelineStatusChip(status: PipelineStatus) {
             "전사 완료 (대기)",
             MaterialTheme.colorScheme.tertiaryContainer,
             MaterialTheme.colorScheme.onTertiaryContainer
+        )
+        PipelineStatus.MINUTES_ONLY -> Triple(
+            "회의록 완료",
+            MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.onPrimaryContainer
         )
         PipelineStatus.FAILED -> Triple(
             "실패",

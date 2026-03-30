@@ -87,6 +87,10 @@ interface MeetingDao {
     @Query("UPDATE meetings SET transcriptPath = NULL, pipelineStatus = 'AUDIO_RECEIVED', updatedAt = :updatedAt WHERE id = :id")
     suspend fun clearTranscriptPath(id: Long, updatedAt: Long)
 
+    /** 전사/오디오 파일 경로를 지우고 상태를 MINUTES_ONLY로 설정한다 (회의록은 보존). */
+    @Query("UPDATE meetings SET audioFilePath = '', transcriptPath = NULL, pipelineStatus = 'MINUTES_ONLY', updatedAt = :updatedAt WHERE id = :id")
+    suspend fun markMinutesOnly(id: Long, updatedAt: Long)
+
     /** 회의를 삭제한다. */
     @Query("DELETE FROM meetings WHERE id = :id")
     suspend fun delete(id: Long)

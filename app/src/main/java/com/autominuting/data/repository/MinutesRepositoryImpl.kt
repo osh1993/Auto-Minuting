@@ -94,6 +94,9 @@ class MinutesRepositoryImpl @Inject constructor(
     /**
      * 생성된 회의록을 파일로 저장한다.
      *
+     * 파일명에 타임스탬프를 포함하여, 재생성 시에도 이전 파일을 덮어쓰지 않도록 한다.
+     * 형식: minutes/{meetingId}_{epochMillis}.md
+     *
      * @param meetingId 회의 ID
      * @param minutesText 생성된 회의록 텍스트
      * @return 저장된 파일의 절대 경로
@@ -102,7 +105,8 @@ class MinutesRepositoryImpl @Inject constructor(
         val minutesDir = File(context.filesDir, MINUTES_DIR)
         minutesDir.mkdirs()
 
-        val file = File(minutesDir, "${meetingId}.md")
+        val timestamp = System.currentTimeMillis()
+        val file = File(minutesDir, "${meetingId}_${timestamp}.md")
         file.writeText(minutesText)
         Log.d(TAG, "회의록 저장 완료: ${file.absolutePath} (${minutesText.length}자)")
         return file.absolutePath

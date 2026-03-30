@@ -241,7 +241,8 @@ fun TranscriptsScreen(
             text = { Text("기존 회의록을 삭제하고 새로 생성할까요?") },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.generateMinutes(meeting.id)
+                    // regenerateMinutes: 기존 회의록 파일 삭제 후 새로 생성
+                    viewModel.regenerateMinutes(meeting.id)
                     meetingToRegenerate = null
                 }) {
                     Text("재생성")

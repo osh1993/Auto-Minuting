@@ -387,11 +387,14 @@ class DashboardViewModel @Inject constructor(
                 val meetingId = meetingRepository.insertMeeting(meeting)
 
                 // TranscriptionTriggerWorker enqueue
+                // automationMode를 inputData에 전달해야 HYBRID 모드에서 회의록 자동 생성이 방지됨
+                val currentAutomationMode = automationMode.value
                 val workRequest = OneTimeWorkRequestBuilder<TranscriptionTriggerWorker>()
                     .setInputData(
                         workDataOf(
                             TranscriptionTriggerWorker.KEY_AUDIO_FILE_PATH to finalFile.absolutePath,
-                            TranscriptionTriggerWorker.KEY_MEETING_ID to meetingId
+                            TranscriptionTriggerWorker.KEY_MEETING_ID to meetingId,
+                            TranscriptionTriggerWorker.KEY_AUTOMATION_MODE to currentAutomationMode.name
                         )
                     )
                     .build()

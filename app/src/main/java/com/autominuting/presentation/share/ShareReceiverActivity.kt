@@ -257,7 +257,14 @@ class ShareReceiverActivity : ComponentActivity() {
 
         val transcriptPath = if (finalFile.exists()) finalFile.absolutePath else tempFile.absolutePath
 
-        // 4. 회의록 자동 생성 시도 (실패해도 전사 데이터는 이미 DB에 보존됨)
+        // 4. 자동모드 확인 후 회의록 생성 (HYBRID 모드이면 자동 생성 안 함)
+        val automationMode = userPreferencesRepository.getAutomationModeOnce()
+        if (automationMode == com.autominuting.domain.model.AutomationMode.HYBRID) {
+            Log.d(TAG, "HYBRID 모드 — 회의록 자동 생성 건너뜀: meetingId=$meetingId")
+            Toast.makeText(this@ShareReceiverActivity, "전사 데이터가 저장되었습니다. 수동으로 회의록을 생성하세요.", Toast.LENGTH_LONG).show()
+            return
+        }
+
         try {
             val templateId = userPreferencesRepository.getDefaultTemplateIdOnce()
             val workData = when {
@@ -278,7 +285,6 @@ class ShareReceiverActivity : ComponentActivity() {
                     )
                 }
                 else -> {
-                    // 매번 선택 또는 기본 → templateId/customPrompt 없이 enqueue (STRUCTURED 폴백)
                     workDataOf(
                         MinutesGenerationWorker.KEY_MEETING_ID to meetingId,
                         MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to transcriptPath
@@ -296,7 +302,6 @@ class ShareReceiverActivity : ComponentActivity() {
             PipelineNotificationHelper.updateProgress(this@ShareReceiverActivity, "회의록 생성 중...")
             Toast.makeText(this@ShareReceiverActivity, "회의록 생성 중...", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            // Worker enqueue 실패 시에도 전사 데이터(TRANSCRIBED 상태)는 DB에 보존됨
             Log.e(TAG, "회의록 생성 Worker enqueue 실패 (전사 데이터는 보존됨)", e)
             Toast.makeText(
                 this@ShareReceiverActivity,
@@ -358,17 +363,20 @@ class ShareReceiverActivity : ComponentActivity() {
 
         // 3. TranscriptionTriggerWorker enqueue (기존 STT 파이프라인 활용)
         try {
+            // automationMode를 전달해야 HYBRID 모드에서 회의록 자동 생성이 방지됨
+            val automationMode = userPreferencesRepository.getAutomationModeOnce()
             val workRequest = OneTimeWorkRequestBuilder<TranscriptionTriggerWorker>()
                 .setInputData(
                     workDataOf(
                         TranscriptionTriggerWorker.KEY_AUDIO_FILE_PATH to audioFile.absolutePath,
-                        TranscriptionTriggerWorker.KEY_MEETING_ID to meetingId
+                        TranscriptionTriggerWorker.KEY_MEETING_ID to meetingId,
+                        TranscriptionTriggerWorker.KEY_AUTOMATION_MODE to automationMode.name
                     )
                 )
                 .build()
             WorkManager.getInstance(this@ShareReceiverActivity).enqueue(workRequest)
 
-            Log.d(TAG, "전사 파이프라인 진입: meetingId=$meetingId, audioPath=${audioFile.absolutePath}")
+            Log.d(TAG, "전사 파이프라인 진입: meetingId=$meetingId, audioPath=${audioFile.absolutePath}, automationMode=$automationMode")
 
             PipelineNotificationHelper.updateProgress(this@ShareReceiverActivity, "음성 파일 전사 중...")
             Toast.makeText(this@ShareReceiverActivity, "음성 파일 전사 중...", Toast.LENGTH_SHORT).show()
@@ -633,17 +641,20 @@ class ShareReceiverActivity : ComponentActivity() {
                 val meetingId = meetingRepository.insertMeeting(meeting)
 
                 // TranscriptionTriggerWorker enqueue
+                // automationMode를 전달해야 HYBRID 모드에서 회의록 자동 생성이 방지됨
+                val automationMode = userPreferencesRepository.getAutomationModeOnce()
                 val workRequest = OneTimeWorkRequestBuilder<TranscriptionTriggerWorker>()
                     .setInputData(
                         workDataOf(
                             TranscriptionTriggerWorker.KEY_AUDIO_FILE_PATH to audioFile.absolutePath,
-                            TranscriptionTriggerWorker.KEY_MEETING_ID to meetingId
+                            TranscriptionTriggerWorker.KEY_MEETING_ID to meetingId,
+                            TranscriptionTriggerWorker.KEY_AUTOMATION_MODE to automationMode.name
                         )
                     )
                     .build()
                 WorkManager.getInstance(this@ShareReceiverActivity).enqueue(workRequest)
 
-                Log.d(TAG, "Plaud 전사 파이프라인 진입: meetingId=$meetingId")
+                Log.d(TAG, "Plaud 전사 파이프라인 진입: meetingId=$meetingId, automationMode=$automationMode")
 
                 withContext(Dispatchers.Main) {
                     PipelineNotificationHelper.updateProgress(

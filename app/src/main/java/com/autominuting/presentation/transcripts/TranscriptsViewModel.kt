@@ -81,10 +81,13 @@ class TranscriptsViewModel @Inject constructor(
         }
     }
 
-    /** 전사 항목 전체(회의 + 전사 파일 + 회의록)를 삭제한다. */
+    /**
+     * 전사 파일만 삭제한다. 회의록은 보존된다.
+     * Meeting 행 자체는 유지하고 transcriptPath만 초기화한다.
+     */
     fun deleteTranscript(id: Long) {
         viewModelScope.launch {
-            meetingRepository.deleteMeeting(id)
+            meetingRepository.deleteTranscript(id)
         }
     }
 
@@ -117,7 +120,7 @@ class TranscriptsViewModel @Inject constructor(
     }
 
     /**
-     * ManualMinutesDialog에서 템플릿/커스텀 프롬프트를 선택한 후 호의록을 생성한다.
+     * ManualMinutesDialog에서 템플릿/커스텀 프롬프트를 선택한 후 회의록을 생성한다.
      *
      * @param meetingId 회의록을 생성할 Meeting의 ID
      * @param templateId 선택된 프롬프트 템플릿 ID (null이면 미선택)
@@ -126,6 +129,49 @@ class TranscriptsViewModel @Inject constructor(
     fun generateMinutesWithTemplate(meetingId: Long, templateId: Long?, customPrompt: String?) {
         viewModelScope.launch {
             enqueueMinutesWorker(meetingId, templateId = templateId, customPrompt = customPrompt)
+        }
+    }
+
+    /**
+     * 기존 회의록을 삭제하고 새 회의록을 생성한다 (재생성 전용).
+     *
+     * 기존 minutesPath 파일을 삭제하고 상태를 TRANSCRIBED로 되돌린 뒤,
+     * MinutesGenerationWorker를 enqueue하여 새 파일로 회의록을 생성한다.
+     * 파일명에 타임스탬프가 포함되어 있으므로 이전 파일과 충돌하지 않는다.
+     *
+     * @param meetingId 재생성할 Meeting의 ID
+     */
+    fun regenerateMinutes(meetingId: Long) {
+        viewModelScope.launch {
+            val original = meetingRepository.getMeetingById(meetingId).first() ?: return@launch
+            if (original.transcriptPath == null) {
+                Log.w(TAG, "전사 파일 없음, 회의록 재생성 불가: meetingId=$meetingId")
+                return@launch
+            }
+
+            // 원본 row는 그대로 보존 (기존 회의록 유지).
+            // 전사 파일(transcriptPath)만 공유하여 새 Meeting row를 생성한다.
+            val now = Instant.now()
+            val newMeeting = original.copy(
+                id = 0,
+                minutesPath = null,
+                minutesTitle = null,
+                pipelineStatus = PipelineStatus.TRANSCRIBED,
+                createdAt = now,
+                updatedAt = now
+            )
+            val newMeetingId = meetingRepository.insertMeeting(newMeeting)
+
+            // 새 row에 대해 회의록 생성 Worker enqueue
+            val templateId = userPreferencesRepository.getDefaultTemplateIdOnce()
+            if (templateId == UserPreferencesRepository.CUSTOM_PROMPT_MODE_ID) {
+                val customPrompt = userPreferencesRepository.getDefaultCustomPromptOnce()
+                enqueueMinutesWorker(newMeetingId, customPrompt = customPrompt.ifBlank { null })
+            } else if (templateId > 0) {
+                enqueueMinutesWorker(newMeetingId, templateId = templateId)
+            } else {
+                enqueueMinutesWorker(newMeetingId)
+            }
         }
     }
 
@@ -181,20 +227,32 @@ class TranscriptsViewModel @Inject constructor(
             // 기존 전사 파일은 보존 (재전사 실패 시 복구 가능하도록)
             // Worker 성공 후 새 전사 파일로 덮어쓰므로 별도 삭제 불필요
 
+            // 재전사 시작 시 이전 회의록 파일과 경로를 초기화하여 "회의록 완료" 배지가
+            // 재전사 도중에 잘못 표시되는 것을 방지한다.
+            // deleteMinutesOnly는 상태를 TRANSCRIBED로 되돌리므로, 이후 TRANSCRIBING 상태를 재설정한다.
+            if (meeting.minutesPath != null) {
+                meetingRepository.deleteMinutesOnly(meetingId)
+            }
+
             // 즉시 TRANSCRIBING 상태로 변경 (목록에서 사라지지 않도록)
             meetingRepository.updatePipelineStatus(meetingId, PipelineStatus.TRANSCRIBING)
+
+            // automationMode를 조회하여 Worker inputData에 전달
+            // 미전달 시 Worker 기본값이 FULL_AUTO로 처리되어 HYBRID 모드가 무시됨
+            val automationMode = userPreferencesRepository.getAutomationModeOnce()
 
             // TranscriptionTriggerWorker enqueue
             val workRequest = OneTimeWorkRequestBuilder<TranscriptionTriggerWorker>()
                 .setInputData(
                     workDataOf(
                         TranscriptionTriggerWorker.KEY_MEETING_ID to meetingId,
-                        TranscriptionTriggerWorker.KEY_AUDIO_FILE_PATH to meeting.audioFilePath
+                        TranscriptionTriggerWorker.KEY_AUDIO_FILE_PATH to meeting.audioFilePath,
+                        TranscriptionTriggerWorker.KEY_AUTOMATION_MODE to automationMode.name
                     )
                 )
                 .build()
             WorkManager.getInstance(context).enqueue(workRequest)
-            Log.d(TAG, "재전사 Worker enqueue 완료: meetingId=$meetingId")
+            Log.d(TAG, "재전사 Worker enqueue 완료: meetingId=$meetingId, automationMode=$automationMode")
         }
     }
 

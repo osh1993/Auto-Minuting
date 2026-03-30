@@ -123,9 +123,10 @@ class MinutesGenerationWorker @AssistedInject constructor(
                 ?.saveMinutesToFile(meetingId, minutesText)
                 ?: run {
                     // MinutesRepositoryImpl이 아닌 경우 직접 저장
+                    // 타임스탬프 기반 파일명으로 재생성 시 덮어쓰기 방지
                     val file = File(
                         applicationContext.filesDir,
-                        "minutes/${meetingId}.md"
+                        "minutes/${meetingId}_${System.currentTimeMillis()}.md"
                     )
                     file.parentFile?.mkdirs()
                     file.writeText(minutesText)

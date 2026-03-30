@@ -38,8 +38,11 @@ interface MeetingRepository {
     /** 회의록 파일만 삭제하고 전사 파일을 보존한다. */
     suspend fun deleteMinutesOnly(id: Long)
 
-    /** 전사 파일(+ 연관 회의록 파일)을 삭제한다. */
+    /** 전사/오디오 파일을 삭제하고 상태를 MINUTES_ONLY로 변경한다. 회의록은 보존. */
     suspend fun deleteTranscript(id: Long)
+
+    /** 전사/오디오 파일 경로를 초기화하고 상태를 MINUTES_ONLY로 변경한다. 파일은 삭제하지 않음. */
+    suspend fun archiveAsMinutesOnly(id: Long)
 
     /** 회의록 제목을 업데이트한다. */
     suspend fun updateMinutesTitle(id: Long, title: String)
