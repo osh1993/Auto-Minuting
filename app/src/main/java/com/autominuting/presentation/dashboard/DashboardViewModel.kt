@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.BackoffPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
@@ -161,6 +162,7 @@ class DashboardViewModel @Inject constructor(
                 MinutesGenerationWorker.KEY_TEMPLATE_ID to (templateId ?: 0L),
                 MinutesGenerationWorker.KEY_CUSTOM_PROMPT to customPrompt
             ))
+            .setBackoffCriteria(BackoffPolicy.LINEAR, 60L, TimeUnit.SECONDS)
             .build()
         WorkManager.getInstance(context).enqueue(workRequest)
     }

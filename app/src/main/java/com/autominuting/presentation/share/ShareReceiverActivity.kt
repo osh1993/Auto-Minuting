@@ -18,6 +18,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.work.BackoffPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
@@ -294,6 +295,7 @@ class ShareReceiverActivity : ComponentActivity() {
 
             val workRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
                 .setInputData(workData)
+                .setBackoffCriteria(BackoffPolicy.LINEAR, 60L, TimeUnit.SECONDS)
                 .build()
             WorkManager.getInstance(this@ShareReceiverActivity).enqueue(workRequest)
 

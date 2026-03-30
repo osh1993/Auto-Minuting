@@ -107,6 +107,31 @@ object PipelineNotificationHelper {
     }
 
     /**
+     * Gemini API 쿼터 초과 알림을 표시한다.
+     * GeminiEngine 내부 재시도 소진 후 Worker가 retry할 때 사용자에게 상황을 알린다.
+     *
+     * @param context 컨텍스트
+     */
+    fun notifyQuotaExceeded(context: Context) {
+        val notification = NotificationCompat.Builder(context, PIPELINE_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Auto Minuting")
+            .setContentText("Gemini API 쿼터 초과 — 잠시 후 자동 재시도합니다")
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText("Gemini API 무료 쿼터가 초과되었습니다.\n잠시 후 자동으로 재시도합니다.")
+            )
+            .setAutoCancel(false)
+            .setOngoing(true)
+            .setSilent(false)
+            .build()
+
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(PIPELINE_NOTIFICATION_ID, notification)
+    }
+
+    /**
      * 전사 완료 알림을 표시한다 (하이브리드 모드용).
      * 사용자에게 전사 결과를 확인하고 회의록 생성을 시작할 수 있는 액션 버튼을 제공한다.
      *

@@ -12,6 +12,7 @@ import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.domain.repository.MinutesRepository
 import com.autominuting.domain.repository.PromptTemplateRepository
 import com.autominuting.service.PipelineNotificationHelper
+import com.google.ai.client.generativeai.type.QuotaExceededException
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.io.File
@@ -166,7 +167,16 @@ class MinutesGenerationWorker @AssistedInject constructor(
             val errorMessage = error?.message ?: "알 수 없는 회의록 생성 오류"
             Log.e(TAG, "회의록 생성 실패: $errorMessage", error)
 
-            // 실패 알림
+            // 쿼터 초과인 경우: 알림 후 WorkManager retry
+            val isQuotaExceeded = error is QuotaExceededException
+                || error?.cause is QuotaExceededException
+            if (isQuotaExceeded) {
+                PipelineNotificationHelper.notifyQuotaExceeded(applicationContext)
+                // 상태는 GENERATING_MINUTES 유지 (retry 후 재개)
+                return Result.retry()
+            }
+
+            // 일반 실패 알림
             PipelineNotificationHelper.updateProgress(applicationContext, "회의록 생성 실패", ongoing = false)
 
             // 파이프라인 상태를 FAILED로 업데이트

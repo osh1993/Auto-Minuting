@@ -5,6 +5,7 @@ import android.util.Log
 import com.autominuting.data.minutes.MinutesEngine
 import com.autominuting.data.quota.GeminiQuotaTracker
 import com.autominuting.data.quota.QuotaCategory
+import com.google.ai.client.generativeai.type.QuotaExceededException
 import com.autominuting.domain.repository.MinutesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -77,6 +78,12 @@ class MinutesRepositoryImpl @Inject constructor(
                 // 현재 폴백 없음 — 향후 NotebookLM MCP 추가 예정
                 val error = result.exceptionOrNull()
                 Log.e(TAG, "회의록 생성 실패: ${error?.message}")
+
+                // 쿼터 초과는 래핑하지 않고 그대로 전달 — Worker에서 Result.retry() 처리
+                if (error is QuotaExceededException) {
+                    return@withContext Result.failure(error)
+                }
+
                 Result.failure(
                     MinutesGenerationException(
                         "회의록 생성 실패 — Gemini: ${error?.message}",

@@ -4,9 +4,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.work.BackoffPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import java.util.concurrent.TimeUnit
 import com.autominuting.worker.MinutesGenerationWorker
 
 /**
@@ -35,6 +37,7 @@ class PipelineActionReceiver : BroadcastReceiver() {
                             MinutesGenerationWorker.KEY_CUSTOM_PROMPT to customPrompt
                         )
                     )
+                    .setBackoffCriteria(BackoffPolicy.LINEAR, 60L, TimeUnit.SECONDS)
                     .build()
                 WorkManager.getInstance(context).enqueue(workRequest)
             }

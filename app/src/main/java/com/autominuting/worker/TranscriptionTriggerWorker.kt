@@ -4,7 +4,9 @@ import android.content.Context
 import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.BackoffPolicy
 import androidx.work.OneTimeWorkRequestBuilder
+import java.util.concurrent.TimeUnit
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
@@ -141,6 +143,7 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
                             MinutesGenerationWorker.KEY_CUSTOM_PROMPT to resolvedCustomPrompt
                         )
                     )
+                    .setBackoffCriteria(BackoffPolicy.LINEAR, 60L, TimeUnit.SECONDS)
                     .build()
                 WorkManager.getInstance(applicationContext)
                     .enqueue(minutesWorkRequest)

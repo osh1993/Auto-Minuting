@@ -5,9 +5,11 @@ import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.BackoffPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import java.util.concurrent.TimeUnit
 import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.domain.model.Meeting
 import com.autominuting.domain.model.PipelineStatus
@@ -162,16 +164,28 @@ class TranscriptsViewModel @Inject constructor(
             )
             val newMeetingId = meetingRepository.insertMeeting(newMeeting)
 
-            // 새 row에 대해 회의록 생성 Worker enqueue
+            // 새 row에 대해 회의록 생성 Worker를 직접 enqueue
+            // (DB 재조회 없이 original.transcriptPath를 직접 사용 — 타이밍 문제 방지)
             val templateId = userPreferencesRepository.getDefaultTemplateIdOnce()
-            if (templateId == UserPreferencesRepository.CUSTOM_PROMPT_MODE_ID) {
-                val customPrompt = userPreferencesRepository.getDefaultCustomPromptOnce()
-                enqueueMinutesWorker(newMeetingId, customPrompt = customPrompt.ifBlank { null })
-            } else if (templateId > 0) {
-                enqueueMinutesWorker(newMeetingId, templateId = templateId)
-            } else {
-                enqueueMinutesWorker(newMeetingId)
-            }
+            val customPrompt = if (templateId == UserPreferencesRepository.CUSTOM_PROMPT_MODE_ID) {
+                userPreferencesRepository.getDefaultCustomPromptOnce().ifBlank { null }
+            } else null
+            val effectiveTemplateId = if (templateId > 0 &&
+                templateId != UserPreferencesRepository.CUSTOM_PROMPT_MODE_ID) templateId else null
+
+            val workRequest = OneTimeWorkRequestBuilder<MinutesGenerationWorker>()
+                .setInputData(
+                    workDataOf(
+                        MinutesGenerationWorker.KEY_MEETING_ID to newMeetingId,
+                        MinutesGenerationWorker.KEY_TRANSCRIPT_PATH to original.transcriptPath,
+                        MinutesGenerationWorker.KEY_TEMPLATE_ID to (effectiveTemplateId ?: 0L),
+                        MinutesGenerationWorker.KEY_CUSTOM_PROMPT to customPrompt
+                    )
+                )
+                .setBackoffCriteria(BackoffPolicy.LINEAR, 60L, TimeUnit.SECONDS)
+                .build()
+            WorkManager.getInstance(context).enqueue(workRequest)
+            Log.d(TAG, "회의록 재생성 Worker enqueue: newMeetingId=$newMeetingId, templateId=$templateId")
         }
     }
 
@@ -200,6 +214,7 @@ class TranscriptsViewModel @Inject constructor(
                     MinutesGenerationWorker.KEY_CUSTOM_PROMPT to customPrompt
                 )
             )
+            .setBackoffCriteria(BackoffPolicy.LINEAR, 60L, TimeUnit.SECONDS)
             .build()
 
         WorkManager.getInstance(context).enqueue(workRequest)
@@ -224,15 +239,8 @@ class TranscriptsViewModel @Inject constructor(
                 return@launch
             }
 
-            // 기존 전사 파일은 보존 (재전사 실패 시 복구 가능하도록)
-            // Worker 성공 후 새 전사 파일로 덮어쓰므로 별도 삭제 불필요
-
-            // 재전사 시작 시 이전 회의록 파일과 경로를 초기화하여 "회의록 완료" 배지가
-            // 재전사 도중에 잘못 표시되는 것을 방지한다.
-            // deleteMinutesOnly는 상태를 TRANSCRIBED로 되돌리므로, 이후 TRANSCRIBING 상태를 재설정한다.
-            if (meeting.minutesPath != null) {
-                meetingRepository.deleteMinutesOnly(meetingId)
-            }
+            // 기존 회의록은 삭제하지 않고 보존한다.
+            // 재전사 완료 후 사용자가 회의록을 재작성할지 선택한다.
 
             // 즉시 TRANSCRIBING 상태로 변경 (목록에서 사라지지 않도록)
             meetingRepository.updatePipelineStatus(meetingId, PipelineStatus.TRANSCRIBING)
