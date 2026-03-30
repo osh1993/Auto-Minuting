@@ -103,7 +103,7 @@ Requirements for v5.0 milestone. Each maps to roadmap phases.
 ### 데이터 모델 분리 (Data)
 
 - [x] **DATA-01**: Minutes 독립 테이블이 신설되어 회의록이 Meeting과 별도 Row로 저장된다 (Room DB v5 마이그레이션)
-- [ ] **DATA-02**: 하나의 전사(Meeting)에서 여러 회의록(Minutes)을 생성할 수 있다 (1:N 관계)
+- [x] **DATA-02**: 하나의 전사(Meeting)에서 여러 회의록(Minutes)을 생성할 수 있다 (1:N 관계)
 
 ### 파일 독립성 (Independence)
 
@@ -174,7 +174,7 @@ Deferred to future release.
 | SET-02 | Phase 35 | Complete |
 | SET-03 | Phase 35 | Pending |
 | DATA-01 | Phase 36 | Complete |
-| DATA-02 | Phase 36 | Pending |
+| DATA-02 | Phase 36 | Complete |
 | IND-01 | Phase 37 | Pending |
 | IND-02 | Phase 37 | Pending |
 | IND-03 | Phase 37 | Pending |

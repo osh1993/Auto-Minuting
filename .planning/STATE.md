@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 36-01-PLAN.md
-last_updated: "2026-03-30T23:28:05.297Z"
+stopped_at: Completed 36-02-PLAN.md
+last_updated: "2026-03-30T23:35:38.700Z"
 last_activity: 2026-03-30 — v5.0 로드맵 생성
 progress:
   total_phases: 38
   completed_phases: 30
   total_plans: 59
-  completed_plans: 55
+  completed_plans: 56
 ---
 
 # Project State
@@ -57,6 +57,7 @@ Recent decisions affecting current work:
 - [v5.0 계획]: regenerateMinutes() 새 Meeting Row 생성 방식 → Minutes Row 추가 방식으로 변경
 - [Phase 36]: ForeignKey onDelete=SET_NULL로 Meeting 삭제 시 Minutes 보존
 - [Phase 36]: SQLite 테이블 재생성 패턴으로 minutesPath/minutesTitle 컬럼 제거 (DROP COLUMN 미지원)
+- [Phase 36]: MinutesDataRepository로 명명하여 기존 MinutesRepository와 역할 분리 (CRUD vs API 호출)
 
 ### Roadmap Evolution
 
@@ -75,6 +76,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-30T23:28:05.291Z
-Stopped at: Completed 36-01-PLAN.md
+Last session: 2026-03-30T23:35:38.693Z
+Stopped at: Completed 36-02-PLAN.md
 Resume file: None
