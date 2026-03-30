@@ -105,6 +105,12 @@
                 tools:node="remove" />
         </provider>
 
+        <!-- WorkManager ForegroundService: dataSync 타입 선언 (Android 14+ 필수) -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
+
         <!-- 파이프라인 알림 액션 처리 (회의록 생성/공유) -->
         <receiver
             android:name=".receiver.PipelineActionReceiver"
