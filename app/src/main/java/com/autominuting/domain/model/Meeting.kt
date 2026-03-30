@@ -11,7 +11,6 @@ import java.time.Instant
  * @property recordedAt 녹음 시각
  * @property audioFilePath 오디오 파일 경로
  * @property transcriptPath 전사 텍스트 파일 경로 (전사 완료 시 설정)
- * @property minutesPath 회의록 파일 경로 (회의록 생성 완료 시 설정)
  * @property pipelineStatus 현재 파이프라인 처리 상태
  * @property errorMessage 오류 발생 시 메시지
  * @property createdAt 레코드 생성 시각
@@ -23,13 +22,10 @@ data class Meeting(
     val recordedAt: Instant,
     val audioFilePath: String,
     val transcriptPath: String? = null,
-    val minutesPath: String? = null,
     val pipelineStatus: PipelineStatus,
     val errorMessage: String? = null,
     val createdAt: Instant,
     val updatedAt: Instant,
     /** 데이터 소스 (PLAUD_BLE, SAMSUNG_SHARE 등) */
-    val source: String = "PLAUD_BLE",
-    /** 회의록 자동 제목 (Gemini 응답 첫 줄에서 추출) */
-    val minutesTitle: String? = null
+    val source: String = "PLAUD_BLE"
 )

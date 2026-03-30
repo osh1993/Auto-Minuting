@@ -21,8 +21,5 @@ enum class PipelineStatus {
     COMPLETED,
 
     /** 파이프라인 처리 중 오류가 발생한 상태 */
-    FAILED,
-
-    /** 전사/오디오 파일은 삭제됐지만 회의록은 보존된 상태 */
-    MINUTES_ONLY
+    FAILED
 }

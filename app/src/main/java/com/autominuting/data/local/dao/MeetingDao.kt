@@ -53,24 +53,6 @@ interface MeetingDao {
         updatedAt: Long
     )
 
-    /** 회의록 생성 완료 후 minutesPath, minutesTitle과 파이프라인 상태를 업데이트한다. */
-    @Query("UPDATE meetings SET minutesPath = :minutesPath, minutesTitle = :minutesTitle, pipelineStatus = :status, updatedAt = :updatedAt WHERE id = :id")
-    suspend fun updateMinutes(
-        id: Long,
-        minutesPath: String,
-        minutesTitle: String?,
-        status: String,
-        updatedAt: Long
-    )
-
-    /** 회의록 제목만 업데이트한다. */
-    @Query("UPDATE meetings SET minutesTitle = :minutesTitle, updatedAt = :updatedAt WHERE id = :id")
-    suspend fun updateMinutesTitle(
-        id: Long,
-        minutesTitle: String,
-        updatedAt: Long
-    )
-
     /** 오디오 파일 경로로 회의를 조회한다. */
     @Query("SELECT * FROM meetings WHERE audioFilePath = :audioFilePath LIMIT 1")
     suspend fun getMeetingByAudioPath(audioFilePath: String): MeetingEntity?
@@ -79,17 +61,9 @@ interface MeetingDao {
     @Query("SELECT * FROM meetings WHERE title LIKE '%' || :query || '%' ORDER BY recordedAt DESC")
     fun searchMeetings(query: String): Flow<List<MeetingEntity>>
 
-    /** 회의록 경로와 제목을 초기화하고 상태를 TRANSCRIBED로 되돌린다 (전사 파일 보존). */
-    @Query("UPDATE meetings SET minutesPath = NULL, minutesTitle = NULL, pipelineStatus = 'TRANSCRIBED', updatedAt = :updatedAt WHERE id = :id")
-    suspend fun clearMinutesPath(id: Long, updatedAt: Long)
-
-    /** 전사 경로만 초기화하고 상태를 AUDIO_RECEIVED로 되돌린다 (회의록 보존). */
+    /** 전사 경로만 초기화하고 상태를 AUDIO_RECEIVED로 되돌린다. */
     @Query("UPDATE meetings SET transcriptPath = NULL, pipelineStatus = 'AUDIO_RECEIVED', updatedAt = :updatedAt WHERE id = :id")
     suspend fun clearTranscriptPath(id: Long, updatedAt: Long)
-
-    /** 전사/오디오 파일 경로를 지우고 상태를 MINUTES_ONLY로 설정한다 (회의록은 보존). */
-    @Query("UPDATE meetings SET audioFilePath = '', transcriptPath = NULL, pipelineStatus = 'MINUTES_ONLY', updatedAt = :updatedAt WHERE id = :id")
-    suspend fun markMinutesOnly(id: Long, updatedAt: Long)
 
     /**
      * 진행 중 상태(TRANSCRIBING, GENERATING_MINUTES)로 남아있는 회의를 FAILED로 복구한다.

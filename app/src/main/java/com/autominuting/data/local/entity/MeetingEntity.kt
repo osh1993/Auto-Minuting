@@ -19,7 +19,6 @@ data class MeetingEntity(
     val recordedAt: Long,
     val audioFilePath: String,
     val transcriptPath: String? = null,
-    val minutesPath: String? = null,
     /** 파이프라인 상태 (enum name으로 저장) */
     val pipelineStatus: String,
     val errorMessage: String? = null,
@@ -28,9 +27,7 @@ data class MeetingEntity(
     /** 레코드 최종 수정 시각 (epoch millis) */
     val updatedAt: Long,
     /** 데이터 소스 (PLAUD_BLE, SAMSUNG_SHARE 등) */
-    val source: String = "PLAUD_BLE",
-    /** 회의록 자동 제목 (Gemini 응답 첫 줄에서 추출) */
-    val minutesTitle: String? = null
+    val source: String = "PLAUD_BLE"
 ) {
     /**
      * Entity를 도메인 모델로 변환한다.
@@ -41,13 +38,11 @@ data class MeetingEntity(
         recordedAt = Instant.ofEpochMilli(recordedAt),
         audioFilePath = audioFilePath,
         transcriptPath = transcriptPath,
-        minutesPath = minutesPath,
         pipelineStatus = PipelineStatus.valueOf(pipelineStatus),
         errorMessage = errorMessage,
         createdAt = Instant.ofEpochMilli(createdAt),
         updatedAt = Instant.ofEpochMilli(updatedAt),
-        source = source,
-        minutesTitle = minutesTitle
+        source = source
     )
 
     companion object {
@@ -60,13 +55,11 @@ data class MeetingEntity(
             recordedAt = meeting.recordedAt.toEpochMilli(),
             audioFilePath = meeting.audioFilePath,
             transcriptPath = meeting.transcriptPath,
-            minutesPath = meeting.minutesPath,
             pipelineStatus = meeting.pipelineStatus.name,
             errorMessage = meeting.errorMessage,
             createdAt = meeting.createdAt.toEpochMilli(),
             updatedAt = meeting.updatedAt.toEpochMilli(),
-            source = meeting.source,
-            minutesTitle = meeting.minutesTitle
+            source = meeting.source
         )
     }
 }
