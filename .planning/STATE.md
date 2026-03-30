@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v5.0
-milestone_name: 전사-회의록 독립 아키텍처
+milestone: v1.0
+milestone_name: milestone
 status: planning
-stopped_at: v5.0 로드맵 생성 완료 — Phase 36-38 정의
-last_updated: "2026-03-30T20:00:00.000Z"
-last_activity: 2026-03-30
+stopped_at: Completed 36-01-PLAN.md
+last_updated: "2026-03-30T23:28:05.297Z"
+last_activity: 2026-03-30 — v5.0 로드맵 생성
 progress:
   total_phases: 38
-  completed_phases: 33
+  completed_phases: 30
   total_plans: 59
-  completed_plans: 57
+  completed_plans: 55
 ---
 
 # Project State
@@ -55,6 +55,8 @@ Recent decisions affecting current work:
 - [v5.0 계획]: Meeting.minutesPath/minutesTitle → Minutes 독립 테이블 분리 (Room DB v4→v5)
 - [v5.0 계획]: MINUTES_ONLY PipelineStatus 워크어라운드 정리 예정
 - [v5.0 계획]: regenerateMinutes() 새 Meeting Row 생성 방식 → Minutes Row 추가 방식으로 변경
+- [Phase 36]: ForeignKey onDelete=SET_NULL로 Meeting 삭제 시 Minutes 보존
+- [Phase 36]: SQLite 테이블 재생성 패턴으로 minutesPath/minutesTitle 컬럼 제거 (DROP COLUMN 미지원)
 
 ### Roadmap Evolution
 
@@ -73,6 +75,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-30
-Stopped at: v5.0 로드맵 생성 완료
+Last session: 2026-03-30T23:28:05.291Z
+Stopped at: Completed 36-01-PLAN.md
 Resume file: None

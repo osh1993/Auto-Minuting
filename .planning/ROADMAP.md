@@ -269,7 +269,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 36-01-PLAN.md — MinutesEntity/MinutesDao/Minutes 도메인 모델 신설 + Room DB v5 마이그레이션 + MeetingEntity/MeetingDao/PipelineStatus 정리
+- [x] 36-01-PLAN.md — MinutesEntity/MinutesDao/Minutes 도메인 모델 신설 + Room DB v5 마이그레이션 + MeetingEntity/MeetingDao/PipelineStatus 정리
 - [ ] 36-02-PLAN.md — MinutesDataRepository 신설 + MeetingRepository 정리 + MinutesGenerationWorker/TranscriptsViewModel 로직 교체
 - [ ] 36-03-PLAN.md — MinutesViewModel/MinutesDetailViewModel + Screen/Navigation을 Minutes 테이블 기반으로 교체 + 빌드 검증
 
@@ -321,6 +321,6 @@ Plans:
 | 33. GUI 일관성 개선 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 34. Whisper 전사 진행률 | v4.0 | 2/2 | Complete    | 2026-03-30 |
 | 35. 회의록 설정 구조 개편 | v4.0 | 3/3 | Complete    | 2026-03-30 |
-| 36. Minutes 데이터 모델 분리 | v5.0 | 0/3 | Not started | - |
+| 36. Minutes 데이터 모델 분리 | v5.0 | 1/3 | In Progress|  |
 | 37. 전사-회의록 독립 삭제 | v5.0 | 0/? | Not started | - |
 | 38. 독립 아키텍처 UI 반영 | v5.0 | 0/? | Not started | - |
