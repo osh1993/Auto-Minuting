@@ -4,8 +4,8 @@ import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.autominuting.domain.model.Meeting
-import com.autominuting.domain.repository.MeetingRepository
+import com.autominuting.domain.model.Minutes
+import com.autominuting.domain.repository.MinutesDataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -23,11 +22,11 @@ import javax.inject.Inject
 
 /**
  * 회의록 목록 화면의 상태를 관리하는 ViewModel.
- * 모든 회의 목록을 제공하며, 검색 기능과 회의록 정렬을 지원한다.
+ * Minutes 테이블 기반으로 회의록 목록을 제공하며, 검색/삭제/제목 수정/공유를 지원한다.
  */
 @HiltViewModel
 class MinutesViewModel @Inject constructor(
-    private val meetingRepository: MeetingRepository
+    private val minutesDataRepository: MinutesDataRepository
 ) : ViewModel() {
 
     /** 검색어 내부 상태. */
@@ -42,22 +41,20 @@ class MinutesViewModel @Inject constructor(
     }
 
     /**
-     * 회의 목록 (검색어 기반 필터링 + 회의록 있는 항목을 상단에 정렬).
-     * 검색어가 비어있으면 전체 목록을, 있으면 제목 LIKE 검색 결과를 표시한다.
+     * 회의록 목록 (검색어 기반 클라이언트 필터링).
+     * 검색어가 비어있으면 전체 목록을, 있으면 minutesTitle LIKE 검색 결과를 표시한다.
      * 300ms debounce로 불필요한 쿼리를 방지한다.
      */
     @OptIn(FlowPreview::class)
-    val meetings: StateFlow<List<Meeting>> = _searchQuery
+    val minutes: StateFlow<List<Minutes>> = _searchQuery
         .debounce(300)
         .flatMapLatest { query ->
-            if (query.isBlank()) {
-                meetingRepository.getMeetings()
-            } else {
-                meetingRepository.searchMeetings(query.trim())
+            minutesDataRepository.getAllMinutes().map { list ->
+                if (query.isBlank()) list
+                else list.filter { m ->
+                    (m.minutesTitle ?: "").contains(query, ignoreCase = true)
+                }
             }
-        }
-        .map { list ->
-            list.filter { meeting -> meeting.minutesPath != null }
         }
         .stateIn(
             scope = viewModelScope,
@@ -65,41 +62,41 @@ class MinutesViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    /** 회의록만 삭제한다 (전사 파일 보존). 목록에서 자동으로 사라진다. */
-    fun deleteMeeting(id: Long) {
+    /** 회의록을 삭제한다 (Minutes ID 기반). */
+    fun deleteMinutes(id: Long) {
         viewModelScope.launch {
-            meetingRepository.deleteMinutesOnly(id)
+            minutesDataRepository.deleteMinutes(id)
         }
     }
 
-    /** 선택된 회의록을 일괄 삭제한다 (전사 파일 보존). */
+    /** 선택된 회의록을 일괄 삭제한다 (Minutes ID 기반). */
     fun deleteSelectedMinutes(ids: Set<Long>) {
         viewModelScope.launch {
-            ids.forEach { meetingRepository.deleteMinutesOnly(it) }
+            ids.forEach { minutesDataRepository.deleteMinutes(it) }
         }
     }
 
-    /** 회의록 제목(minutesTitle)을 변경한다. */
-    fun updateMinutesTitle(meetingId: Long, newTitle: String) {
+    /** 회의록 제목(minutesTitle)을 변경한다 (Minutes ID 기반). */
+    fun updateMinutesTitle(minutesId: Long, newTitle: String) {
         viewModelScope.launch {
-            meetingRepository.updateMinutesTitle(meetingId, newTitle)
+            minutesDataRepository.updateMinutesTitle(minutesId, newTitle)
         }
     }
 
     /**
      * 회의록 텍스트를 외부 앱으로 공유한다.
-     * 회의록 파일을 읽어 ACTION_SEND Intent로 공유 시트를 띄운다.
+     * Minutes 엔티티에서 파일 경로를 읽어 ACTION_SEND Intent로 공유 시트를 띄운다.
      *
-     * @param meetingId 공유할 Meeting의 ID
+     * @param minutesId 공유할 Minutes의 ID
      * @param activityContext Activity Context (startActivity 호출용)
      */
-    fun shareMinutes(meetingId: Long, activityContext: Context) {
+    fun shareMinutes(minutesId: Long, activityContext: Context) {
         viewModelScope.launch {
-            val meeting = meetingRepository.getMeetingById(meetingId).first()
-            if (meeting?.minutesPath == null) return@launch
+            val minutesEntity = minutesDataRepository.getMinutesByIdOnce(minutesId)
+                ?: return@launch
 
             val minutesText = try {
-                File(meeting.minutesPath).readText()
+                File(minutesEntity.minutesPath).readText()
             } catch (e: Exception) {
                 return@launch
             }
@@ -107,7 +104,7 @@ class MinutesViewModel @Inject constructor(
 
             val sendIntent = Intent().apply {
                 action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_SUBJECT, meeting.minutesTitle ?: meeting.title)
+                putExtra(Intent.EXTRA_SUBJECT, minutesEntity.minutesTitle ?: "회의록")
                 putExtra(Intent.EXTRA_TEXT, minutesText)
                 type = "text/plain"
             }
