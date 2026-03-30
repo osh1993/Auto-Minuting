@@ -1,0 +1,55 @@
+# Android 빌드 아티팩트
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+build/
+app/build/
+app/.cxx/
+app/schemas/
+
+# Gradle
+.gradle/
+local.properties
+gradle.properties.local
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+.navigation/
+captures/
+*.tmp
+*.bak
+*.swp
+
+# VS Code
+.vscode/
+
+# Claude Code
+.claude/
+
+# 로컬 서명 설정
+keystore.properties
+*.jks
+*.keystore
+
+# ProGuard
+proguard/
+*.pro.mapping
+
+# NDK
+.externalNativeBuild/
+cmake-build-*/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
