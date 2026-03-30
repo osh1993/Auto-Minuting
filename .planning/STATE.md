@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 35
 Plan: Not started
 Status: Ready to execute
-Last activity: 2026-03-30 - Completed quick task 260330-bee: Whisper 전사 성능 개선 P0~P3 (모델 캐싱, 스레드, ARM 최적화, 양자화 모델)
+Last activity: 2026-03-30 - Completed quick task 260330-cml: ggml Vulkan 백엔드 코드 준비 (CMake/JNI/Manifest)
 
 ## Performance Metrics
 
@@ -89,6 +89,7 @@ None.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260330-bee | Whisper 전사 성능 개선 P0~P3 (모델 캐싱, 스레드, ARM 최적화, 양자화 모델) | 2026-03-30 | b8d1474 | [260330-bee-whisper-p0-p3-arm](./quick/260330-bee-whisper-p0-p3-arm/) |
+| 260330-cml | ggml Vulkan 백엔드 코드 준비 (CMake/JNI/Manifest) | 2026-03-30 | 41f5136 | [260330-cml-p4-ggml-vulkan](./quick/260330-cml-p4-ggml-vulkan/) |
 
 ### Blockers/Concerns
 
@@ -97,6 +98,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29T19:33:34.511Z
-Stopped at: Phase 35 Plan 03 완료 — MinutesFormat 참조 전면 제거 및 빌드 성공
+Last session: 2026-03-30T00:09:34Z
+Stopped at: Quick task 260330-cml 완료 — ggml Vulkan 백엔드 코드 준비
 Resume file: None
