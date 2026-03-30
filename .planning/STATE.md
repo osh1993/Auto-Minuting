@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: planning
 stopped_at: Completed 36-03-PLAN.md
-last_updated: "2026-03-30T23:47:03.620Z"
-last_activity: 2026-03-30 — v5.0 로드맵 생성
+last_updated: "2026-03-30T23:51:45.759Z"
+last_activity: 2026-03-30
 progress:
   total_phases: 38
   completed_phases: 31
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 ## Current Position
 
-Phase: 36 of 38 (Minutes 데이터 모델 분리)
+Phase: 37 of 38 (independent delete)
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-03-30 — v5.0 로드맵 생성
+Last activity: 2026-03-30
 
 ## Performance Metrics
 

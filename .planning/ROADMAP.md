@@ -321,6 +321,6 @@ Plans:
 | 33. GUI 일관성 개선 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 34. Whisper 전사 진행률 | v4.0 | 2/2 | Complete    | 2026-03-30 |
 | 35. 회의록 설정 구조 개편 | v4.0 | 3/3 | Complete    | 2026-03-30 |
-| 36. Minutes 데이터 모델 분리 | v5.0 | 3/3 | Complete   | 2026-03-30 |
+| 36. Minutes 데이터 모델 분리 | v5.0 | 3/3 | Complete    | 2026-03-30 |
 | 37. 전사-회의록 독립 삭제 | v5.0 | 0/? | Not started | - |
 | 38. 독립 아키텍처 UI 반영 | v5.0 | 0/? | Not started | - |
