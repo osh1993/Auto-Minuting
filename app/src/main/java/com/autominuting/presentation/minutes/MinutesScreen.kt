@@ -57,15 +57,17 @@ import java.time.format.DateTimeFormatter
  * 항목을 탭하면 상세 화면으로 이동한다.
  *
  * @param onMinutesClick 회의록 상세 화면으로 이동하는 콜백 (minutesId 전달)
+ * @param onSourceTranscriptClick 출처 전사 편집 화면으로 이동하는 콜백 (meetingId 전달)
  * @param viewModel 회의록 목록 상태를 관리하는 ViewModel
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MinutesScreen(
     onMinutesClick: (Long) -> Unit = {},
+    onSourceTranscriptClick: (Long) -> Unit = {},
     viewModel: MinutesViewModel = hiltViewModel()
 ) {
-    val minutesList by viewModel.minutes.collectAsState()
+    val minutesUiModels by viewModel.minutesUiModels.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val context = LocalContext.current
     var minutesToDelete by remember { mutableStateOf<Minutes?>(null) }
@@ -134,7 +136,7 @@ fun MinutesScreen(
             )
         }
 
-        if (minutesList.isEmpty()) {
+        if (minutesUiModels.isEmpty()) {
             // 빈 목록 안내: 검색 결과 없음 vs 전체 목록 비어있음 구분
             Box(
                 modifier = Modifier
@@ -171,35 +173,37 @@ fun MinutesScreen(
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(minutesList, key = { it.id }) { minutes ->
+                items(minutesUiModels, key = { it.minutes.id }) { uiModel ->
                     MinutesCard(
-                        minutes = minutes,
+                        minutes = uiModel.minutes,
+                        meetingTitle = uiModel.meetingTitle,
                         isSelectionMode = isSelectionMode,
-                        isSelected = minutes.id in selectedIds,
+                        isSelected = uiModel.minutes.id in selectedIds,
                         onClick = {
                             if (isSelectionMode) {
                                 // 선택 모드: toggle 선택
-                                selectedIds = if (minutes.id in selectedIds) {
-                                    selectedIds - minutes.id
+                                selectedIds = if (uiModel.minutes.id in selectedIds) {
+                                    selectedIds - uiModel.minutes.id
                                 } else {
-                                    selectedIds + minutes.id
+                                    selectedIds + uiModel.minutes.id
                                 }
                             } else {
                                 // 일반 모드: 회의록 상세 화면으로 이동
-                                onMinutesClick(minutes.id)
+                                onMinutesClick(uiModel.minutes.id)
                             }
                         },
                         onLongClick = {
                             if (!isSelectionMode) {
                                 // 선택 모드 진입
-                                selectedIds = setOf(minutes.id)
+                                selectedIds = setOf(uiModel.minutes.id)
                             }
                         },
                         onRenameRequest = { m -> minutesToRename = m },
                         onDeleteRequest = { id ->
-                            minutesToDelete = minutesList.find { it.id == id }
+                            minutesToDelete = minutesUiModels.map { it.minutes }.find { it.id == id }
                         },
-                        onShare = { id -> viewModel.shareMinutes(id, context) }
+                        onShare = { id -> viewModel.shareMinutes(id, context) },
+                        onSourceClick = { meetingId -> onSourceTranscriptClick(meetingId) }
                     )
                 }
             }
@@ -276,19 +280,24 @@ fun MinutesScreen(
 
 /**
  * 개별 회의록 항목 카드.
- * 회의록 제목과 생성 시각을 표시한다.
+ * 회의록 제목, 출처 전사명, 생성 시각을 표시한다.
+ *
+ * @param meetingTitle 출처 전사 이름 (null이면 "삭제된 전사" 표시)
+ * @param onSourceClick 출처 전사 클릭 시 콜백 (meetingId 전달)
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun MinutesCard(
     minutes: Minutes,
+    meetingTitle: String?,
     isSelectionMode: Boolean,
     isSelected: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onRenameRequest: (Minutes) -> Unit,
     onDeleteRequest: (Long) -> Unit,
-    onShare: (Long) -> Unit
+    onShare: (Long) -> Unit,
+    onSourceClick: (Long) -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
     Card(
@@ -333,6 +342,23 @@ private fun MinutesCard(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.clickable { onRenameRequest(minutes) }
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // 출처 전사 이름 (UI5-01)
+                Text(
+                    text = meetingTitle ?: "삭제된 전사",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (minutes.meetingId != null)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = if (minutes.meetingId != null) {
+                        Modifier.clickable { onSourceClick(minutes.meetingId) }
+                    } else {
+                        Modifier
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))

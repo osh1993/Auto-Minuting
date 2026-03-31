@@ -75,6 +75,7 @@ fun TranscriptsScreen(
     onEditClick: (Long) -> Unit = {}
 ) {
     val meetings by viewModel.meetings.collectAsState()
+    val minutesCountMap by viewModel.minutesCountMap.collectAsState()
     val templates by viewModel.templates.collectAsState()
     val defaultTemplateId by viewModel.defaultTemplateId.collectAsState()
     val context = LocalContext.current
@@ -140,6 +141,7 @@ fun TranscriptsScreen(
             items(meetings, key = { it.id }) { meeting ->
                 TranscriptMeetingCard(
                     meeting = meeting,
+                    minutesCount = minutesCountMap[meeting.id] ?: 0,
                     onClick = {
                         // 전사 파일이 있는 상태에서만 편집 화면으로 이동
                         if (meeting.pipelineStatus.isEditable() && meeting.transcriptPath != null) {
@@ -277,6 +279,7 @@ fun TranscriptsScreen(
 @Composable
 private fun TranscriptMeetingCard(
     meeting: Meeting,
+    minutesCount: Int,
     onClick: () -> Unit,
     onRenameRequest: (Meeting) -> Unit,
     onDeleteRequest: (Long) -> Unit,
@@ -418,7 +421,24 @@ private fun TranscriptMeetingCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TranscriptionStatusBadge(meeting)
-                MinutesStatusBadge(meeting)
+                // 회의록 상태: 생성 중이면 기존 배지, 아니면 count 배지
+                if (meeting.pipelineStatus == PipelineStatus.GENERATING_MINUTES) {
+                    SuggestionChip(
+                        onClick = {},
+                        label = {
+                            Text(
+                                text = "회의록 생성 중",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        },
+                        colors = SuggestionChipDefaults.suggestionChipColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            labelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    )
+                } else {
+                    MinutesCountBadge(minutesCount)
+                }
                 // FAILED 상태일 때 오류 배지 표시
                 if (meeting.pipelineStatus == PipelineStatus.FAILED) {
                     SuggestionChip(
@@ -516,42 +536,26 @@ private fun TranscriptionStatusBadge(meeting: Meeting) {
 }
 
 /**
- * 회의록 상태 배지.
- * GENERATING_MINUTES -> "회의록 생성 중", COMPLETED -> "회의록 완료", else -> "회의록 미작성"
+ * 회의록 수 배지 (UI5-02).
+ * count가 0이면 배지를 표시하지 않는다.
  */
 @Composable
-private fun MinutesStatusBadge(meeting: Meeting) {
-    val (label, containerColor, labelColor) = when {
-        meeting.pipelineStatus == PipelineStatus.GENERATING_MINUTES -> Triple(
-            "회의록 생성 중",
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer
-        )
-        meeting.pipelineStatus == PipelineStatus.COMPLETED -> Triple(
-            "회의록 완료",
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.onPrimaryContainer
-        )
-        else -> Triple(
-            "회의록 미작성",
-            MaterialTheme.colorScheme.surfaceVariant,
-            MaterialTheme.colorScheme.onSurfaceVariant
+private fun MinutesCountBadge(count: Int) {
+    if (count > 0) {
+        SuggestionChip(
+            onClick = {},
+            label = {
+                Text(
+                    text = "회의록 ${count}개",
+                    style = MaterialTheme.typography.labelSmall
+                )
+            },
+            colors = SuggestionChipDefaults.suggestionChipColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                labelColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
         )
     }
-
-    SuggestionChip(
-        onClick = {},
-        label = {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall
-            )
-        },
-        colors = SuggestionChipDefaults.suggestionChipColors(
-            containerColor = containerColor,
-            labelColor = labelColor
-        )
-    )
 }
 
 /** 편집 가능한 상태인지 확인하는 확장 함수 (전사 파일이 존재하는 상태) */

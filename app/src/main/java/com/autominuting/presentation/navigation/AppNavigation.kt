@@ -89,6 +89,9 @@ fun AppNavigation() {
                 MinutesScreen(
                     onMinutesClick = { minutesId ->
                         navController.navigate(Screen.MinutesDetail.createRoute(minutesId))
+                    },
+                    onSourceTranscriptClick = { meetingId ->
+                        navController.navigate(Screen.TranscriptEdit.createRoute(meetingId))
                     }
                 )
             }
