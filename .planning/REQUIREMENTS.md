@@ -113,8 +113,8 @@ Requirements for v5.0 milestone. Each maps to roadmap phases.
 
 ### UI 업데이트 (UI)
 
-- [ ] **UI5-01**: 회의록 목록 화면에서 각 회의록이 독립 카드로 표시되며 어느 전사에서 왔는지 표기된다
-- [ ] **UI5-02**: 전사 목록 화면의 카드에 연결된 회의록 수(badge)가 표시된다
+- [x] **UI5-01**: 회의록 목록 화면에서 각 회의록이 독립 카드로 표시되며 어느 전사에서 왔는지 표기된다
+- [x] **UI5-02**: 전사 목록 화면의 카드에 연결된 회의록 수(badge)가 표시된다
 
 ## Future Requirements
 
