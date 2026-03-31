@@ -5,7 +5,7 @@
 - ✅ **v1.0 Auto Minuting MVP** — Phases 1-7 (shipped 2026-03-24)
 - ✅ **v2.0 실동작 파이프라인 + 기능 확장** — Phases 8-13 (shipped 2026-03-26)
 - ✅ **v2.1 안정화** — Phases 14-18 (shipped 2026-03-26)
-- ✅ **v3.0 기능 확장 및 UX 개선** — Phases 19-23 (shipped 2026-03-28)
+- ✅ **v3.0 기능 확장 및 UX 개선** — Phases 19-23 (shipped 2026-03-28; Phase 19 폐기됨)
 - ✅ **v3.1 UX 개선 및 정보 표시 강화** — Phases 24-28 (shipped 2026-03-29)
 - ✅ **v4.0 파이프라인 고도화 및 GUI 품질 개선** — Phases 29-35 (shipped 2026-03-30)
 - **v5.0 전사-회의록 독립 아키텍처** — Phases 36-38
@@ -30,12 +30,12 @@
 ### Phase 16: 파일 삭제 (1/1 plans) — completed 2026-03-26
 ### Phase 17: UI 정리 (1/1 plans) — completed 2026-03-26
 ### Phase 18: OAuth 수정 (1/1 plans) — completed 2026-03-26
-### Phase 19: 수동 회의록 생성 및 음성 공유 처리 (0/1 plans)
+### Phase 19: 수동 회의록 생성 및 음성 공유 처리 — **폐기됨**
 
-**Plans:** 1 plan
-
-Plans:
-- [ ] 19-01-PLAN.md — 전사 목록 수동 회의록 생성 UI + 음성 공유 intent-filter 정비
+**폐기 사유:**
+- 수동 회의록 생성 UI → Phase 20, 26, 29에서 완전히 구현됨 (MoreVert 메뉴, 회의록 생성 다이얼로그)
+- 음성 공유 수신 → Phase 9(삼성 공유), Phase 32(Plaud 링크)에서 구현됨
+- 별도 구현 불필요 — 모든 목표 기능이 다른 Phase에서 달성됨
 
 ### Phase 20: 전사 목록 액션 메뉴 (삭제, 전사, 공유) (1/1 plans) — completed 2026-03-27
 

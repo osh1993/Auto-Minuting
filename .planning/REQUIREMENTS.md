@@ -14,18 +14,18 @@ Requirements for v2.1 milestone. Each maps to roadmap phases.
 ### 회의록 생성 (Minutes)
 
 - [x] **MINS-01**: 사용자가 전사 파일을 선택하고 생성 버튼으로 회의록을 수동 생성할 수 있다 (프롬프트 템플릿 선택 또는 수기 입력)
-- [ ] **MINS-02**: 사용자가 프롬프트 템플릿을 추가/삭제/편집하여 관리할 수 있다
+- [ ] **MINS-02**: 사용자가 프롬프트 템플릿을 추가/삭제/편집하여 관리할 수 있다ㅤ*(폐기 — 3종 프리셋 + 커스텀 직접 입력으로 충분, 별도 관리 UI 불필요)*
 
 ### 파일 관리 (File)
 
-- [ ] **FILE-02**: 사용자가 회의록을 다중 선택하여 삭제할 수 있고, 전사 파일은 보존된다
+- [ ] **FILE-02**: 사용자가 회의록을 다중 선택하여 삭제할 수 있고, 전사 파일은 보존된다ㅤ*(폐기 — 개별 삭제로 충분, 다중 선택 UX는 복잡도 대비 필요성 낮음)*
 - [x] **FILE-03**: 사용자가 전사 파일을 별도로 삭제할 수 있다
 
 ### UI/UX 개선
 
-- [ ] **UI-01**: 앱 아이콘이 새롭게 디자인되어 교체된다
-- [ ] **UI-02**: NotebookLM 열기 버튼이 설정 화면에서 메인 화면으로 이동한다
-- [ ] **UI-03**: 테스트 도구(spike 패키지) 코드가 삭제된다
+- [ ] **UI-01**: 앱 아이콘이 새롭게 디자인되어 교체된다ㅤ*(폐기 — 디자인 리소스 없음, 기본 아이콘 유지)*
+- [ ] **UI-02**: NotebookLM 열기 버튼이 설정 화면에서 메인 화면으로 이동한다ㅤ*(폐기 — NotebookLM MCP REST API 미존재, 연동 기능 자체가 제한적)*
+- [x] **UI-03**: 테스트 도구(spike 패키지) 코드가 삭제된다ㅤ*(Phase 28에서 완료)*
 
 ### 전사 엔진 (STT)
 
@@ -35,7 +35,7 @@ Requirements for v2.1 milestone. Each maps to roadmap phases.
 
 ### 인증 수정
 
-- [ ] **AUTH-03**: Google OAuth Web Client ID 미설정 오류가 해결되어 Google 계정 로그인이 동작한다
+- [ ] **AUTH-03**: Google OAuth Web Client ID 미설정 오류가 해결되어 Google 계정 로그인이 동작한다ㅤ*(폐기 — OAuth Client ID 발급은 Google Cloud Console 외부 설정 필요, 앱 코드로 해결 불가. 현재 API 키 방식으로 충분)*
 
 ## v3.1 Requirements
 
@@ -120,9 +120,9 @@ Requirements for v5.0 milestone. Each maps to roadmap phases.
 
 Deferred to future release.
 
-- **PLUD-F01**: Plaud 리버스 엔지니어링 결과에 따른 연결 본구현
-- **SREC-F01**: 삼성 녹음앱 자동 감지 본구현 (v2.0 스파이크 Partial Go)
-- **NLMK-F01**: MCP 서버 API 본구현 (REST API 미존재 — 대기)
+- **PLUD-F01**: Plaud 리버스 엔지니어링 결과에 따른 연결 본구현 *(대기 — SDK 의존 유지, E2EE + 서버 인증으로 리버스 엔지니어링 불가 판정)*
+- **SREC-F01**: 삼성 녹음앱 자동 감지 본구현 (v2.0 스파이크 Partial Go) *(대기 — 전사 텍스트 직접 감지 불가, 오디오 공유 수신으로 대체 충족)*
+- ~~**NLMK-F01**: MCP 서버 API 본구현~~ → **폐기** (NotebookLM 공식 REST API 미존재, 구현 불가)
 - ~~**STT-03**: Whisper 온디바이스 전사 NDK 빌드~~ → 완료 (2026-03-29)
 
 ## Out of Scope
@@ -140,13 +140,13 @@ Deferred to future release.
 |-------------|-------|--------|
 | PLUD-02 | Phase 14 | Complete (No-Go) |
 | MINS-01 | Phase 15 | Complete |
-| MINS-02 | Phase 15 | Pending |
-| FILE-02 | Phase 16 | Pending |
+| MINS-02 | Phase 15 | Deprecated |
+| FILE-02 | Phase 16 | Deprecated |
 | FILE-03 | Phase 16 | Complete |
-| UI-01 | Phase 17 | Pending |
-| UI-02 | Phase 17 | Pending |
-| UI-03 | Phase 17 | Pending |
-| AUTH-03 | Phase 18 | Pending |
+| UI-01 | Phase 17 | Deprecated |
+| UI-02 | Phase 17 | Deprecated |
+| UI-03 | Phase 28 | Complete |
+| AUTH-03 | Phase 18 | Deprecated |
 | STT-01 | Phase 20/23 | Complete |
 | STT-02 | Phase 23 | Complete |
 | CARD-01 | Phase 24 | Complete |

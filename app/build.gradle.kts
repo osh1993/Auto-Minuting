@@ -13,6 +13,22 @@ android {
 
     ndkVersion = "27.2.12479018"
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("autominuting-release.jks")
+            storePassword = "autominuting2026"
+            keyAlias = "autominuting"
+            keyPassword = "autominuting2026"
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
     defaultConfig {
         applicationId = "com.autominuting"
         minSdk = 31
