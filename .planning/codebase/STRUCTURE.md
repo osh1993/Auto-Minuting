@@ -258,4 +258,376 @@ Auto_Minuting/
 
 ---
 
-*Structure analysis: 2026-03-26*
+## System Architecture Diagrams
+
+*Updated: 2026-03-30*
+
+### 1. 전체 레이어 구조
+
+```mermaid
+graph TD
+    subgraph PRESENTATION["🖥️ Presentation Layer"]
+        UI_ENTRY["MainActivity\nShareReceiverActivity"]
+        NAV["AppNavigation\nBottomNavBar"]
+        SCREENS["DashboardScreen\nTranscriptsScreen\nMinutesScreen\nSettingsScreen\nPromptTemplateScreen"]
+        VM["DashboardViewModel\nTranscriptsViewModel\nMinutesDetailViewModel\nSettingsViewModel\nPromptTemplateViewModel"]
+    end
+
+    subgraph DOMAIN["📐 Domain Layer"]
+        MODELS["Meeting\nPipelineStatus\nAutomationMode\nPromptTemplate\nSttEngineType"]
+        REPOS_IF["MeetingRepository\nTranscriptionRepository\nMinutesRepository\nAudioRepository\nPromptTemplateRepository"]
+    end
+
+    subgraph DATA["💾 Data Layer"]
+        subgraph DB["Room Database"]
+            DAO["MeetingDao\nPromptTemplateDao"]
+            ENTITY["MeetingEntity\nPromptTemplateEntity"]
+        end
+        subgraph STT["STT Engines"]
+            WHISPER["WhisperEngine\nwhisper.cpp JNI"]
+            MLKIT["MlKitEngine"]
+            GEMINI_STT["GeminiSttEngine"]
+            AUDIO_CONV["AudioConverter"]
+        end
+        subgraph MINUTES["Minutes Engines"]
+            SELECTOR["MinutesEngineSelector"]
+            GEMINI_API["GeminiEngine\n(API Key)"]
+            GEMINI_OAUTH["GeminiOAuthEngine\n(OAuth)"]
+            RETROFIT["GeminiRestApiService\n(Retrofit)"]
+        end
+        subgraph PREFS["Preferences & Security"]
+            DATASTORE["UserPreferencesRepository\n(DataStore)"]
+            SECURE["SecureApiKeyRepository\n(EncryptedSharedPrefs)"]
+            QUOTA["GeminiQuotaTracker"]
+        end
+        REPO_IMPL["MeetingRepositoryImpl\nTranscriptionRepositoryImpl\nMinutesRepositoryImpl\nPromptTemplateRepositoryImpl"]
+    end
+
+    subgraph WORKER["⚙️ Background Workers"]
+        TRW["TranscriptionTriggerWorker"]
+        MGW["MinutesGenerationWorker"]
+    end
+
+    UI_ENTRY --> NAV
+    NAV --> SCREENS
+    SCREENS --> VM
+    VM --> REPOS_IF
+    VM --> WORKER
+    REPOS_IF --> REPO_IMPL
+    REPO_IMPL --> DAO
+    REPO_IMPL --> STT
+    REPO_IMPL --> MINUTES
+    WORKER --> DAO
+    WORKER --> STT
+    WORKER --> MINUTES
+    WORKER --> DATASTORE
+    GEMINI_API --> RETROFIT
+    GEMINI_OAUTH --> RETROFIT
+    SELECTOR --> GEMINI_API
+    SELECTOR --> GEMINI_OAUTH
+    GEMINI_API --> SECURE
+    GEMINI_API --> QUOTA
+```
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  PRESENTATION LAYER                                                          │
+│                                                                              │
+│  MainActivity ──► AppNavigation ──► DashboardScreen   ── DashboardViewModel │
+│  ShareReceiverActivity            TranscriptsScreen   ── TranscriptsViewModel│
+│                                   MinutesScreen       ── MinutesDetailVM    │
+│                                   SettingsScreen      ── SettingsViewModel  │
+│                                   PromptTemplateScreen── PromptTemplateVM   │
+└────────────────────────────┬──────────────────────┬───────────────────────-─┘
+                             │ uses (interface)      │ enqueues
+                             ▼                       ▼
+┌────────────────────────────────────┐   ┌──────────────────────────────────┐
+│  DOMAIN LAYER                      │   │  BACKGROUND WORKERS              │
+│                                    │   │                                  │
+│  Models:                           │   │  TranscriptionTriggerWorker      │
+│    Meeting  PipelineStatus         │   │  MinutesGenerationWorker         │
+│    AutomationMode  PromptTemplate  │   │                                  │
+│                                    │   │  (WorkManager / @HiltWorker)     │
+│  Repository Interfaces:            │   └──────────┬───────────────────────┘
+│    MeetingRepository               │              │ uses
+│    TranscriptionRepository         │              │
+│    MinutesRepository               │              │
+│    AudioRepository                 │              │
+│    PromptTemplateRepository        │              │
+└────────────────────┬───────────────┘              │
+                     │ implements                    │
+                     ▼                               ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│  DATA LAYER                                                                  │
+│                                                                              │
+│  ┌──────────────────────┐  ┌──────────────────────┐  ┌───────────────────┐ │
+│  │  Room Database        │  │  STT Engines          │  │  Minutes Engines  │ │
+│  │                       │  │                       │  │                   │ │
+│  │  MeetingDao           │  │  WhisperEngine        │  │  EngineSelector   │ │
+│  │  PromptTemplateDao    │  │  └─ whisper.cpp JNI   │  │  ├─ GeminiEngine  │ │
+│  │  MeetingEntity        │  │     (ARM dotprod+fp16)│  │  │  (API Key)     │ │
+│  │  PromptTemplateEntity │  │  MlKitEngine          │  │  └─ GeminiOAuth   │ │
+│  │                       │  │  GeminiSttEngine      │  │     Engine        │ │
+│  │  AppDatabase (v3)     │  │  AudioConverter       │  │  GeminiRestApi    │ │
+│  └──────────────────────┘  └──────────────────────┘  │  Service(Retrofit) │ │
+│                                                        └───────────────────┘ │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │  Preferences & Security                                               │   │
+│  │  UserPreferencesRepository(DataStore)  SecureApiKeyRepository        │   │
+│  │  GeminiQuotaTracker                                                   │   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
+│                                                                              │
+│  Repository Impls: MeetingRepositoryImpl  TranscriptionRepositoryImpl        │
+│                    MinutesRepositoryImpl  PromptTemplateRepositoryImpl       │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 2. 파이프라인 흐름
+
+```mermaid
+flowchart LR
+    subgraph INPUT["입력 경로"]
+        SHARE["삼성 공유\nShareReceiverActivity"]
+        URL["URL 다운로드\nDashboardViewModel"]
+    end
+
+    subgraph PIPELINE["파이프라인"]
+        direction TB
+        S1["AUDIO_RECEIVED\n오디오 저장"]
+        S2["TRANSCRIBING\nSTT 실행"]
+        S3["TRANSCRIBED\n전사 완료"]
+        S4["GENERATING_MINUTES\n회의록 생성"]
+        S5["COMPLETED\n완료"]
+
+        S1 --> S2
+        S2 --> S3
+        S3 -->|FULL_AUTO| S4
+        S3 -->|HYBRID 수동 승인| S4
+        S4 --> S5
+    end
+
+    subgraph STT_FALLBACK["STT 폴백 체인"]
+        W1["1. WhisperEngine\n로컬 whisper.cpp"]
+        W2["2. MlKitEngine\nML Kit"]
+        W3["3. GeminiSttEngine\nGemini API"]
+        W1 -->|실패| W2
+        W2 -->|실패| W3
+    end
+
+    subgraph MINUTES_ENGINE["회의록 엔진 선택"]
+        MS["MinutesEngineSelector"]
+        ME1["GeminiEngine\n(API Key 모드)"]
+        ME2["GeminiOAuthEngine\n(OAuth 모드)"]
+        MS -->|API Key 설정됨| ME1
+        MS -->|Google 로그인| ME2
+    end
+
+    SHARE --> S1
+    URL --> S1
+    S2 --- STT_FALLBACK
+    S4 --- MINUTES_ENGINE
+```
+
+```text
+  입력 경로                      파이프라인 상태                   엔진
+  ──────────                     ──────────────────               ────────────────────────────
+  삼성 공유          ┐            AUDIO_RECEIVED                   STT 폴백 체인
+  ShareReceiver ────┤──────────► (오디오 저장)                     1. WhisperEngine (로컬)
+                    │                   │                               │ 실패
+  URL 다운로드       │            TRANSCRIBING ◄───────────────────     ▼
+  DashboardVM  ─────┘            (STT 실행)    TranscriptionTW    2. MlKitEngine
+                                        │                               │ 실패
+                                        ▼                               ▼
+                                 TRANSCRIBED                      3. GeminiSttEngine
+                                 (전사 완료)
+                                        │                         회의록 엔진 선택
+                              ┌─────────┴──────────┐             ────────────────────────────
+                     FULL_AUTO│          HYBRID 수동 승인후       MinutesEngineSelector
+                              ▼                    ▼                   ├─ GeminiEngine
+                       GENERATING_MINUTES   MGW enqueue                │  (API Key 설정됨)
+                       (회의록 생성) ◄───────────────────────          └─ GeminiOAuthEngine
+                       MinutesGenerationWorker                            (Google 로그인)
+                              │
+                              ▼
+                          COMPLETED
+```
+
+---
+
+### 3. 컴포넌트 의존 관계
+
+```mermaid
+graph LR
+    DVM["DashboardViewModel"] --> MR["MeetingRepository"]
+    DVM --> UPR["UserPreferencesRepository"]
+    DVM --> PTR["PromptTemplateRepository"]
+    DVM --> GQT["GeminiQuotaTracker"]
+    DVM --> WM["WorkManager"]
+
+    WM --> TRW["TranscriptionTriggerWorker"]
+    WM --> MGW["MinutesGenerationWorker"]
+
+    TRW --> MDAO["MeetingDao"]
+    TRW --> TR["TranscriptionRepository"]
+    TRW --> UPR
+    TRW --> WM
+
+    TR --> WHISPER["WhisperEngine"]
+    TR --> MLKIT["MlKitEngine"]
+    TR --> GSTT["GeminiSttEngine"]
+
+    WHISPER --> JNI["libwhisper.so\nggml CPU 백엔드\n(ARM dotprod+fp16)"]
+    WHISPER --> ACONV["AudioConverter\n→ 16kHz WAV"]
+
+    MGW --> MDAO
+    MGW --> MINR["MinutesRepository"]
+    MGW --> PTR
+    MGW --> UPR
+
+    MINR --> MSEL["MinutesEngineSelector"]
+    MSEL --> GAPI["GeminiEngine"]
+    MSEL --> GOAUTH["GeminiOAuthEngine"]
+    GAPI --> SKEY["SecureApiKeyRepository"]
+    GAPI --> GQT
+    GAPI --> RFIT["Retrofit\nGemini REST API"]
+    GOAUTH --> RFIT
+```
+
+```text
+  DashboardViewModel
+  ├── MeetingRepository ──────────────► MeetingRepositoryImpl ──► MeetingDao
+  ├── UserPreferencesRepository ──────────────────────────────► DataStore
+  ├── PromptTemplateRepository ───────► PromptTemplateRepositoryImpl ──► PromptTemplateDao
+  ├── GeminiQuotaTracker ─────────────────────────────────────► DataStore (shared)
+  └── WorkManager
+        ├──► TranscriptionTriggerWorker
+        │      ├── MeetingDao
+        │      ├── UserPreferencesRepository
+        │      ├── WorkManager (체이닝)
+        │      └── TranscriptionRepository
+        │            └── TranscriptionRepositoryImpl
+        │                  ├── WhisperEngine ──► libwhisper.so (ggml, ARM dotprod+fp16)
+        │                  │                    └── AudioConverter (→ 16kHz WAV)
+        │                  ├── MlKitEngine   (폴백 1)
+        │                  └── GeminiSttEngine (폴백 2)
+        │
+        └──► MinutesGenerationWorker
+               ├── MeetingDao
+               ├── UserPreferencesRepository
+               ├── PromptTemplateRepository
+               └── MinutesRepository
+                     └── MinutesRepositoryImpl
+                           └── MinutesEngineSelector
+                                 ├── GeminiEngine (API Key)
+                                 │     ├── SecureApiKeyRepository (EncryptedSharedPrefs)
+                                 │     ├── GeminiQuotaTracker
+                                 │     └── GeminiRestApiService (Retrofit + OkHttp)
+                                 └── GeminiOAuthEngine (OAuth)
+                                       ├── GoogleAuthRepository
+                                       └── GeminiRestApiService (BearerTokenInterceptor)
+```
+
+---
+
+### 4. Room DB 스키마
+
+```mermaid
+erDiagram
+    MEETINGS {
+        long id PK
+        string title
+        string audioPath
+        string transcriptPath
+        string minutesPath
+        string pipelineStatus
+        string automationMode
+        long createdAt
+        long updatedAt
+        string source
+    }
+
+    PROMPT_TEMPLATES {
+        long id PK
+        string name
+        string content
+        boolean isDefault
+        long createdAt
+        long updatedAt
+    }
+```
+
+```text
+  ┌─────────────────────────────────────┐   ┌───────────────────────────────────┐
+  │  meetings                           │   │  prompt_templates                 │
+  ├─────────────────────────────────────┤   ├───────────────────────────────────┤
+  │  id             LONG  PK            │   │  id             LONG  PK          │
+  │  title          TEXT                │   │  name           TEXT              │
+  │  audioPath      TEXT                │   │  content        TEXT              │
+  │  transcriptPath TEXT                │   │  isDefault      BOOLEAN           │
+  │  minutesPath    TEXT                │   │  createdAt      LONG              │
+  │  pipelineStatus TEXT  (enum)        │   │  updatedAt      LONG              │
+  │  automationMode TEXT  (enum)        │   └───────────────────────────────────┘
+  │  createdAt      LONG                │
+  │  updatedAt      LONG                │   pipelineStatus 값:
+  │  source         TEXT                │     AUDIO_RECEIVED → TRANSCRIBING
+  └─────────────────────────────────────┘     → TRANSCRIBED → GENERATING_MINUTES
+                                              → COMPLETED / FAILED
+```
+
+---
+
+### 5. 화면 네비게이션 구조
+
+```mermaid
+graph TD
+    MAIN["MainActivity"] --> BOT["Bottom Navigation"]
+    BOT --> TAB1["대시보드\nDashboardScreen"]
+    BOT --> TAB2["전사 목록\nTranscriptsScreen"]
+    BOT --> TAB3["회의록 목록\nMinutesScreen"]
+    BOT --> TAB4["설정\nSettingsScreen"]
+
+    TAB2 --> EDIT["전사 편집\nTranscriptEditScreen"]
+    TAB3 --> DETAIL["회의록 상세\nMinutesDetailScreen"]
+    TAB4 --> TPL["프롬프트 템플릿\nPromptTemplateScreen"]
+
+    EXTERNAL["외부 앱 공유"] --> SHARE["ShareReceiverActivity\n→ 투명 Activity"]
+    SHARE --> TAB1
+```
+
+```text
+  MainActivity
+  └── AppNavigation
+        └── Bottom Navigation (4탭)
+              ├── [1] 대시보드 ──────────────────────► DashboardScreen
+              │                                          (파이프라인 현황, URL 입력)
+              │
+              ├── [2] 전사 목록 ──────────────────────► TranscriptsScreen
+              │                                                │
+              │                                               [탭] 항목 선택
+              │                                                ▼
+              │                                          TranscriptEditScreen
+              │                                          (전사 편집 / 회의록 수동 생성)
+              │
+              ├── [3] 회의록 목록 ─────────────────────► MinutesScreen
+              │                                                │
+              │                                               [탭] 항목 선택
+              │                                                ▼
+              │                                          MinutesDetailScreen
+              │                                          (회의록 보기 / 재생성)
+              │
+              └── [4] 설정 ──────────────────────────► SettingsScreen
+                                                               │
+                                                              [탭] 프롬프트 템플릿
+                                                               ▼
+                                                        PromptTemplateScreen
+
+  외부 앱 공유 (삼성 My Files 등)
+  └── ShareReceiverActivity  (투명, UI 없음)
+        └── 오디오 파일 수신 → MeetingEntity 생성 → 파이프라인 시작 → 대시보드로 이동
+```
+
+---
+
+*Diagrams updated: 2026-03-30*
