@@ -33,8 +33,8 @@ android {
         applicationId = "com.autominuting"
         minSdk = 31
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 6
+        versionName = "6.0"
 
         ndk {
             abiFilters += "arm64-v8a"
@@ -75,6 +75,9 @@ android {
         buildConfig = true
     }
 }
+
+// Release APK 파일명에 버전 번호 포함 (AutoMinuting-v6.0-release.apk)
+base.archivesName.set("AutoMinuting-v${android.defaultConfig.versionName}")
 
 dependencies {
     // Retrofit + OkHttp
