@@ -23,6 +23,7 @@ class SecureApiKeyRepository @Inject constructor(
         private const val KEY_GEMINI_API = "gemini_api_key"
         private const val KEY_GOOGLE_OAUTH_CLIENT_ID = "google_oauth_client_id"
         private const val KEY_GROQ_API = "groq_api_key"
+        private const val KEY_DEEPGRAM_API = "deepgram_api_key"
     }
 
     @Suppress("DEPRECATION")
@@ -85,6 +86,21 @@ class SecureApiKeyRepository @Inject constructor(
     /** 저장된 Groq API 키를 삭제한다. */
     fun clearGroqApiKey() {
         encryptedPrefs?.edit()?.remove(KEY_GROQ_API)?.apply()
+    }
+
+    /** 저장된 Deepgram API 키를 반환한다. */
+    fun getDeepgramApiKey(): String? =
+        encryptedPrefs?.getString(KEY_DEEPGRAM_API, null)
+
+    /** Deepgram API 키를 암호화하여 저장한다. */
+    fun saveDeepgramApiKey(apiKey: String) {
+        encryptedPrefs?.edit()?.putString(KEY_DEEPGRAM_API, apiKey)?.apply()
+            ?: Log.w(TAG, "Deepgram API 키 저장 실패: EncryptedSharedPreferences 사용 불가")
+    }
+
+    /** 저장된 Deepgram API 키를 삭제한다. */
+    fun clearDeepgramApiKey() {
+        encryptedPrefs?.edit()?.remove(KEY_DEEPGRAM_API)?.apply()
     }
 
     /** EncryptedSharedPreferences가 정상 초기화되었는지 반환한다. */
