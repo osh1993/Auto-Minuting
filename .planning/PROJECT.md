@@ -21,6 +21,9 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 **Phase 34 완료** (2026-03-30) — Whisper 전사 진행률 표시 (JNI progress_callback → 알림/DashboardScreen/TranscriptsScreen)
 **Phase 35 완료** (2026-03-30) — 회의록 설정 구조 개편 (MinutesFormat 전면 제거, 자동모드 Switch 이동, CUSTOM_PROMPT_MODE_ID 직접 입력)
 **Phase 36 완료** (2026-03-31) — Minutes 독립 테이블 신설, Room DB v5 마이그레이션, 전사-회의록 1:N 분리
+**Phase 37 완료** (2026-03-31) — 전사-회의록 독립 삭제/재생성 (재생성 다이얼로그 텍스트 수정)
+**Phase 38 완료** (2026-03-31) — 독립 아키텍처 UI 반영 (회의록 카드 출처 전사명, 전사 카드 회의록 수 badge)
+**v5.0 완료** (2026-03-31) — 전사-회의록 독립 아키텍처 완성
 
 - 65+ Kotlin 파일, 7,000+ LOC
 - Tech stack: Kotlin 2.3.20, Jetpack Compose (BOM 2026.03), Hilt 2.56, Room 2.8.4, WorkManager
