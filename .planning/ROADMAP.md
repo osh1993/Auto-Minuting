@@ -296,10 +296,10 @@ Plans:
   2. 같은 전사에서 생성된 여러 회의록이 각각 별도 카드로 나뉜다
   3. 전사 목록 화면의 카드에 연결된 회의록 수가 badge로 표시된다 (0개면 badge 미표시)
   4. 회의록 카드에서 출처 전사를 탭하면 해당 전사 상세로 이동할 수 있다
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 38-01-PLAN.md — MinutesDao JOIN/count 쿼리 + Repository/ViewModel 데이터 계약
+- [x] 38-01-PLAN.md — MinutesDao JOIN/count 쿼리 + Repository/ViewModel 데이터 계약
 - [ ] 38-02-PLAN.md — MinutesScreen 출처 전사 표시 + TranscriptsScreen badge + assembleDebug 빌드 검증
 
 **UI hint**: yes
@@ -331,4 +331,4 @@ Plans:
 | 35. 회의록 설정 구조 개편 | v4.0 | 3/3 | Complete    | 2026-03-30 |
 | 36. Minutes 데이터 모델 분리 | v5.0 | 3/3 | Complete    | 2026-03-30 |
 | 37. 전사-회의록 독립 삭제 | v5.0 | 1/1 | Complete    | 2026-03-31 |
-| 38. 독립 아키텍처 UI 반영 | v5.0 | 0/2 | Not started | - |
+| 38. 독립 아키텍처 UI 반영 | v5.0 | 1/2 | In Progress|  |

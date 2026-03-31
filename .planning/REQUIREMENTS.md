@@ -178,8 +178,8 @@ Deferred to future release.
 | IND-01 | Phase 37 | Complete |
 | IND-02 | Phase 37 | Complete |
 | IND-03 | Phase 37 | Complete |
-| UI5-01 | Phase 38 | Pending |
-| UI5-02 | Phase 38 | Pending |
+| UI5-01 | Phase 38 | In Progress |
+| UI5-02 | Phase 38 | In Progress |
 
 **Coverage:**
 
