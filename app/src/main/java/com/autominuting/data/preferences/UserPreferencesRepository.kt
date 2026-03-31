@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.autominuting.data.auth.AuthMode
 import com.autominuting.domain.model.AutomationMode
+import com.autominuting.domain.model.MinutesEngineType
 import com.autominuting.domain.model.SttEngineType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -49,6 +50,9 @@ class UserPreferencesRepository @Inject constructor(
 
         /** 직접 입력 기본 프롬프트 키 */
         val DEFAULT_CUSTOM_PROMPT_KEY = stringPreferencesKey("default_custom_prompt")
+
+        /** 회의록 엔진 유형 설정 키 */
+        val MINUTES_ENGINE_KEY = stringPreferencesKey("minutes_engine")
     }
 
     /** 현재 자동화 모드 설정을 관찰한다. 기본값: FULL_AUTO */
@@ -81,6 +85,16 @@ class UserPreferencesRepository @Inject constructor(
     /** 기본 커스텀 프롬프트 텍스트를 관찰한다. 기본값: 빈 문자열 */
     val defaultCustomPrompt: Flow<String> = dataStore.data.map { prefs ->
         prefs[DEFAULT_CUSTOM_PROMPT_KEY] ?: ""
+    }
+
+    /** 현재 회의록 엔진 유형을 관찰한다. 기본값: GEMINI */
+    val minutesEngineType: Flow<MinutesEngineType> = dataStore.data.map { prefs ->
+        val name = prefs[MINUTES_ENGINE_KEY] ?: MinutesEngineType.GEMINI.name
+        try {
+            MinutesEngineType.valueOf(name)
+        } catch (e: IllegalArgumentException) {
+            MinutesEngineType.GEMINI  // 알 수 없는 값 -> 기본값 폴백
+        }
     }
 
     /** 저장된 Google 계정 이메일을 관찰한다. */
@@ -195,4 +209,22 @@ class UserPreferencesRepository @Inject constructor(
     /** 현재 기본 커스텀 프롬프트를 즉시 조회한다. */
     suspend fun getDefaultCustomPromptOnce(): String =
         dataStore.data.first()[DEFAULT_CUSTOM_PROMPT_KEY] ?: ""
+
+    /** 회의록 엔진 유형을 변경한다. */
+    suspend fun setMinutesEngineType(type: MinutesEngineType) {
+        dataStore.edit { prefs ->
+            prefs[MINUTES_ENGINE_KEY] = type.name
+        }
+    }
+
+    /** 현재 회의록 엔진 유형을 즉시 조회한다. */
+    suspend fun getMinutesEngineTypeOnce(): MinutesEngineType =
+        dataStore.data.first().let { prefs ->
+            val name = prefs[MINUTES_ENGINE_KEY] ?: MinutesEngineType.GEMINI.name
+            try {
+                MinutesEngineType.valueOf(name)
+            } catch (e: IllegalArgumentException) {
+                MinutesEngineType.GEMINI
+            }
+        }
 }

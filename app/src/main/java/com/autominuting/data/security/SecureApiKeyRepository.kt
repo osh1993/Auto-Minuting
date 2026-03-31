@@ -26,6 +26,8 @@ class SecureApiKeyRepository @Inject constructor(
         private const val KEY_DEEPGRAM_API = "deepgram_api_key"
         private const val KEY_CLOVA_INVOKE_URL = "clova_invoke_url"
         private const val KEY_CLOVA_SECRET_KEY = "clova_secret_key"
+        private const val KEY_CLOVA_SUMMARY_CLIENT_ID = "clova_summary_client_id"
+        private const val KEY_CLOVA_SUMMARY_CLIENT_SECRET = "clova_summary_client_secret"
     }
 
     @Suppress("DEPRECATION")
@@ -133,6 +135,36 @@ class SecureApiKeyRepository @Inject constructor(
     /** 저장된 CLOVA Speech Secret Key를 삭제한다. */
     fun clearClovaSecretKey() {
         encryptedPrefs?.edit()?.remove(KEY_CLOVA_SECRET_KEY)?.apply()
+    }
+
+    /** 저장된 CLOVA Summary Client ID를 반환한다. */
+    fun getClovaSummaryClientId(): String? =
+        encryptedPrefs?.getString(KEY_CLOVA_SUMMARY_CLIENT_ID, null)
+
+    /** CLOVA Summary Client ID를 암호화하여 저장한다. */
+    fun saveClovaSummaryClientId(clientId: String) {
+        encryptedPrefs?.edit()?.putString(KEY_CLOVA_SUMMARY_CLIENT_ID, clientId)?.apply()
+            ?: Log.w(TAG, "CLOVA Summary Client ID 저장 실패: EncryptedSharedPreferences 사용 불가")
+    }
+
+    /** 저장된 CLOVA Summary Client ID를 삭제한다. */
+    fun clearClovaSummaryClientId() {
+        encryptedPrefs?.edit()?.remove(KEY_CLOVA_SUMMARY_CLIENT_ID)?.apply()
+    }
+
+    /** 저장된 CLOVA Summary Client Secret을 반환한다. */
+    fun getClovaSummaryClientSecret(): String? =
+        encryptedPrefs?.getString(KEY_CLOVA_SUMMARY_CLIENT_SECRET, null)
+
+    /** CLOVA Summary Client Secret을 암호화하여 저장한다. */
+    fun saveClovaSummaryClientSecret(secret: String) {
+        encryptedPrefs?.edit()?.putString(KEY_CLOVA_SUMMARY_CLIENT_SECRET, secret)?.apply()
+            ?: Log.w(TAG, "CLOVA Summary Client Secret 저장 실패: EncryptedSharedPreferences 사용 불가")
+    }
+
+    /** 저장된 CLOVA Summary Client Secret을 삭제한다. */
+    fun clearClovaSummaryClientSecret() {
+        encryptedPrefs?.edit()?.remove(KEY_CLOVA_SUMMARY_CLIENT_SECRET)?.apply()
     }
 
     /** EncryptedSharedPreferences가 정상 초기화되었는지 반환한다. */
