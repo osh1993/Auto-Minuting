@@ -333,7 +333,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 40-01-PLAN.md — DeepgramMinutesEngine 구현 (Audio Intelligence API, 요약/주제)
+- [ ] 40-01-PLAN.md — DeepgramMinutesEngine 구현 (Text Intelligence /v1/read, 영어 지원 안내 포함)
 - [ ] 40-02-PLAN.md — NaverClovaMinutesEngine 구현 (CLOVA Summary API) + MinutesEngineType enum 신설 + MinutesEngineSelector 확장 + Hilt 바인딩
 
 ### Phase 41: 설정 UI 확장 (엔진 선택 + API 키 관리)
