@@ -3,7 +3,10 @@ package com.autominuting.data.repository
 import android.content.Context
 import android.util.Log
 import com.autominuting.data.preferences.UserPreferencesRepository
+import com.autominuting.data.stt.DeepgramSttEngine
 import com.autominuting.data.stt.GeminiSttEngine
+import com.autominuting.data.stt.GroqSttEngine
+import com.autominuting.data.stt.NaverClovaSttEngine
 import com.autominuting.data.stt.SttEngine
 import com.autominuting.data.stt.WhisperEngine
 import com.autominuting.domain.model.SttEngineType
@@ -29,6 +32,9 @@ import javax.inject.Singleton
 class TranscriptionRepositoryImpl @Inject constructor(
     private val whisperEngine: WhisperEngine,
     private val geminiSttEngine: GeminiSttEngine,
+    private val groqSttEngine: GroqSttEngine,
+    private val deepgramSttEngine: DeepgramSttEngine,
+    private val naverClovaSttEngine: NaverClovaSttEngine,
     private val userPreferencesRepository: UserPreferencesRepository,
     @ApplicationContext private val context: Context
 ) : TranscriptionRepository {
@@ -64,6 +70,9 @@ class TranscriptionRepositoryImpl @Inject constructor(
                 val engine: SttEngine = when (selectedEngine) {
                     SttEngineType.GEMINI -> geminiSttEngine
                     SttEngineType.WHISPER -> whisperEngine
+                    SttEngineType.GROQ -> groqSttEngine
+                    SttEngineType.DEEPGRAM -> deepgramSttEngine
+                    SttEngineType.NAVER_CLOVA -> naverClovaSttEngine
                 }
 
                 val result = tryEngine(engine, audioFilePath, onProgress)

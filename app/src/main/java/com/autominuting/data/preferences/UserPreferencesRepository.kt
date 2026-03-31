@@ -66,7 +66,11 @@ class UserPreferencesRepository @Inject constructor(
     /** 현재 STT 엔진 유형을 관찰한다. 기본값: GEMINI */
     val sttEngineType: Flow<SttEngineType> = dataStore.data.map { prefs ->
         val name = prefs[STT_ENGINE_KEY] ?: SttEngineType.GEMINI.name
-        SttEngineType.valueOf(name)
+        try {
+            SttEngineType.valueOf(name)
+        } catch (e: IllegalArgumentException) {
+            SttEngineType.GEMINI  // 알 수 없는 값 -> 기본값 폴백
+        }
     }
 
     /** 기본 프롬프트 템플릿 ID를 관찰한다. 기본값: 0L (미설정, 매번 선택) */
@@ -156,7 +160,12 @@ class UserPreferencesRepository @Inject constructor(
      */
     suspend fun getSttEngineTypeOnce(): SttEngineType =
         dataStore.data.first().let { prefs ->
-            SttEngineType.valueOf(prefs[STT_ENGINE_KEY] ?: SttEngineType.GEMINI.name)
+            val name = prefs[STT_ENGINE_KEY] ?: SttEngineType.GEMINI.name
+            try {
+                SttEngineType.valueOf(name)
+            } catch (e: IllegalArgumentException) {
+                SttEngineType.GEMINI  // 알 수 없는 값 -> 기본값 폴백
+            }
         }
 
     /**

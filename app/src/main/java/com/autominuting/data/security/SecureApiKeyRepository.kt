@@ -24,6 +24,8 @@ class SecureApiKeyRepository @Inject constructor(
         private const val KEY_GOOGLE_OAUTH_CLIENT_ID = "google_oauth_client_id"
         private const val KEY_GROQ_API = "groq_api_key"
         private const val KEY_DEEPGRAM_API = "deepgram_api_key"
+        private const val KEY_CLOVA_INVOKE_URL = "clova_invoke_url"
+        private const val KEY_CLOVA_SECRET_KEY = "clova_secret_key"
     }
 
     @Suppress("DEPRECATION")
@@ -101,6 +103,36 @@ class SecureApiKeyRepository @Inject constructor(
     /** 저장된 Deepgram API 키를 삭제한다. */
     fun clearDeepgramApiKey() {
         encryptedPrefs?.edit()?.remove(KEY_DEEPGRAM_API)?.apply()
+    }
+
+    /** 저장된 CLOVA Speech invoke URL을 반환한다. */
+    fun getClovaInvokeUrl(): String? =
+        encryptedPrefs?.getString(KEY_CLOVA_INVOKE_URL, null)
+
+    /** CLOVA Speech invoke URL을 저장한다. */
+    fun saveClovaInvokeUrl(url: String) {
+        encryptedPrefs?.edit()?.putString(KEY_CLOVA_INVOKE_URL, url)?.apply()
+            ?: Log.w(TAG, "CLOVA invoke URL 저장 실패: EncryptedSharedPreferences 사용 불가")
+    }
+
+    /** 저장된 CLOVA Speech invoke URL을 삭제한다. */
+    fun clearClovaInvokeUrl() {
+        encryptedPrefs?.edit()?.remove(KEY_CLOVA_INVOKE_URL)?.apply()
+    }
+
+    /** 저장된 CLOVA Speech Secret Key를 반환한다. */
+    fun getClovaSecretKey(): String? =
+        encryptedPrefs?.getString(KEY_CLOVA_SECRET_KEY, null)
+
+    /** CLOVA Speech Secret Key를 암호화하여 저장한다. */
+    fun saveClovaSecretKey(secretKey: String) {
+        encryptedPrefs?.edit()?.putString(KEY_CLOVA_SECRET_KEY, secretKey)?.apply()
+            ?: Log.w(TAG, "CLOVA Secret Key 저장 실패: EncryptedSharedPreferences 사용 불가")
+    }
+
+    /** 저장된 CLOVA Speech Secret Key를 삭제한다. */
+    fun clearClovaSecretKey() {
+        encryptedPrefs?.edit()?.remove(KEY_CLOVA_SECRET_KEY)?.apply()
     }
 
     /** EncryptedSharedPreferences가 정상 초기화되었는지 반환한다. */

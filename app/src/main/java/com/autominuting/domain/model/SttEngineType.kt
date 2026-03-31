@@ -8,5 +8,11 @@ enum class SttEngineType {
     /** Gemini 2.5 Flash 멀티모달 API (클라우드, 기본값) */
     GEMINI,
     /** Whisper (whisper.cpp 온디바이스) */
-    WHISPER
+    WHISPER,
+    /** Groq Whisper API (클라우드) */
+    GROQ,
+    /** Deepgram Nova-3 (클라우드) */
+    DEEPGRAM,
+    /** Naver CLOVA Speech (클라우드) */
+    NAVER_CLOVA
 }

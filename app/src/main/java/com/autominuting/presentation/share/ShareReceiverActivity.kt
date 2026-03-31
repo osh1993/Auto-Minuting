@@ -199,8 +199,16 @@ class ShareReceiverActivity : ComponentActivity() {
 
         Log.d(TAG, "공유 텍스트 확보: ${sharedText.length}자")
 
-        // 제목 추출: 첫 줄 사용, 30자 초과 시 자르기
-        val title = extractTitle(sharedText)
+        // 제목 추출: 파일 공유인 경우 파일명 우선, 없으면 첫 줄 사용
+        val title = if (streamUri != null) {
+            getDisplayName(streamUri) ?: extractTitle(sharedText)
+        } else if (intent?.action == Intent.ACTION_SEND_MULTIPLE) {
+            // 다중 파일: 첫 번째 파일명 사용
+            val streamUris = intent.getParcelableArrayListExtra<android.net.Uri>(Intent.EXTRA_STREAM)
+            streamUris?.firstOrNull()?.let { getDisplayName(it) } ?: extractTitle(sharedText)
+        } else {
+            extractTitle(sharedText)
+        }
 
         lifecycleScope.launch {
             try {

@@ -294,6 +294,9 @@ fun SettingsScreen(
                         value = when (sttEngineType) {
                             SttEngineType.GEMINI -> "Gemini STT (클라우드)"
                             SttEngineType.WHISPER -> "Whisper (온디바이스)"
+                            SttEngineType.GROQ -> "Groq Whisper (클라우드)"
+                            SttEngineType.DEEPGRAM -> "Deepgram Nova-3 (클라우드)"
+                            SttEngineType.NAVER_CLOVA -> "Naver CLOVA Speech (클라우드)"
                         },
                         onValueChange = {},
                         readOnly = true,
@@ -317,6 +320,27 @@ fun SettingsScreen(
                             text = { Text("Whisper (온디바이스)") },
                             onClick = {
                                 viewModel.setSttEngineType(SttEngineType.WHISPER)
+                                sttDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Groq Whisper (클라우드)") },
+                            onClick = {
+                                viewModel.setSttEngineType(SttEngineType.GROQ)
+                                sttDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Deepgram Nova-3 (클라우드)") },
+                            onClick = {
+                                viewModel.setSttEngineType(SttEngineType.DEEPGRAM)
+                                sttDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Naver CLOVA Speech (클라우드)") },
+                            onClick = {
+                                viewModel.setSttEngineType(SttEngineType.NAVER_CLOVA)
                                 sttDropdownExpanded = false
                             }
                         )
