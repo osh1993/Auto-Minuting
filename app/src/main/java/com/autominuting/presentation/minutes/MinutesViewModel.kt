@@ -20,6 +20,12 @@ import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
+/** 회의록 목록 UI에 표시할 모델. Minutes + 출처 전사명 포함. */
+data class MinutesUiModel(
+    val minutes: Minutes,
+    val meetingTitle: String?  // null이면 "삭제된 전사" 표시
+)
+
 /**
  * 회의록 목록 화면의 상태를 관리하는 ViewModel.
  * Minutes 테이블 기반으로 회의록 목록을 제공하며, 검색/삭제/제목 수정/공유를 지원한다.
@@ -41,21 +47,36 @@ class MinutesViewModel @Inject constructor(
     }
 
     /**
-     * 회의록 목록 (검색어 기반 클라이언트 필터링).
+     * 회의록 목록 (검색어 기반 클라이언트 필터링, 출처 전사명 포함).
      * 검색어가 비어있으면 전체 목록을, 있으면 minutesTitle LIKE 검색 결과를 표시한다.
      * 300ms debounce로 불필요한 쿼리를 방지한다.
      */
     @OptIn(FlowPreview::class)
-    val minutes: StateFlow<List<Minutes>> = _searchQuery
+    val minutesUiModels: StateFlow<List<MinutesUiModel>> = _searchQuery
         .debounce(300)
         .flatMapLatest { query ->
-            minutesDataRepository.getAllMinutes().map { list ->
-                if (query.isBlank()) list
-                else list.filter { m ->
-                    (m.minutesTitle ?: "").contains(query, ignoreCase = true)
+            minutesDataRepository.getAllMinutesWithMeetingTitle().map { list ->
+                val filtered = if (query.isBlank()) list
+                else list.filter { (minutes, _) ->
+                    (minutes.minutesTitle ?: "").contains(query, ignoreCase = true)
+                }
+                filtered.map { (minutes, meetingTitle) ->
+                    MinutesUiModel(minutes = minutes, meetingTitle = meetingTitle)
                 }
             }
         }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
+    /**
+     * 하위 호환용 회의록 목록 (Minutes만 추출).
+     * Plan 02에서 MinutesScreen이 minutesUiModels로 전환되면 제거 예정.
+     */
+    val minutes: StateFlow<List<Minutes>> = minutesUiModels
+        .map { list -> list.map { it.minutes } }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),

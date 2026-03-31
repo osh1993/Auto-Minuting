@@ -15,6 +15,7 @@ import com.autominuting.domain.model.Meeting
 import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.domain.model.PromptTemplate
 import com.autominuting.domain.repository.MeetingRepository
+import com.autominuting.domain.repository.MinutesDataRepository
 import com.autominuting.domain.repository.PromptTemplateRepository
 import com.autominuting.worker.MinutesGenerationWorker
 import com.autominuting.worker.TranscriptionTriggerWorker
@@ -37,6 +38,7 @@ import javax.inject.Inject
 @HiltViewModel
 class TranscriptsViewModel @Inject constructor(
     private val meetingRepository: MeetingRepository,
+    private val minutesDataRepository: MinutesDataRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val promptTemplateRepository: PromptTemplateRepository,
     @ApplicationContext private val context: Context
@@ -53,6 +55,15 @@ class TranscriptsViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
+        )
+
+    /** meetingId별 회의록 수 맵. UI에서 badge 표시에 사용한다. */
+    val minutesCountMap: StateFlow<Map<Long, Int>> = minutesDataRepository
+        .getMinutesCountPerMeeting()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyMap()
         )
 
     /** 프롬프트 템플릿 목록 */
