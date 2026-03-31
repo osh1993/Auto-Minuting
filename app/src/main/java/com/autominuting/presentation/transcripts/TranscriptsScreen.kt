@@ -238,14 +238,14 @@ fun TranscriptsScreen(
         AlertDialog(
             onDismissRequest = { meetingToRegenerate = null },
             title = { Text("회의록 재생성") },
-            text = { Text("기존 회의록을 삭제하고 새로 생성할까요?") },
+            text = { Text("새 회의록이 추가됩니다.\n기존 회의록은 유지됩니다.") },
             confirmButton = {
                 TextButton(onClick = {
-                    // regenerateMinutes: 기존 회의록 파일 삭제 후 새로 생성
+                    // regenerateMinutes: 기존 회의록을 유지하고 새 회의록을 추가 생성
                     viewModel.regenerateMinutes(meeting.id)
                     meetingToRegenerate = null
                 }) {
-                    Text("재생성")
+                    Text("추가 생성")
                 }
             },
             dismissButton = {
