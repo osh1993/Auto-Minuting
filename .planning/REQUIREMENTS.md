@@ -107,9 +107,9 @@ Requirements for v5.0 milestone. Each maps to roadmap phases.
 
 ### 파일 독립성 (Independence)
 
-- [ ] **IND-01**: 전사 파일을 삭제해도 연결된 회의록 파일은 삭제되지 않는다
-- [ ] **IND-02**: 회의록을 삭제해도 전사 파일과 Meeting 상태는 변경되지 않는다
-- [ ] **IND-03**: 전사 파일로 회의록을 재생성하면 기존 회의록은 그대로 유지되고 새 회의록이 추가된다
+- [x] **IND-01**: 전사 파일을 삭제해도 연결된 회의록 파일은 삭제되지 않는다
+- [x] **IND-02**: 회의록을 삭제해도 전사 파일과 Meeting 상태는 변경되지 않는다
+- [x] **IND-03**: 전사 파일로 회의록을 재생성하면 기존 회의록은 그대로 유지되고 새 회의록이 추가된다
 
 ### UI 업데이트 (UI)
 
@@ -175,9 +175,9 @@ Deferred to future release.
 | SET-03 | Phase 35 | Pending |
 | DATA-01 | Phase 36 | Complete |
 | DATA-02 | Phase 36 | Complete |
-| IND-01 | Phase 37 | Pending |
-| IND-02 | Phase 37 | Pending |
-| IND-03 | Phase 37 | Pending |
+| IND-01 | Phase 37 | Complete |
+| IND-02 | Phase 37 | Complete |
+| IND-03 | Phase 37 | Complete |
 | UI5-01 | Phase 38 | Pending |
 | UI5-02 | Phase 38 | Pending |
 

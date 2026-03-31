@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 36-03-PLAN.md
-last_updated: "2026-03-30T23:51:45.759Z"
+stopped_at: Completed 37-01-PLAN.md
+last_updated: "2026-03-31T00:05:10.087Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 38
-  completed_phases: 31
-  total_plans: 59
-  completed_plans: 57
+  completed_phases: 32
+  total_plans: 60
+  completed_plans: 58
 ---
 
 # Project State
@@ -59,6 +59,7 @@ Recent decisions affecting current work:
 - [Phase 36]: SQLite 테이블 재생성 패턴으로 minutesPath/minutesTitle 컬럼 제거 (DROP COLUMN 미지원)
 - [Phase 36]: MinutesDataRepository로 명명하여 기존 MinutesRepository와 역할 분리 (CRUD vs API 호출)
 - [Phase 36]: MinutesScreen PipelineStatus 배지 제거 (Minutes 테이블에 pipelineStatus 없음)
+- [Phase 37]: 재생성 버튼 텍스트를 '추가 생성'으로 변경하여 실제 동작(INSERT) 반영
 
 ### Roadmap Evolution
 
@@ -77,6 +78,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-30T23:47:03.612Z
-Stopped at: Completed 36-03-PLAN.md
+Last session: 2026-03-31T00:05:10.078Z
+Stopped at: Completed 37-01-PLAN.md
 Resume file: None
