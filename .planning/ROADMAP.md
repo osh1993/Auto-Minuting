@@ -8,7 +8,8 @@
 - ✅ **v3.0 기능 확장 및 UX 개선** — Phases 19-23 (shipped 2026-03-28; Phase 19 폐기됨)
 - ✅ **v3.1 UX 개선 및 정보 표시 강화** — Phases 24-28 (shipped 2026-03-29)
 - ✅ **v4.0 파이프라인 고도화 및 GUI 품질 개선** — Phases 29-35 (shipped 2026-03-30)
-- **v5.0 전사-회의록 독립 아키텍처** — Phases 36-38
+- ✅ **v5.0 전사-회의록 독립 아키텍처** — Phases 36-38
+- **v6.0 멀티 엔진 확장** — Phases 39-42
 
 ## Phases
 
@@ -304,6 +305,63 @@ Plans:
 
 **UI hint**: yes
 
+## Phase Details (v6.0)
+
+### Phase 39: STT 엔진 확장 (Groq / Deepgram / Naver CLOVA)
+**Goal**: 사용자가 Groq Whisper, Deepgram Nova-3, Naver CLOVA Speech 중 하나를 STT 엔진으로 선택하여 전사할 수 있다
+**Depends on**: Nothing (기존 SttEngine 인터페이스 확장)
+**Requirements**: STT6-01, STT6-02, STT6-03, STT6-04
+**Success Criteria** (what must be TRUE):
+  1. 설정에서 STT 엔진 목록에 Groq / Deepgram / Naver CLOVA가 표시된다
+  2. 각 엔진을 선택 후 해당 API 키를 입력하면 실제 전사가 동작한다
+  3. 기존 Gemini / Whisper 온디바이스 엔진은 그대로 동작한다
+**Plans**: 3 plans
+
+Plans:
+- [ ] 39-01-PLAN.md — GroqSttEngine 구현 (multipart/form-data, REST)
+- [ ] 39-02-PLAN.md — DeepgramSttEngine 구현 (REST, Nova-3 한국어)
+- [ ] 39-03-PLAN.md — NaverClovaSttEngine 구현 (REST, NEST 모델) + SttEngineType enum 확장 + TranscriptionRepositoryImpl 선택 로직 + Hilt 바인딩
+
+### Phase 40: 회의록 엔진 확장 (Deepgram Intelligence / Naver CLOVA Summary)
+**Goal**: 사용자가 Deepgram Audio Intelligence 또는 Naver CLOVA Summary를 회의록 엔진으로 선택할 수 있다
+**Depends on**: Phase 39 (API 키 관리 패턴 재사용)
+**Requirements**: MIN6-01, MIN6-02, MIN6-03
+**Success Criteria** (what must be TRUE):
+  1. 설정에서 회의록 엔진 목록에 Deepgram Intelligence / Naver CLOVA Summary가 표시된다
+  2. 각 엔진이 전사 텍스트를 받아 요약 결과를 회의록으로 저장한다
+  3. 기존 Gemini 회의록 엔진은 그대로 동작한다
+**Plans**: 2 plans
+
+Plans:
+- [ ] 40-01-PLAN.md — DeepgramMinutesEngine 구현 (Audio Intelligence API, 요약/주제)
+- [ ] 40-02-PLAN.md — NaverClovaMinutesEngine 구현 (CLOVA Summary API) + MinutesEngineType enum 신설 + MinutesEngineSelector 확장 + Hilt 바인딩
+
+### Phase 41: 설정 UI 확장 (엔진 선택 + API 키 관리)
+**Goal**: 설정 화면에서 STT 엔진과 회의록 엔진을 독립적으로 선택하고, 각 서비스의 API 키를 입력/저장할 수 있다
+**Depends on**: Phase 39, Phase 40 (엔진 구현 후 UI 연결)
+**Requirements**: SET6-01, SET6-02
+**Success Criteria** (what must be TRUE):
+  1. 설정 화면 STT 섹션에서 5개 엔진(Whisper 온디바이스, Gemini, Groq, Deepgram, Naver) 중 하나를 선택할 수 있다
+  2. 설정 화면 회의록 섹션에서 3개 엔진(Gemini, Deepgram Intelligence, Naver CLOVA) 중 하나를 선택할 수 있다
+  3. Groq / Deepgram / Naver API 키 입력 필드가 각각 표시되고 암호화 저장된다
+  4. 선택한 엔진의 API 키가 없으면 안내 메시지가 표시된다
+**Plans**: 1 plan
+
+Plans:
+- [ ] 41-01-PLAN.md — SettingsScreen STT/회의록 엔진 드롭다운 확장 + Groq/Deepgram/Naver API 키 입력 UI
+
+### Phase 42: 버전 번호 포함 APK 빌드
+**Goal**: Release APK 파일명에 버전 번호가 자동으로 포함된다 (AutoMinuting-v6.0-release.apk)
+**Depends on**: Phase 41 (전체 기능 완성 후 릴리스 빌드)
+**Requirements**: BUILD-01
+**Success Criteria** (what must be TRUE):
+  1. `./gradlew assembleRelease` 실행 시 `AutoMinuting-v6.0-release.apk` 파일이 생성된다
+  2. APK 버전명이 versionName과 일치한다
+**Plans**: 1 plan
+
+Plans:
+- [ ] 42-01-PLAN.md — build.gradle.kts archivesName + versionName v6.0 설정 + assembleRelease 검증
+
 ## Milestone Details
 
 - v1.0 (Phases 1-7): `.planning/milestones/v1.0-ROADMAP.md`
@@ -329,6 +387,10 @@ Plans:
 | 33. GUI 일관성 개선 | v4.0 | 1/1 | Complete    | 2026-03-29 |
 | 34. Whisper 전사 진행률 | v4.0 | 2/2 | Complete    | 2026-03-30 |
 | 35. 회의록 설정 구조 개편 | v4.0 | 3/3 | Complete    | 2026-03-30 |
-| 36. Minutes 데이터 모델 분리 | v5.0 | 3/3 | Complete    | 2026-03-30 |
-| 37. 전사-회의록 독립 삭제 | v5.0 | 1/1 | Complete    | 2026-03-31 |
-| 38. 독립 아키텍처 UI 반영 | v5.0 | 2/2 | Complete    | 2026-03-31 |
+| 36. Minutes 데이터 모델 분리 | v5.0 | 3/3 | Complete | 2026-03-30 |
+| 37. 전사-회의록 독립 삭제 | v5.0 | 1/1 | Complete | 2026-03-31 |
+| 38. 독립 아키텍처 UI 반영 | v5.0 | 2/2 | Complete | 2026-03-31 |
+| 39. STT 엔진 확장 | v6.0 | 0/3 | Pending | — |
+| 40. 회의록 엔진 확장 | v6.0 | 0/2 | Pending | — |
+| 41. 설정 UI 확장 | v6.0 | 0/1 | Pending | — |
+| 42. 버전 번호 포함 APK 빌드 | v6.0 | 0/1 | Pending | — |

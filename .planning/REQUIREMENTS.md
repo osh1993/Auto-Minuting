@@ -187,6 +187,55 @@ Deferred to future release.
 - Mapped to phases: 7
 - Unmapped: 0
 
+## v6.0 Requirements
+
+Requirements for v6.0 milestone. Each maps to roadmap phases.
+
+### STT 엔진 확장 (STT)
+
+- [ ] **STT6-01**: 사용자가 설정에서 Groq Whisper API를 STT 엔진으로 선택하고 API 키를 입력할 수 있다
+- [ ] **STT6-02**: 사용자가 설정에서 Deepgram Nova-3를 STT 엔진으로 선택하고 API 키를 입력할 수 있다
+- [ ] **STT6-03**: 사용자가 설정에서 Naver CLOVA Speech를 STT 엔진으로 선택하고 API 키를 입력할 수 있다
+- [ ] **STT6-04**: 각 STT 엔진이 실제로 한국어 오디오 파일을 전사하여 텍스트를 반환한다
+
+### 회의록 엔진 확장 (MIN)
+
+- [ ] **MIN6-01**: 사용자가 설정에서 Deepgram Audio Intelligence를 회의록 엔진으로 선택할 수 있다
+- [ ] **MIN6-02**: 사용자가 설정에서 Naver CLOVA Summary를 회의록 엔진으로 선택할 수 있다
+- [ ] **MIN6-03**: 각 회의록 엔진이 전사 텍스트를 받아 요약 결과를 회의록으로 저장한다
+
+### 설정 UI (SET6)
+
+- [ ] **SET6-01**: 설정 화면에서 STT 엔진과 회의록 엔진을 독립적으로 선택할 수 있다
+- [ ] **SET6-02**: 각 외부 API 키(Groq, Deepgram, Naver)를 설정 화면에서 입력/저장할 수 있다
+
+### 빌드 (BUILD)
+
+- [ ] **BUILD-01**: Release APK 파일명에 버전 번호가 포함된다 (AutoMinuting-v6.0-release.apk)
+
 ---
 
-*Requirements defined: 2026-03-26, v3.1 추가: 2026-03-28, v4.0 추가: 2026-03-29, v5.0 추가: 2026-03-30*
+### Traceability (v6.0)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| STT6-01 | Phase 39 | Pending |
+| STT6-02 | Phase 39 | Pending |
+| STT6-03 | Phase 39 | Pending |
+| STT6-04 | Phase 39 | Pending |
+| MIN6-01 | Phase 40 | Pending |
+| MIN6-02 | Phase 40 | Pending |
+| MIN6-03 | Phase 40 | Pending |
+| SET6-01 | Phase 41 | Pending |
+| SET6-02 | Phase 41 | Pending |
+| BUILD-01 | Phase 42 | Pending |
+
+**Coverage:**
+
+- v6.0 requirements: 10 total
+- Mapped to phases: 10
+- Unmapped: 0
+
+---
+
+*Requirements defined: 2026-03-26, v3.1 추가: 2026-03-28, v4.0 추가: 2026-03-29, v5.0 추가: 2026-03-30, v6.0 추가: 2026-03-31*

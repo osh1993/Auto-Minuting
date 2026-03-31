@@ -1,74 +1,63 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: executing
-stopped_at: Completed 38-02-PLAN.md
-last_updated: "2026-03-31T00:39:33.215Z"
+milestone: v6.0
+milestone_name: 멀티 엔진 확장
+status: ready
+stopped_at: null
+last_updated: "2026-03-31T00:00:00.000Z"
 last_activity: 2026-03-31
 progress:
-  total_phases: 38
-  completed_phases: 33
-  total_plans: 62
-  completed_plans: 60
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 7
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-30)
+See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다.
-**Current focus:** v5.0 전사-회의록 독립 아키텍처 — Phase 36 대기
+**Current focus:** v6.0 멀티 엔진 확장 — Phase 39 대기
 
 ## Current Position
 
-Phase: 38 of 38 (independent ui)
+Phase: 39 of 42 (STT 엔진 확장)
 Plan: Not started
-Status: Ready to execute
+Status: Ready to plan
 Last activity: 2026-03-31
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 58
-- Average duration: ~3.5 min/plan
-- Total execution time: ~200 min
+- Total plans completed: 0
+- Average duration: ~3.5 min/plan (inherited from v5.0)
+- Total execution time: 0 min
 
 **Recent Trend:**
 
-- Trend: Stable (~3 min/plan)
-
-*Updated after each plan completion*
+- Trend: New milestone
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+- [v6.0 계획]: SttEngine 인터페이스 확장 패턴 — 기존 GeminiSttEngine/WhisperEngine과 동일한 방식으로 GroqSttEngine/DeepgramSttEngine/NaverClovaSttEngine 추가
+- [v6.0 계획]: MinutesEngine 인터페이스 확장 — MinutesEngineType enum 신설, MinutesEngineSelector 확장
+- [v6.0 계획]: API 키는 SecureApiKeyRepository 패턴 재사용 (EncryptedSharedPreferences)
+- [v6.0 계획]: 회의록 엔진으로 Deepgram/Naver 요약 결과를 그대로 회의록으로 저장 (Gemini 수준의 구조화는 아님)
+- [v6.0 계획]: APK 파일명 형식 — AutoMinuting-v6.0-release.apk (build.gradle.kts archivesName)
+- [v6.0 계획]: 텍스트 파일 공유 시 파일명을 전사 카드 제목으로 저장 — ShareReceiverActivity 수정 완료 (2026-03-31)
 
-- [Phase 35]: MinutesFormat enum 전면 제거, PromptTemplate 시스템이 완전 대체
-- [Phase 35]: CUSTOM_PROMPT_MODE_ID(-1L)를 특수 templateId로 사용하여 직접 입력 모드 표현
-- [v5.0 계획]: Meeting.minutesPath/minutesTitle → Minutes 독립 테이블 분리 (Room DB v4→v5)
-- [v5.0 계획]: MINUTES_ONLY PipelineStatus 워크어라운드 정리 예정
-- [v5.0 계획]: regenerateMinutes() 새 Meeting Row 생성 방식 → Minutes Row 추가 방식으로 변경
-- [Phase 36]: ForeignKey onDelete=SET_NULL로 Meeting 삭제 시 Minutes 보존
-- [Phase 36]: SQLite 테이블 재생성 패턴으로 minutesPath/minutesTitle 컬럼 제거 (DROP COLUMN 미지원)
-- [Phase 36]: MinutesDataRepository로 명명하여 기존 MinutesRepository와 역할 분리 (CRUD vs API 호출)
-- [Phase 36]: MinutesScreen PipelineStatus 배지 제거 (Minutes 테이블에 pipelineStatus 없음)
-- [Phase 37]: 재생성 버튼 텍스트를 '추가 생성'으로 변경하여 실제 동작(INSERT) 반영
-- [Phase 38]: DAO JOIN 접근법 채택 (ViewModel combine 대비 효율적)
-- [Phase 38]: 하위 호환용 minutes 프로퍼티 유지하여 기존 MinutesScreen 컴파일 보장
-- [Phase 38]: MinutesStatusBadge를 MinutesCountBadge로 완전 교체 (실제 count 기반)
+### Roadmap
 
-### Roadmap Evolution
-
-- Phase 36 added: Minutes 데이터 모델 분리 (DATA-01, DATA-02)
-- Phase 37 added: 전사-회의록 독립 삭제 (IND-01, IND-02, IND-03)
-- Phase 38 added: 독립 아키텍처 UI 반영 (UI5-01, UI5-02)
+- Phase 39: STT 엔진 확장 (Groq / Deepgram / Naver CLOVA) — 3 plans
+- Phase 40: 회의록 엔진 확장 (Deepgram Intelligence / Naver CLOVA Summary) — 2 plans
+- Phase 41: 설정 UI 확장 (엔진 선택 + API 키 관리) — 1 plan
+- Phase 42: 버전 번호 포함 APK 빌드 — 1 plan
 
 ### Pending Todos
 
@@ -76,11 +65,11 @@ None.
 
 ### Blockers/Concerns
 
-- [Phase 36]: Room DB v4→v5 마이그레이션 시 기존 minutesPath/minutesTitle 데이터 이관 필요
-- [Phase 37]: deleteTranscript()의 markMinutesOnly() 워크어라운드 제거 시 기존 MINUTES_ONLY 상태 데이터 처리 필요
+- Naver CLOVA Speech API 무료 한도 불명확 — 구현은 진행하되 실제 쿼터는 사용 시 확인 필요
+- Deepgram Audio Intelligence는 STT 결과 텍스트 기반 요약 API — 별도 오디오 업로드 없이 POST body로 transcript 전달
 
 ## Session Continuity
 
-Last session: 2026-03-31T00:36:34.824Z
-Stopped at: Completed 38-02-PLAN.md
+Last session: 2026-03-31
+Stopped at: Milestone initialized
 Resume file: None

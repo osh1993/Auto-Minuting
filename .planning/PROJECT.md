@@ -91,19 +91,20 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 | AnnotatedString Markdown 렌더링 | 외부 라이브러리 없이 직접 구현 | ✓ v1.0 |
 | Room LIKE 검색 | v1 데이터 규모에 FTS 불필요 | ✓ v1.0 |
 
-## Current Milestone: v5.0 전사-회의록 독립 아키텍처
+## Current Milestone: v6.0 멀티 엔진 확장
 
-**Goal:** 전사 파일과 회의록 파일을 완전히 독립된 엔티티로 분리하여, 하나를 삭제하거나 재생성해도 다른 쪽에 영향이 없도록 데이터 모델을 재설계한다.
+**Goal:** STT 및 회의록 생성 엔진을 확장하여 Groq Whisper / Deepgram Nova-3 / Naver CLOVA를 설정에서 선택 가능하게 하고, 릴리스 번호가 포함된 APK를 자동 생성한다.
 
 **Target features:**
 
-- Minutes 독립 테이블 신설 — Meeting에서 minutesPath/minutesTitle 분리
-- 전사 1개 → 회의록 N개 관계 (1:N)
-- 전사 삭제 → 연결된 회의록 보존
-- 회의록 삭제 → 전사 파일/상태 무영향
-- 회의록 재생성 → 기존 회의록 보존 + 새 회의록 추가 생성
-- 회의록 목록 화면: 동일 전사에서 생성된 여러 회의록 표시
-- 전사 목록 화면: 연결된 회의록 수 badge 표시
+- STT 엔진 추가: Groq Whisper API (20 RPM, 100MB, 무료)
+- STT 엔진 추가: Deepgram Nova-3 ($200 크레딧, 한국어 최고 정확도)
+- STT 엔진 추가: Naver CLOVA Speech (한국어 특화 NEST 모델)
+- 회의록 엔진 추가: Deepgram Audio Intelligence (요약/주제 감지)
+- 회의록 엔진 추가: Naver CLOVA Summary API
+- 설정 화면: STT 엔진 / 회의록 엔진 각각 선택 가능
+- API 키 관리: Groq / Deepgram / Naver 키 입력 UI
+- APK 빌드: 파일명에 버전 번호 포함 (AutoMinuting-v6.0-release.apk)
 
 ## Evolution
 
@@ -126,4 +127,4 @@ This document evolves at phase transitions and milestone boundaries.
 **v1.0 Roadmap archived to:** `.planning/milestones/v1.0-ROADMAP.md`
 
 ---
-*Last updated: 2026-03-30 — Phase 35 완료 (v4.0 마일스톤 완료)*
+*Last updated: 2026-03-31 — v5.0 완료, v6.0 멀티 엔진 확장 시작*

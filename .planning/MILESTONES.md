@@ -1,5 +1,13 @@
 # Milestones
 
+## v6.0 멀티 엔진 확장 (In Progress: 2026-03-31)
+
+**Phases:** 39-42 (4 phases, 7 plans)
+
+**Goal:** STT 및 회의록 생성 엔진을 확장하여 Groq Whisper / Deepgram Nova-3 / Naver CLOVA를 설정에서 선택 가능하게 하고, 릴리스 번호가 포함된 APK를 생성한다.
+
+---
+
 ## v1.0 Auto Minuting MVP (Shipped: 2026-03-24)
 
 **Phases completed:** 7 phases, 18 plans, 39 tasks
