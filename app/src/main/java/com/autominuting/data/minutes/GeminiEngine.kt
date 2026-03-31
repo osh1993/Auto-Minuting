@@ -1,7 +1,6 @@
 package com.autominuting.data.minutes
 
 import android.util.Log
-import com.autominuting.BuildConfig
 import com.autominuting.data.security.SecureApiKeyRepository
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.QuotaExceededException
@@ -86,9 +85,7 @@ class GeminiEngine @Inject constructor(
         transcriptText: String,
         customPrompt: String?
     ): Result<String> {
-        // 사용자 설정 API 키 우선, 없으면 BuildConfig 폴백
-        val apiKey = secureApiKeyRepository.getGeminiApiKey()
-            ?: BuildConfig.GEMINI_API_KEY
+        val apiKey = secureApiKeyRepository.getGeminiApiKey() ?: ""
         if (apiKey.isBlank()) {
             Log.e(TAG, "Gemini API 키가 설정되지 않았습니다")
             return Result.failure(
@@ -141,8 +138,7 @@ class GeminiEngine @Inject constructor(
 
     /** API 키가 설정되어 있으면 사용 가능하다. */
     override fun isAvailable(): Boolean {
-        val apiKey = secureApiKeyRepository.getGeminiApiKey()
-            ?: BuildConfig.GEMINI_API_KEY
+        val apiKey = secureApiKeyRepository.getGeminiApiKey() ?: ""
         return apiKey.isNotBlank()
     }
 }

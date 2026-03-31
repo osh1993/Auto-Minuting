@@ -40,16 +40,12 @@ android {
             abiFilters += "arm64-v8a"
         }
 
-        // Gemini API 인증 키 (local.properties에서 읽음)
+        // Google OAuth Web Client ID (local.properties에서 읽음)
         val localProps = Properties()
         val localPropsFile = rootProject.file("local.properties")
         if (localPropsFile.exists()) {
             localProps.load(localPropsFile.inputStream())
         }
-        val geminiApiKey: String = localProps.getProperty("GEMINI_API_KEY", "")
-        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
-
-        // Google OAuth Web Client ID (local.properties에서 읽음)
         val googleOAuthWebClientId: String = localProps.getProperty("GOOGLE_OAUTH_WEB_CLIENT_ID", "")
         buildConfigField("String", "GOOGLE_OAUTH_WEB_CLIENT_ID", "\"$googleOAuthWebClientId\"")
     }

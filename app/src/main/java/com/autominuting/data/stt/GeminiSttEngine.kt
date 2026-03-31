@@ -2,7 +2,6 @@ package com.autominuting.data.stt
 
 import android.util.Base64
 import android.util.Log
-import com.autominuting.BuildConfig
 import com.autominuting.data.quota.GeminiQuotaTracker
 import com.autominuting.data.quota.QuotaCategory
 import com.autominuting.data.security.SecureApiKeyRepository
@@ -208,9 +207,7 @@ class GeminiSttEngine @Inject constructor(
         }
 
     private fun getApiKey(): String {
-        return secureApiKeyRepository.getGeminiApiKey()
-            ?: BuildConfig.GEMINI_API_KEY
-            ?: ""
+        return secureApiKeyRepository.getGeminiApiKey() ?: ""
     }
 }
 
