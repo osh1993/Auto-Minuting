@@ -55,6 +55,7 @@ import com.autominuting.data.auth.AuthState
 import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.data.stt.WhisperModelManager
 import com.autominuting.domain.model.AutomationMode
+import com.autominuting.domain.model.MinutesEngineType
 import com.autominuting.domain.model.SttEngineType
 
 /**
@@ -96,6 +97,13 @@ fun SettingsScreen(
     val defaultTemplateId by viewModel.defaultTemplateId.collectAsStateWithLifecycle()
     val defaultCustomPrompt by viewModel.defaultCustomPrompt.collectAsStateWithLifecycle()
     val sttEngineType by viewModel.sttEngineType.collectAsStateWithLifecycle()
+    val minutesEngineType by viewModel.minutesEngineType.collectAsStateWithLifecycle()
+    val hasGroqApiKey by viewModel.hasGroqApiKey.collectAsStateWithLifecycle()
+    val hasDeepgramApiKey by viewModel.hasDeepgramApiKey.collectAsStateWithLifecycle()
+    val hasClovaInvokeUrl by viewModel.hasClovaInvokeUrl.collectAsStateWithLifecycle()
+    val hasClovaSecretKey by viewModel.hasClovaSecretKey.collectAsStateWithLifecycle()
+    val hasClovaSummaryClientId by viewModel.hasClovaSummaryClientId.collectAsStateWithLifecycle()
+    val hasClovaSummaryClientSecret by viewModel.hasClovaSummaryClientSecret.collectAsStateWithLifecycle()
     val whisperModelState by viewModel.whisperModelState.collectAsStateWithLifecycle()
     val automationMode by viewModel.automationMode.collectAsStateWithLifecycle()
     val authMode by viewModel.authMode.collectAsStateWithLifecycle()
@@ -266,6 +274,66 @@ fun SettingsScreen(
                     }
                 }
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 회의록 엔진 선택
+                Text(
+                    text = "회의록 생성 엔진",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "회의록 텍스트를 생성할 엔진을 선택합니다",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                var minutesDropdownExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = minutesDropdownExpanded,
+                    onExpandedChange = { minutesDropdownExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = when (minutesEngineType) {
+                            MinutesEngineType.GEMINI -> "Gemini (클라우드)"
+                            MinutesEngineType.DEEPGRAM -> "Deepgram Intelligence (클라우드)"
+                            MinutesEngineType.NAVER_CLOVA -> "Naver CLOVA Summary (클라우드)"
+                        },
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = minutesDropdownExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = minutesDropdownExpanded,
+                        onDismissRequest = { minutesDropdownExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Gemini (클라우드)") },
+                            onClick = {
+                                viewModel.setMinutesEngineType(MinutesEngineType.GEMINI)
+                                minutesDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Deepgram Intelligence (클라우드)") },
+                            onClick = {
+                                viewModel.setMinutesEngineType(MinutesEngineType.DEEPGRAM)
+                                minutesDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Naver CLOVA Summary (클라우드)") },
+                            onClick = {
+                                viewModel.setMinutesEngineType(MinutesEngineType.NAVER_CLOVA)
+                                minutesDropdownExpanded = false
+                            }
+                        )
+                    }
+                }
+
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -393,6 +461,110 @@ fun SettingsScreen(
                         FilledTonalButton(onClick = { viewModel.downloadWhisperModel() }) {
                             Text("다시 시도")
                         }
+                    }
+                }
+
+                // === STT 엔진별 API 키 입력 ===
+
+                // Groq API 키 (STT 엔진이 GROQ일 때만)
+                if (sttEngineType == SttEngineType.GROQ) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ApiKeyInputField(
+                        label = "Groq API 키",
+                        hasKey = hasGroqApiKey,
+                        onSave = { viewModel.saveGroqApiKey(it) },
+                        onClear = { viewModel.clearGroqApiKey() }
+                    )
+                    if (!hasGroqApiKey) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Groq API 키가 필요합니다. console.groq.com에서 발급받으세요.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+
+                // Deepgram API 키 (STT 엔진이 DEEPGRAM이거나 회의록 엔진이 DEEPGRAM일 때)
+                if (sttEngineType == SttEngineType.DEEPGRAM || minutesEngineType == MinutesEngineType.DEEPGRAM) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ApiKeyInputField(
+                        label = "Deepgram API 키",
+                        hasKey = hasDeepgramApiKey,
+                        onSave = { viewModel.saveDeepgramApiKey(it) },
+                        onClear = { viewModel.clearDeepgramApiKey() }
+                    )
+                    if (!hasDeepgramApiKey) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Deepgram API 키가 필요합니다. console.deepgram.com에서 발급받으세요.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+
+                // Naver CLOVA Speech 설정 (STT 엔진이 NAVER_CLOVA일 때)
+                if (sttEngineType == SttEngineType.NAVER_CLOVA) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Naver CLOVA Speech (STT)",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ApiKeyInputField(
+                        label = "CLOVA Speech Invoke URL",
+                        hasKey = hasClovaInvokeUrl,
+                        onSave = { viewModel.saveClovaInvokeUrl(it) },
+                        onClear = { viewModel.clearClovaInvokeUrl() }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ApiKeyInputField(
+                        label = "CLOVA Speech Secret Key",
+                        hasKey = hasClovaSecretKey,
+                        onSave = { viewModel.saveClovaSecretKey(it) },
+                        onClear = { viewModel.clearClovaSecretKey() }
+                    )
+                    if (!hasClovaInvokeUrl || !hasClovaSecretKey) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "CLOVA Speech Invoke URL과 Secret Key가 모두 필요합니다. NAVER Cloud Console에서 발급받으세요.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+
+                // Naver CLOVA Summary 설정 (회의록 엔진이 NAVER_CLOVA일 때)
+                if (minutesEngineType == MinutesEngineType.NAVER_CLOVA) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Naver CLOVA Summary (회의록)",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ApiKeyInputField(
+                        label = "CLOVA Summary Client ID",
+                        hasKey = hasClovaSummaryClientId,
+                        onSave = { viewModel.saveClovaSummaryClientId(it) },
+                        onClear = { viewModel.clearClovaSummaryClientId() }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ApiKeyInputField(
+                        label = "CLOVA Summary Client Secret",
+                        hasKey = hasClovaSummaryClientSecret,
+                        onSave = { viewModel.saveClovaSummaryClientSecret(it) },
+                        onClear = { viewModel.clearClovaSummaryClientSecret() }
+                    )
+                    if (!hasClovaSummaryClientId || !hasClovaSummaryClientSecret) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "CLOVA Summary Client ID와 Client Secret이 모두 필요합니다. NAVER Cloud Console에서 발급받으세요.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                 }
             }
@@ -780,6 +952,84 @@ private fun ApiKeySection(viewModel: SettingsViewModel) {
             text = "사용자 API 키 사용 중",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.tertiary
+        )
+    }
+}
+
+/**
+ * API 키 입력 + 저장/삭제 재사용 composable.
+ * Gemini API 키 입력 패턴을 간소화한 버전 (검증 없이 바로 저장).
+ *
+ * @param label 입력 필드 라벨
+ * @param hasKey 저장된 키 존재 여부
+ * @param onSave 저장 콜백
+ * @param onClear 삭제 콜백
+ */
+@Composable
+private fun ApiKeyInputField(
+    label: String,
+    hasKey: Boolean,
+    onSave: (String) -> Unit,
+    onClear: () -> Unit
+) {
+    var input by remember { mutableStateOf("") }
+    var isVisible by remember { mutableStateOf(false) }
+
+    OutlinedTextField(
+        value = input,
+        onValueChange = { input = it },
+        label = { Text(label) },
+        visualTransformation = if (isVisible)
+            VisualTransformation.None
+        else
+            PasswordVisualTransformation(),
+        trailingIcon = {
+            IconButton(onClick = { isVisible = !isVisible }) {
+                Icon(
+                    imageVector = if (isVisible)
+                        Icons.Default.VisibilityOff
+                    else
+                        Icons.Default.Visibility,
+                    contentDescription = if (isVisible) "숨기기" else "보기"
+                )
+            }
+        },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Button(
+            onClick = {
+                onSave(input.trim())
+                input = ""
+            },
+            enabled = input.isNotBlank()
+        ) {
+            Text("저장")
+        }
+
+        if (hasKey) {
+            OutlinedButton(onClick = {
+                onClear()
+                input = ""
+            }) {
+                Text("삭제")
+            }
+        }
+    }
+
+    if (hasKey) {
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "저장됨",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary
         )
     }
 }

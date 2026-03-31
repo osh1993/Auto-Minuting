@@ -12,6 +12,7 @@ import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.data.security.SecureApiKeyRepository
 import com.autominuting.data.stt.WhisperModelManager
 import com.autominuting.domain.model.AutomationMode
+import com.autominuting.domain.model.MinutesEngineType
 import com.autominuting.domain.model.PromptTemplate
 import com.autominuting.domain.model.SttEngineType
 import com.autominuting.domain.repository.PromptTemplateRepository
@@ -57,6 +58,14 @@ class SettingsViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = SttEngineType.GEMINI
+        )
+
+    /** 현재 선택된 회의록 엔진 유형 */
+    val minutesEngineType: StateFlow<MinutesEngineType> = userPreferencesRepository.minutesEngineType
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = MinutesEngineType.GEMINI
         )
 
     /** Whisper 모델 다운로드 상태 */
@@ -122,14 +131,51 @@ class SettingsViewModel @Inject constructor(
     private val _oauthClientIdSaved = MutableStateFlow(false)
     val oauthClientIdSaved: StateFlow<Boolean> = _oauthClientIdSaved.asStateFlow()
 
+    /** Groq API 키 존재 여부 */
+    private val _hasGroqApiKey = MutableStateFlow(false)
+    val hasGroqApiKey: StateFlow<Boolean> = _hasGroqApiKey.asStateFlow()
+
+    /** Deepgram API 키 존재 여부 */
+    private val _hasDeepgramApiKey = MutableStateFlow(false)
+    val hasDeepgramApiKey: StateFlow<Boolean> = _hasDeepgramApiKey.asStateFlow()
+
+    /** CLOVA Speech Invoke URL 존재 여부 */
+    private val _hasClovaInvokeUrl = MutableStateFlow(false)
+    val hasClovaInvokeUrl: StateFlow<Boolean> = _hasClovaInvokeUrl.asStateFlow()
+
+    /** CLOVA Speech Secret Key 존재 여부 */
+    private val _hasClovaSecretKey = MutableStateFlow(false)
+    val hasClovaSecretKey: StateFlow<Boolean> = _hasClovaSecretKey.asStateFlow()
+
+    /** CLOVA Summary Client ID 존재 여부 */
+    private val _hasClovaSummaryClientId = MutableStateFlow(false)
+    val hasClovaSummaryClientId: StateFlow<Boolean> = _hasClovaSummaryClientId.asStateFlow()
+
+    /** CLOVA Summary Client Secret 존재 여부 */
+    private val _hasClovaSummaryClientSecret = MutableStateFlow(false)
+    val hasClovaSummaryClientSecret: StateFlow<Boolean> = _hasClovaSummaryClientSecret.asStateFlow()
+
     init {
         // 초기 로드: 저장된 API 키 존재 여부 확인
         _hasApiKey.value = secureApiKeyRepository.getGeminiApiKey() != null
         _hasOAuthClientId.value = !secureApiKeyRepository.getGoogleOAuthClientId().isNullOrBlank()
+        _hasGroqApiKey.value = !secureApiKeyRepository.getGroqApiKey().isNullOrBlank()
+        _hasDeepgramApiKey.value = !secureApiKeyRepository.getDeepgramApiKey().isNullOrBlank()
+        _hasClovaInvokeUrl.value = !secureApiKeyRepository.getClovaInvokeUrl().isNullOrBlank()
+        _hasClovaSecretKey.value = !secureApiKeyRepository.getClovaSecretKey().isNullOrBlank()
+        _hasClovaSummaryClientId.value = !secureApiKeyRepository.getClovaSummaryClientId().isNullOrBlank()
+        _hasClovaSummaryClientSecret.value = !secureApiKeyRepository.getClovaSummaryClientSecret().isNullOrBlank()
 
         // 저장된 Google 인증 상태 복원
         viewModelScope.launch {
             googleAuthRepository.restoreAuthState()
+        }
+    }
+
+    /** 회의록 엔진 유형을 변경한다. */
+    fun setMinutesEngineType(type: MinutesEngineType) {
+        viewModelScope.launch {
+            userPreferencesRepository.setMinutesEngineType(type)
         }
     }
 
@@ -278,5 +324,77 @@ class SettingsViewModel @Inject constructor(
     /** OAuth Client ID 저장 상태를 초기화한다. */
     fun resetOAuthClientIdSaved() {
         _oauthClientIdSaved.value = false
+    }
+
+    /** Groq API 키를 저장한다. */
+    fun saveGroqApiKey(apiKey: String) {
+        secureApiKeyRepository.saveGroqApiKey(apiKey)
+        _hasGroqApiKey.value = true
+    }
+
+    /** Groq API 키를 삭제한다. */
+    fun clearGroqApiKey() {
+        secureApiKeyRepository.clearGroqApiKey()
+        _hasGroqApiKey.value = false
+    }
+
+    /** Deepgram API 키를 저장한다. */
+    fun saveDeepgramApiKey(apiKey: String) {
+        secureApiKeyRepository.saveDeepgramApiKey(apiKey)
+        _hasDeepgramApiKey.value = true
+    }
+
+    /** Deepgram API 키를 삭제한다. */
+    fun clearDeepgramApiKey() {
+        secureApiKeyRepository.clearDeepgramApiKey()
+        _hasDeepgramApiKey.value = false
+    }
+
+    /** CLOVA Speech Invoke URL을 저장한다. */
+    fun saveClovaInvokeUrl(url: String) {
+        secureApiKeyRepository.saveClovaInvokeUrl(url)
+        _hasClovaInvokeUrl.value = true
+    }
+
+    /** CLOVA Speech Invoke URL을 삭제한다. */
+    fun clearClovaInvokeUrl() {
+        secureApiKeyRepository.clearClovaInvokeUrl()
+        _hasClovaInvokeUrl.value = false
+    }
+
+    /** CLOVA Speech Secret Key를 저장한다. */
+    fun saveClovaSecretKey(secretKey: String) {
+        secureApiKeyRepository.saveClovaSecretKey(secretKey)
+        _hasClovaSecretKey.value = true
+    }
+
+    /** CLOVA Speech Secret Key를 삭제한다. */
+    fun clearClovaSecretKey() {
+        secureApiKeyRepository.clearClovaSecretKey()
+        _hasClovaSecretKey.value = false
+    }
+
+    /** CLOVA Summary Client ID를 저장한다. */
+    fun saveClovaSummaryClientId(clientId: String) {
+        secureApiKeyRepository.saveClovaSummaryClientId(clientId)
+        _hasClovaSummaryClientId.value = true
+    }
+
+    /** CLOVA Summary Client ID를 삭제한다. */
+    fun clearClovaSummaryClientId() {
+        secureApiKeyRepository.clearClovaSummaryClientId()
+        _hasClovaSummaryClientId.value = false
+    }
+
+    /** CLOVA Summary Client Secret을 저장한다. */
+    fun saveClovaSummaryClientSecret(secret: String) {
+        secureApiKeyRepository.saveClovaSummaryClientSecret(secret)
+        _hasClovaSummaryClientSecret.value = true
+    }
+
+    /** CLOVA Summary Client Secret을 삭제한다. */
+    fun clearClovaSummaryClientSecret() {
+        secureApiKeyRepository.clearClovaSummaryClientSecret()
+        _hasClovaSummaryClientSecret.value = false
     }
 }
