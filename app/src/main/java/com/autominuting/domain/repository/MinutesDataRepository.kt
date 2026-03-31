@@ -25,6 +25,12 @@ interface MinutesDataRepository {
     /** 특정 Meeting에 연결된 회의록 수를 조회한다. */
     fun getMinutesCountByMeetingId(meetingId: Long): Flow<Int>
 
+    /** 모든 회의록을 출처 Meeting 제목과 함께 조회한다. */
+    fun getAllMinutesWithMeetingTitle(): Flow<List<Pair<Minutes, String?>>>
+
+    /** 모든 Meeting별 회의록 수를 일괄 조회한다. */
+    fun getMinutesCountPerMeeting(): Flow<Map<Long, Int>>
+
     /** 회의록을 삽입하고 ID를 반환한다. */
     suspend fun insertMinutes(minutes: Minutes): Long
 

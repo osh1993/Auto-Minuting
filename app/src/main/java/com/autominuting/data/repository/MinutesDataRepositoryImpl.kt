@@ -1,6 +1,7 @@
 package com.autominuting.data.repository
 
 import com.autominuting.data.local.dao.MinutesDao
+import com.autominuting.data.local.dao.MinutesWithMeetingTitle
 import com.autominuting.data.local.entity.MinutesEntity
 import com.autominuting.domain.model.Minutes
 import com.autominuting.domain.repository.MinutesDataRepository
@@ -37,6 +38,29 @@ class MinutesDataRepositoryImpl @Inject constructor(
 
     override fun getMinutesCountByMeetingId(meetingId: Long): Flow<Int> =
         minutesDao.getMinutesCountByMeetingId(meetingId)
+
+    override fun getAllMinutesWithMeetingTitle(): Flow<List<Pair<Minutes, String?>>> =
+        minutesDao.getAllMinutesWithMeetingTitle().map { list ->
+            list.map { row ->
+                Pair(
+                    Minutes(
+                        id = row.id,
+                        meetingId = row.meetingId,
+                        minutesPath = row.minutesPath,
+                        minutesTitle = row.minutesTitle,
+                        templateId = row.templateId,
+                        createdAt = Instant.ofEpochMilli(row.createdAt),
+                        updatedAt = Instant.ofEpochMilli(row.updatedAt)
+                    ),
+                    row.meetingTitle
+                )
+            }
+        }
+
+    override fun getMinutesCountPerMeeting(): Flow<Map<Long, Int>> =
+        minutesDao.getMinutesCountPerMeeting().map { list ->
+            list.associate { it.meetingId to it.count }
+        }
 
     override suspend fun insertMinutes(minutes: Minutes): Long =
         minutesDao.insert(MinutesEntity.fromDomain(minutes))
