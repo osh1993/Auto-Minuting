@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
@@ -340,8 +341,7 @@ private fun MinutesCard(
                 Text(
                     text = minutes.minutesTitle ?: "회의록",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.clickable { onRenameRequest(minutes) }
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -394,6 +394,17 @@ private fun MinutesCard(
                             },
                             leadingIcon = {
                                 Icon(Icons.Default.Share, contentDescription = "공유")
+                            }
+                        )
+                        // 이름 변경: 항상 표시
+                        DropdownMenuItem(
+                            text = { Text("이름 변경") },
+                            onClick = {
+                                showMenu = false
+                                onRenameRequest(minutes)
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Edit, contentDescription = "이름 변경")
                             }
                         )
                         // 삭제: 항상 표시
