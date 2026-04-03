@@ -33,7 +33,9 @@
   2. 사용자가 회의록 탭에서 카드를 터치하면 해당 회의록의 상세 화면(Markdown 뷰어)으로 이동한다
   3. 전사목록/회의록 탭의 카드에서 점3개(overflow) 메뉴를 열면 "이름 변경" 항목이 존재한다
   4. overflow 메뉴의 "이름 변경"을 선택하면 이름 편집 다이얼로그가 표시되고 저장이 정상 동작한다
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 43-01-PLAN.md — 전사/회의록 카드 터치 개선 + overflow 이름 변경 이동
 **UI hint**: yes
 
 ### Phase 44: Groq Whisper 버그 수정
@@ -154,7 +156,7 @@ See: `.planning/milestones/v6.0-ROADMAP.md`
 | 40. 회의록 엔진 확장 | v6.0 | 2/2 | Complete | 2026-04-03 |
 | 41. 설정 UI 확장 | v6.0 | 1/1 | Complete | 2026-04-03 |
 | 42. 버전 번호 포함 APK 빌드 | v6.0 | 1/1 | Complete | 2026-04-03 |
-| 43. UX 개선 | v7.0 | 0/0 | Not started | - |
+| 43. UX 개선 | v7.0 | 0/1 | Not started | - |
 | 44. Groq Whisper 버그 수정 | v7.0 | 0/0 | Not started | - |
 | 45. Google Drive 인증 | v7.0 | 0/0 | Not started | - |
 | 46. Google Drive 업로드 파이프라인 | v7.0 | 0/0 | Not started | - |
