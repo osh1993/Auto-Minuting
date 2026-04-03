@@ -425,7 +425,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 48-01-PLAN.md — API 사용량 추적 레이어 + 대시보드 위젯
+- [x] 48-01-PLAN.md — API 사용량 추적 레이어 + 대시보드 위젯
 
 ### Phase 49: 설정 UI 정비
 **Goal**: 설정 화면이 v7.0 신규 기능을 포함하여 논리적으로 재구성된다
@@ -473,5 +473,5 @@ Plans:
 | 45. Google Drive 인증 | v7.0 | 1/1 | Complete   | 2026-04-03 |
 | 46. Google Drive 업로드 파이프라인 | v7.0 | 2/2 | Complete   | 2026-04-03 |
 | 47. 회의록 편집 기능 | v7.0 | 1/1 | Complete   | 2026-04-03 |
-| 48. API 사용량 대시보드 | v7.0 | 0/1 | Pending | — |
+| 48. API 사용량 대시보드 | v7.0 | 1/1 | Complete   | 2026-04-03 |
 | 49. 설정 UI 정비 | v7.0 | 0/1 | Pending | — |

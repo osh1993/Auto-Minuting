@@ -33,7 +33,7 @@
 
 ### API 사용량 대시보드
 
-- [ ] **DASH-01**: 사용자가 전용 탭/화면에서 엔진별 API 호출 횟수와 예상 비용을 확인할 수 있다
+- [x] **DASH-01**: 사용자가 전용 탭/화면에서 엔진별 API 호출 횟수와 예상 비용을 확인할 수 있다
 
 ### 설정 UI 정비
 
@@ -67,5 +67,5 @@
 | DRIVE-04 | Phase 46 | Complete |
 | EDIT-01 | Phase 47 | Complete |
 | BUG-01 | Phase 44 | Pending |
-| DASH-01 | Phase 48 | Pending |
+| DASH-01 | Phase 48 | Complete |
 | SETTINGS-01 | Phase 49 | Pending |
