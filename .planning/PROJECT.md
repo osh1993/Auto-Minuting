@@ -88,15 +88,25 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 | AnnotatedString Markdown 렌더링 | 외부 라이브러리 없이 직접 구현 | ✓ v1.0 |
 | Room LIKE 검색 | v1 데이터 규모에 FTS 불필요 | ✓ v1.0 |
 
-## Current Milestone
+## Current Milestone: v7.0 UX 개선 + Google Drive 연동
 
-v6.0 완료. 다음 마일스톤은 `/gsd:new-milestone`으로 시작.
+**Goal:** 이름 변경 UX 개선, Google Drive 자동 업로드 파이프라인, 회의록 편집 기능, Groq 버그 수정, API 사용량 대시보드, 설정 화면 정비를 통해 실사용 완성도를 높인다.
+
+**Target features:**
+- [UX] 이름 변경을 점3개 메뉴로 이동, 터치 시 파일 열기 (전사목록/회의록 탭)
+- [Drive] Google Sign-In OAuth + 전사/회의록 Google Drive 자동 업로드 파이프라인
+- [Drive] 설정에서 업로드 폴더 지정 (전사 폴더 / 회의록 폴더 별도)
+- [편집] 회의록 파일 텍스트 편집 + 저장 기능 추가
+- [버그] Groq Whisper STT 미동작 원인 파악 및 수정
+- [대시보드] API 사용량 전용 탭/화면 (엔진별 호출 횟수, 예상 비용)
+- [설정] 현재 설정 화면 분석 → 수정안 제시 → 승인 후 적용
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
 
 **After each phase transition** (via `/gsd:transition`):
+
 1. Requirements invalidated? → Move to Out of Scope with reason
 2. Requirements validated? → Move to Validated with phase reference
 3. New requirements emerged? → Add to Active
@@ -104,6 +114,7 @@ This document evolves at phase transitions and milestone boundaries.
 5. "What This Is" still accurate? → Update if drifted
 
 **After each milestone** (via `/gsd:complete-milestone`):
+
 1. Full review of all sections
 2. Core Value check — still the right priority?
 3. Audit Out of Scope — reasons still valid?
