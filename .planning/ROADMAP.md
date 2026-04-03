@@ -402,12 +402,12 @@ Plans:
 ### Phase 46: Google Drive 업로드 파이프라인
 **Goal**: 회의록 생성 완료 시 Drive에 자동 업로드된다
 **Depends on**: Phase 45 (Drive 인증 완료 후)
-**Requirements**: DRIVE-02
+**Requirements**: DRIVE-02, DRIVE-03, DRIVE-04
 **Plans**: 2 plans
 
 Plans:
-- [ ] 46-01-PLAN.md — Drive REST API 업로드 레이어 (OkHttp + Authorization header)
-- [ ] 46-02-PLAN.md — 회의록 생성 파이프라인 Drive 업로드 연동 + UI 상태 표시
+- [ ] 46-01-PLAN.md — DriveUploadRepository(OkHttp multipart) + UserPreferencesRepository 폴더 ID 키 추가
+- [ ] 46-02-PLAN.md — DriveUploadWorker(@HiltWorker) + Worker 독립 enqueue 추가 + SettingsScreen 폴더 ID 입력 UI + assembleDebug 빌드 검증
 
 ### Phase 47: 회의록 편집 기능
 **Goal**: 사용자가 생성된 회의록 내용을 앱 내에서 직접 편집할 수 있다
