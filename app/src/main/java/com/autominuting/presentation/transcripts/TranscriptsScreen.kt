@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.automirrored.filled.TextSnippet
@@ -312,9 +313,7 @@ private fun TranscriptMeetingCard(
                     text = meeting.title,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { onRenameRequest(meeting) }
+                    modifier = Modifier.weight(1f)
                 )
                 Box {
                     IconButton(onClick = { showMenu = true }) {
@@ -385,6 +384,17 @@ private fun TranscriptMeetingCard(
                                 }
                             )
                         }
+                        // 이름 변경: 항상 표시
+                        DropdownMenuItem(
+                            text = { Text("이름 변경") },
+                            onClick = {
+                                showMenu = false
+                                onRenameRequest(meeting)
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Edit, contentDescription = "이름 변경")
+                            }
+                        )
                         // 삭제: 항상 표시
                         DropdownMenuItem(
                             text = { Text("삭제", color = MaterialTheme.colorScheme.error) },
