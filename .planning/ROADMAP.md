@@ -416,7 +416,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 47-01-PLAN.md — 회의록 상세 화면 편집 모드 + 저장
+- [x] 47-01-PLAN.md — 회의록 상세 화면 편집 모드 + 저장
 
 ### Phase 48: API 사용량 대시보드
 **Goal**: 사용자가 각 엔진별 API 사용량을 한눈에 확인할 수 있다
@@ -472,6 +472,6 @@ Plans:
 | 44. Groq Whisper STT 버그 수정 | v7.0 | 1/1 | Complete   | 2026-04-03 |
 | 45. Google Drive 인증 | v7.0 | 1/1 | Complete   | 2026-04-03 |
 | 46. Google Drive 업로드 파이프라인 | v7.0 | 2/2 | Complete   | 2026-04-03 |
-| 47. 회의록 편집 기능 | v7.0 | 0/1 | Pending | — |
+| 47. 회의록 편집 기능 | v7.0 | 1/1 | Complete   | 2026-04-03 |
 | 48. API 사용량 대시보드 | v7.0 | 0/1 | Pending | — |
 | 49. 설정 UI 정비 | v7.0 | 0/1 | Pending | — |

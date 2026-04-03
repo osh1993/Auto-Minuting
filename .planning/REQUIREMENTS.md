@@ -25,7 +25,7 @@
 
 ### 텍스트 편집
 
-- [ ] **EDIT-01**: 사용자가 회의록 상세 화면에서 텍스트를 편집하고 저장할 수 있다
+- [x] **EDIT-01**: 사용자가 회의록 상세 화면에서 텍스트를 편집하고 저장할 수 있다
 
 ### 버그 수정
 
@@ -65,7 +65,7 @@
 | DRIVE-02 | Phase 46 | Complete |
 | DRIVE-03 | Phase 46 | Complete |
 | DRIVE-04 | Phase 46 | Complete |
-| EDIT-01 | Phase 47 | Pending |
+| EDIT-01 | Phase 47 | Complete |
 | BUG-01 | Phase 44 | Pending |
 | DASH-01 | Phase 48 | Pending |
 | SETTINGS-01 | Phase 49 | Pending |
