@@ -37,10 +37,16 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,11 +58,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.autominuting.data.auth.AuthMode
 import com.autominuting.data.auth.AuthState
+import com.autominuting.data.auth.DriveAuthState
 import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.data.stt.WhisperModelManager
 import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.MinutesEngineType
 import com.autominuting.domain.model.SttEngineType
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.common.api.ApiException
+import kotlinx.coroutines.launch
 
 /**
  * 설정 섹션 헤더 + 콘텐츠를 그룹화하는 재사용 가능한 composable.
@@ -108,7 +118,46 @@ fun SettingsScreen(
     val automationMode by viewModel.automationMode.collectAsStateWithLifecycle()
     val authMode by viewModel.authMode.collectAsStateWithLifecycle()
     val authState by viewModel.authState.collectAsStateWithLifecycle()
+    val driveAuthState by viewModel.driveAuthState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    // Drive 동의 결과를 처리하는 Activity Result 런처
+    // Pitfall 방지: 컴포저블 최상위(unconditional)에서 등록해야 한다
+    val driveAuthLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { activityResult ->
+        // Drive 동의 결과 처리
+        val data = activityResult.data
+        if (data != null) {
+            scope.launch {
+                try {
+                    val authResult = Identity.getAuthorizationClient(context)
+                        .getAuthorizationResultFromIntent(data)
+                    val token = authResult.accessToken
+                    if (token != null) {
+                        viewModel.onDriveAuthorizationResult(token)
+                    } else {
+                        viewModel.onDriveAuthorizationFailed("access token이 null입니다")
+                    }
+                } catch (e: ApiException) {
+                    viewModel.onDriveAuthorizationFailed(e.message)
+                }
+            }
+        } else {
+            viewModel.onDriveAuthorizationFailed("Drive 인증이 취소되었습니다")
+        }
+    }
+
+    // NeedsConsent 상태 진입 시 PendingIntent 자동 실행
+    LaunchedEffect(driveAuthState) {
+        val state = driveAuthState
+        if (state is DriveAuthState.NeedsConsent) {
+            driveAuthLauncher.launch(
+                IntentSenderRequest.Builder(state.pendingIntent.intentSender).build()
+            )
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -621,6 +670,18 @@ fun SettingsScreen(
                         onSignIn = { viewModel.signInWithGoogle(context) },
                         onSignOut = { viewModel.signOut() }
                     )
+
+                    // Google Drive 연결 섹션 — Google 계정으로 로그인된 경우에만 표시
+                    if (authState is AuthState.SignedIn) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        GoogleDriveSection(
+                            driveAuthState = driveAuthState,
+                            onConnectDrive = {
+                                viewModel.authorizeDrive(context as Activity)
+                            },
+                            onRevokeDrive = { viewModel.revokeDriveAuth() }
+                        )
+                    }
                 } else {
                     // API 키
                     ApiKeySection(viewModel = viewModel)
@@ -729,6 +790,134 @@ private fun GoogleAccountSection(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Google 계정으로 로그인")
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Google Drive 연결/해제 섹션.
+ *
+ * 미연결 상태: "Google Drive 연결" 버튼 표시
+ * NeedsConsent: 동의 화면 런처 자동 실행 (LaunchedEffect에서 처리)
+ * Loading: 진행 중 인디케이터
+ * Authorized: 연결된 계정 이메일 + "연결 해제" 버튼
+ * Error: 오류 메시지 + 재시도 버튼
+ *
+ * @param driveAuthState Drive 인증 상태
+ * @param onConnectDrive Drive 연결 버튼 클릭 콜백
+ * @param onRevokeDrive 연결 해제 버튼 클릭 콜백
+ */
+@Composable
+private fun GoogleDriveSection(
+    driveAuthState: DriveAuthState,
+    onConnectDrive: () -> Unit,
+    onRevokeDrive: () -> Unit
+) {
+    Column {
+        Text(
+            text = "Google Drive",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        when (driveAuthState) {
+            is DriveAuthState.NotAuthorized -> {
+                FilledTonalButton(
+                    onClick = onConnectDrive,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Google Drive 연결")
+                }
+            }
+
+            is DriveAuthState.NeedsConsent -> {
+                // LaunchedEffect에서 PendingIntent 자동 실행 — 진행 중 표시
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Drive 동의 화면 열기 중...",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            is DriveAuthState.Loading -> {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Drive 연결 중...",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            is DriveAuthState.Authorized -> {
+                Column {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
+                            contentDescription = "Drive 연결된 계정",
+                            modifier = Modifier.size(32.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Drive 연결됨",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            if (driveAuthState.email.isNotBlank()) {
+                                Text(
+                                    text = driveAuthState.email,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(onClick = onRevokeDrive) {
+                        Text("연결 해제")
+                    }
+                }
+            }
+
+            is DriveAuthState.Error -> {
+                Column {
+                    Text(
+                        text = driveAuthState.message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    FilledTonalButton(
+                        onClick = onConnectDrive,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Drive 다시 연결")
+                    }
                 }
             }
         }

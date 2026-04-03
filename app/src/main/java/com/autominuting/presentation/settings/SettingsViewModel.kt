@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autominuting.data.auth.AuthMode
 import com.autominuting.data.auth.AuthState
+import com.autominuting.data.auth.DriveAuthState
 import com.autominuting.data.auth.GoogleAuthRepository
 import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.data.security.SecureApiKeyRepository
@@ -114,6 +115,9 @@ class SettingsViewModel @Inject constructor(
 
     /** Google 인증 상태 */
     val authState: StateFlow<AuthState> = googleAuthRepository.authState
+
+    /** Google Drive 인증 상태 */
+    val driveAuthState: StateFlow<DriveAuthState> = googleAuthRepository.driveAuthState
 
     /** API 키 검증 상태 */
     private val _apiKeyValidationState = MutableStateFlow<ApiKeyValidationState>(ApiKeyValidationState.Idle)
@@ -254,6 +258,46 @@ class SettingsViewModel @Inject constructor(
     fun authorizeGeminiAccess(activity: Activity) {
         viewModelScope.launch {
             googleAuthRepository.authorize(activity)
+        }
+    }
+
+    /**
+     * Google Drive drive.file 스코프 권한을 요청한다.
+     * hasResolution() == true 이면 NeedsConsent 상태로 전환되며,
+     * SettingsScreen에서 rememberLauncherForActivityResult로 PendingIntent를 실행해야 한다.
+     *
+     * @param activity Activity 인스턴스
+     */
+    fun authorizeDrive(activity: Activity) {
+        viewModelScope.launch {
+            googleAuthRepository.authorizeDrive(activity)
+        }
+    }
+
+    /**
+     * Activity Result에서 Drive 동의 결과를 수신한 후 호출한다.
+     * @param accessToken 동의 후 획득한 access token
+     */
+    fun onDriveAuthorizationResult(accessToken: String) {
+        viewModelScope.launch {
+            googleAuthRepository.onDriveAuthorizationResult(accessToken)
+        }
+    }
+
+    /**
+     * Drive 인증 실패 처리.
+     * @param errorMessage 오류 메시지 (null이면 취소로 간주)
+     */
+    fun onDriveAuthorizationFailed(errorMessage: String?) {
+        googleAuthRepository.onDriveAuthorizationFailed(errorMessage)
+    }
+
+    /**
+     * Drive 인증을 해제한다.
+     */
+    fun revokeDriveAuth() {
+        viewModelScope.launch {
+            googleAuthRepository.revokeDriveAuthorization()
         }
     }
 
