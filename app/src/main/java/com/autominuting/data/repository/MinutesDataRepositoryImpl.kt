@@ -69,6 +69,10 @@ class MinutesDataRepositoryImpl @Inject constructor(
         minutesDao.updateTitle(id, title, Instant.now().toEpochMilli())
     }
 
+    override suspend fun updateMinutesUpdatedAt(id: Long, updatedAt: Long) {
+        minutesDao.updateUpdatedAt(id, updatedAt)
+    }
+
     override suspend fun deleteMinutes(id: Long) {
         // 파일 경로 조회 후 파일 삭제, 이후 DB 레코드 삭제
         val entity = minutesDao.getMinutesByIdOnce(id)

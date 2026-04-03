@@ -37,6 +37,9 @@ interface MinutesDataRepository {
     /** 회의록 제목을 업데이트한다. */
     suspend fun updateMinutesTitle(id: Long, title: String)
 
+    /** 회의록 updatedAt을 업데이트한다 (편집 저장 후 호출). */
+    suspend fun updateMinutesUpdatedAt(id: Long, updatedAt: Long)
+
     /** 회의록을 삭제한다 (파일도 삭제). */
     suspend fun deleteMinutes(id: Long)
 

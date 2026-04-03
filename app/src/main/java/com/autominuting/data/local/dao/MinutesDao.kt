@@ -78,6 +78,10 @@ interface MinutesDao {
     @Query("UPDATE minutes SET minutesTitle = :title, updatedAt = :updatedAt WHERE id = :id")
     suspend fun updateTitle(id: Long, title: String, updatedAt: Long)
 
+    /** 회의록 updatedAt을 업데이트한다. */
+    @Query("UPDATE minutes SET updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateUpdatedAt(id: Long, updatedAt: Long)
+
     /** 회의록을 삭제한다. */
     @Query("DELETE FROM minutes WHERE id = :id")
     suspend fun delete(id: Long)
