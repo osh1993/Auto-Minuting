@@ -47,6 +47,13 @@ class GroqSttEngine @Inject constructor(
         )
     }
 
+    // OkHttpClient는 커넥션 풀과 스레드 풀을 포함하므로 Singleton 클래스에서 멤버로 재사용
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(5, TimeUnit.MINUTES)
+        .readTimeout(5, TimeUnit.MINUTES)
+        .build()
+
     override fun engineName(): String = "Groq Whisper (Cloud)"
 
     override suspend fun isAvailable(): Boolean =
@@ -90,65 +97,72 @@ class GroqSttEngine @Inject constructor(
 
                 Log.d(TAG, "Groq STT 전사 시작: $audioFilePath ($fileSize bytes, $mimeType)")
 
-                val client = OkHttpClient.Builder()
-                    .connectTimeout(60, TimeUnit.SECONDS)
-                    .writeTimeout(5, TimeUnit.MINUTES)
-                    .readTimeout(5, TimeUnit.MINUTES)
-                    .build()
-
-                val requestBody = MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart(
-                        "file", audioFile.name,
-                        audioFile.asRequestBody(mimeType.toMediaType())
-                    )
-                    .addFormDataPart("model", MODEL)
-                    .addFormDataPart("language", "ko")
-                    .addFormDataPart("response_format", "verbose_json")
-                    .build()
-
-                val request = Request.Builder()
-                    .url(API_URL)
-                    .header("Authorization", "Bearer $apiKey")
-                    .post(requestBody)
-                    .build()
-
                 // 할당량 초과 시 자동 재시도
                 var lastException: Exception? = null
                 for (attempt in 1..MAX_RETRIES) {
                     try {
-                        Log.d(TAG, "Groq API 호출 (시도 $attempt/$MAX_RETRIES)")
-                        val response = client.newCall(request).execute()
-                        val responseBody = response.body?.string()
+                        // 매 시도마다 requestBody와 request를 새로 생성 (OkHttp 스트림은 재사용 불가)
+                        val requestBody = MultipartBody.Builder()
+                            .setType(MultipartBody.FORM)
+                            .addFormDataPart(
+                                "file", audioFile.name,
+                                audioFile.asRequestBody(mimeType.toMediaType())
+                            )
+                            .addFormDataPart("model", MODEL)
+                            .addFormDataPart("language", "ko")
+                            .addFormDataPart("response_format", "verbose_json")
+                            .build()
 
-                        if (response.code == 429) {
-                            lastException = GroqSttException("할당량 초과 (HTTP 429)")
-                            if (attempt < MAX_RETRIES) {
-                                Log.w(TAG, "할당량 초과, ${RETRY_DELAY_MS / 1000}초 후 재시도 ($attempt/$MAX_RETRIES)")
-                                delay(RETRY_DELAY_MS)
-                                continue
+                        val request = Request.Builder()
+                            .url(API_URL)
+                            .header("Authorization", "Bearer $apiKey")
+                            .post(requestBody)
+                            .build()
+
+                        Log.d(TAG, "Groq API 호출 (시도 $attempt/$MAX_RETRIES)")
+                        // response.use{}로 모든 경로(429 continue 포함)에서 커넥션 자동 반환
+                        val callResult = client.newCall(request).execute().use { resp ->
+                            val responseBody = resp.body?.string()
+
+                            if (resp.code == 429) {
+                                lastException = GroqSttException("할당량 초과 (HTTP 429)")
+                                if (attempt < MAX_RETRIES) {
+                                    Log.w(TAG, "할당량 초과, ${RETRY_DELAY_MS / 1000}초 후 재시도 ($attempt/$MAX_RETRIES)")
+                                }
+                                // null 반환으로 루프 상단의 재시도 로직과 연결
+                                return@use null
                             }
+
+                            if (!resp.isSuccessful || responseBody == null) {
+                                return@withContext Result.failure(
+                                    GroqSttException("Groq API 오류: HTTP ${resp.code} — ${responseBody?.take(200)}")
+                                )
+                            }
+
+                            // 응답에서 텍스트 추출
+                            val json = JSONObject(responseBody)
+                            val text = json.optString("text").trim()
+
+                            if (text.isBlank()) {
+                                return@withContext Result.failure(
+                                    GroqSttException("Groq 전사 결과가 비어있습니다")
+                                )
+                            }
+
+                            Log.d(TAG, "Groq STT 전사 완료: ${text.length}자 (시도 $attempt)")
+                            Result.success(text)
+                        }
+
+                        if (callResult != null) {
+                            return@withContext callResult
+                        }
+
+                        // 429 재시도 대기
+                        if (attempt < MAX_RETRIES) {
+                            delay(RETRY_DELAY_MS)
+                        } else {
                             break
                         }
-
-                        if (!response.isSuccessful || responseBody == null) {
-                            return@withContext Result.failure(
-                                GroqSttException("Groq API 오류: HTTP ${response.code} — ${responseBody?.take(200)}")
-                            )
-                        }
-
-                        // 응답에서 텍스트 추출
-                        val json = JSONObject(responseBody)
-                        val text = json.optString("text").trim()
-
-                        if (text.isNullOrBlank()) {
-                            return@withContext Result.failure(
-                                GroqSttException("Groq 전사 결과가 비어있습니다")
-                            )
-                        }
-
-                        Log.d(TAG, "Groq STT 전사 완료: ${text.length}자 (시도 $attempt)")
-                        return@withContext Result.success(text)
                     } catch (e: java.net.SocketTimeoutException) {
                         lastException = e
                         if (attempt < MAX_RETRIES) {
