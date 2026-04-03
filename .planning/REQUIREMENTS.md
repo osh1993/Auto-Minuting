@@ -18,7 +18,7 @@
 
 ### Google Drive 연동
 
-- [ ] **DRIVE-01**: 사용자가 설정 화면에서 Google 계정으로 로그인/로그아웃할 수 있다 (OAuth 2.0)
+- [x] **DRIVE-01**: 사용자가 설정 화면에서 Google 계정으로 로그인/로그아웃할 수 있다 (OAuth 2.0)
 - [ ] **DRIVE-02**: 전사 파일(BLE 수신 파일 및 공유받은 파일)이 파이프라인 완료 후 설정된 Google Drive 폴더에 자동으로 업로드된다
 - [ ] **DRIVE-03**: 생성된 회의록 파일이 파이프라인 완료 후 설정된 Google Drive 폴더에 자동으로 업로드된다
 - [ ] **DRIVE-04**: 사용자가 설정 화면에서 전사 파일 업로드 폴더와 회의록 파일 업로드 폴더를 각각 지정할 수 있다
@@ -61,7 +61,7 @@
 | ------ | ----- | ------ |
 | UX-01 | Phase 43 | Pending |
 | UX-02 | Phase 43 | Pending |
-| DRIVE-01 | Phase 45 | Pending |
+| DRIVE-01 | Phase 45 | Complete |
 | DRIVE-02 | Phase 46 | Pending |
 | DRIVE-03 | Phase 46 | Pending |
 | DRIVE-04 | Phase 46 | Pending |

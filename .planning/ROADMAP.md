@@ -10,6 +10,7 @@
 - ✅ **v4.0 파이프라인 고도화 및 GUI 품질 개선** — Phases 29-35 (shipped 2026-03-30)
 - ✅ **v5.0 전사-회의록 독립 아키텍처** — Phases 36-38
 - **v6.0 멀티 엔진 확장** — Phases 39-42
+- **v7.0 Drive 연동 + UX 개선** — Phases 43-49
 
 ## Phases
 
@@ -362,6 +363,79 @@ Plans:
 Plans:
 - [ ] 42-01-PLAN.md — build.gradle.kts archivesName + versionName v6.0 설정 + assembleRelease 검증
 
+## Phase Details (v7.0)
+
+### Phase 43: UX 개선 (카드 터치 + 이름 변경 메뉴) — completed 2026-04-03
+**Goal**: 전사/회의록 카드가 터치로 상세 이동되고, 이름 변경이 드롭다운 메뉴로 접근된다
+**Depends on**: Nothing
+**Requirements**: UX7-01, UX7-02
+**Plans**: 1/1 plans complete
+
+Plans:
+- [x] 43-01-PLAN.md — 카드 터치 네비게이션 + 이름 변경 메뉴 이동
+
+### Phase 44: Groq Whisper STT 버그 수정 — completed 2026-04-03
+**Goal**: Groq Whisper STT 엔진의 실제 동작 버그가 수정되어 전사가 정상 동작한다
+**Depends on**: Nothing
+**Requirements**: BUG7-01
+**Plans**: 1/1 plans complete
+
+Plans:
+- [x] 44-01-PLAN.md — Groq Whisper STT 버그 수정
+
+### Phase 45: Google Drive 인증
+**Goal**: 사용자가 설정 화면에서 Google 계정으로 로그인/로그아웃할 수 있다 (OAuth 2.0, Google Drive API 접근 목적)
+**Depends on**: Nothing (기존 GoogleAuthRepository 위에 Drive 스코프 추가)
+**Requirements**: DRIVE-01
+**Success Criteria** (what must be TRUE):
+  1. 설정 화면에서 "Google Drive 연결" 버튼을 탭할 수 있다 (Google 계정 로그인 상태에서)
+  2. 탭 시 Google 계정 선택 → Drive 접근 동의 화면이 표시된다
+  3. 동의 후 설정 화면에 연결된 계정 이메일이 표시된다
+  4. "연결 해제" 버튼으로 Drive 인증을 해제할 수 있다
+  5. Drive 인증 상태가 DataStore에 저장되어 앱 재시작 후 복원된다
+  6. assembleDebug BUILD SUCCESSFUL
+**Plans**: 1 plan
+
+Plans:
+- [x] 45-01-PLAN.md — DriveAuthState 신설 + GoogleAuthRepository.authorizeDrive() + SettingsScreen Drive 인증 UI + SettingsViewModel 연결 + assembleDebug 빌드 검증
+
+### Phase 46: Google Drive 업로드 파이프라인
+**Goal**: 회의록 생성 완료 시 Drive에 자동 업로드된다
+**Depends on**: Phase 45 (Drive 인증 완료 후)
+**Requirements**: DRIVE-02
+**Plans**: 2 plans
+
+Plans:
+- [ ] 46-01-PLAN.md — Drive REST API 업로드 레이어 (OkHttp + Authorization header)
+- [ ] 46-02-PLAN.md — 회의록 생성 파이프라인 Drive 업로드 연동 + UI 상태 표시
+
+### Phase 47: 회의록 편집 기능
+**Goal**: 사용자가 생성된 회의록 내용을 앱 내에서 직접 편집할 수 있다
+**Depends on**: Nothing
+**Requirements**: EDIT7-01
+**Plans**: 1 plan
+
+Plans:
+- [ ] 47-01-PLAN.md — 회의록 상세 화면 편집 모드 + 저장
+
+### Phase 48: API 사용량 대시보드
+**Goal**: 사용자가 각 엔진별 API 사용량을 한눈에 확인할 수 있다
+**Depends on**: Nothing
+**Requirements**: USAGE7-01
+**Plans**: 1 plan
+
+Plans:
+- [ ] 48-01-PLAN.md — API 사용량 추적 레이어 + 대시보드 위젯
+
+### Phase 49: 설정 UI 정비
+**Goal**: 설정 화면이 v7.0 신규 기능을 포함하여 논리적으로 재구성된다
+**Depends on**: Phase 45, Phase 46, Phase 47, Phase 48
+**Requirements**: SET7-01
+**Plans**: 1 plan
+
+Plans:
+- [ ] 49-01-PLAN.md — 설정 화면 Drive/편집/사용량 섹션 추가 및 재구성
+
 ## Milestone Details
 
 - v1.0 (Phases 1-7): `.planning/milestones/v1.0-ROADMAP.md`
@@ -396,7 +470,7 @@ Plans:
 | 42. 버전 번호 포함 APK 빌드 | v6.0 | 0/1 | Pending | — |
 | 43. UX 개선 (카드 터치 + 이름 변경 메뉴) | v7.0 | 1/1 | Complete | 2026-04-03 |
 | 44. Groq Whisper STT 버그 수정 | v7.0 | 1/1 | Complete   | 2026-04-03 |
-| 45. Google Drive 인증 | v7.0 | 0/1 | Pending | — |
+| 45. Google Drive 인증 | v7.0 | 1/1 | Complete   | 2026-04-03 |
 | 46. Google Drive 업로드 파이프라인 | v7.0 | 0/2 | Pending | — |
 | 47. 회의록 편집 기능 | v7.0 | 0/1 | Pending | — |
 | 48. API 사용량 대시보드 | v7.0 | 0/1 | Pending | — |
