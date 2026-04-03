@@ -471,7 +471,7 @@ Plans:
 | 43. UX 개선 (카드 터치 + 이름 변경 메뉴) | v7.0 | 1/1 | Complete | 2026-04-03 |
 | 44. Groq Whisper STT 버그 수정 | v7.0 | 1/1 | Complete   | 2026-04-03 |
 | 45. Google Drive 인증 | v7.0 | 1/1 | Complete   | 2026-04-03 |
-| 46. Google Drive 업로드 파이프라인 | v7.0 | 0/2 | Pending | — |
+| 46. Google Drive 업로드 파이프라인 | v7.0 | 2/2 | Complete   | 2026-04-03 |
 | 47. 회의록 편집 기능 | v7.0 | 0/1 | Pending | — |
 | 48. API 사용량 대시보드 | v7.0 | 0/1 | Pending | — |
 | 49. 설정 UI 정비 | v7.0 | 0/1 | Pending | — |
