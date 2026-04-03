@@ -69,6 +69,7 @@ fun DashboardScreen(
     val downloadState by viewModel.downloadState.collectAsStateWithLifecycle()
     val plaudShareUrl by viewModel.plaudShareUrl.collectAsStateWithLifecycle()
     val quotaUsage by viewModel.quotaUsage.collectAsStateWithLifecycle()
+    val apiUsageState by viewModel.apiUsageState.collectAsStateWithLifecycle()
     val transcriptionProgress by viewModel.transcriptionProgress.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -272,53 +273,8 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Gemini API 쿼터 사용량 카드
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Gemini API 사용량",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                LinearProgressIndicator(
-                    progress = { quotaUsage.usagePercent.coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth(),
-                    color = when {
-                        quotaUsage.usagePercent >= 0.9f -> MaterialTheme.colorScheme.error
-                        quotaUsage.usagePercent >= 0.7f -> MaterialTheme.colorScheme.tertiary
-                        else -> MaterialTheme.colorScheme.primary
-                    }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "${quotaUsage.totalCount} / ${quotaUsage.dailyLimit} (잔여 ${quotaUsage.remaining})",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = "전사(STT): ${quotaUsage.sttCount}회",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "회의록: ${quotaUsage.minutesCount}회",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
+        // 엔진별 API 사용량 요약 카드
+        ApiUsageCard(apiUsageState = apiUsageState)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -440,6 +396,118 @@ fun DashboardScreen(
             )
         } else {
             showPipelineTemplateDialog = false
+        }
+    }
+}
+
+@Composable
+private fun ApiUsageCard(apiUsageState: com.autominuting.data.quota.ApiUsageState) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "API 사용량 요약",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (apiUsageState.isEmpty) {
+                Text(
+                    text = "아직 API 사용 기록이 없습니다",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                // STT 섹션
+                val activeSttStats = apiUsageState.sttEngineStats.filter { it.callCount > 0 }
+                if (activeSttStats.isNotEmpty()) {
+                    Text(
+                        text = "STT 전사 엔진",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    activeSttStats.forEach { stat ->
+                        EngineStatRow(stat)
+                    }
+                }
+
+                // Minutes 섹션
+                val activeMinutesStats = apiUsageState.minutesEngineStats.filter { it.callCount > 0 }
+                if (activeMinutesStats.isNotEmpty()) {
+                    if (activeSttStats.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        androidx.compose.material3.HorizontalDivider()
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    Text(
+                        text = "회의록 생성 엔진",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    activeMinutesStats.forEach { stat ->
+                        EngineStatRow(stat)
+                    }
+                }
+
+                // 총 예상 비용 (무료만 사용 시 숨김)
+                if (apiUsageState.totalEstimatedCostUsd > 0.0) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    androidx.compose.material3.HorizontalDivider()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "총 예상 비용",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = "$%.4f".format(apiUsageState.totalEstimatedCostUsd),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EngineStatRow(stat: com.autominuting.data.quota.EngineCallStat) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stat.displayName,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = "${stat.callCount}회",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (stat.estimatedCostUsd > 0.0) {
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "$%.4f".format(stat.estimatedCostUsd),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

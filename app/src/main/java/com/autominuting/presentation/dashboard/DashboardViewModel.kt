@@ -9,6 +9,9 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.autominuting.data.preferences.UserPreferencesRepository
+import com.autominuting.data.quota.ApiUsageState
+import com.autominuting.data.quota.ApiUsageTracker
+import com.autominuting.data.quota.EngineCallStat
 import com.autominuting.data.quota.GeminiQuotaTracker
 import com.autominuting.data.quota.QuotaUsage
 import com.autominuting.domain.model.AutomationMode
@@ -50,6 +53,7 @@ class DashboardViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val promptTemplateRepository: PromptTemplateRepository,
     private val quotaTracker: GeminiQuotaTracker,
+    private val apiUsageTracker: ApiUsageTracker,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -91,6 +95,48 @@ class DashboardViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = QuotaUsage(0, 0, GeminiQuotaTracker.DAILY_LIMIT, "")
+        )
+
+    /** 엔진별 누적 API 호출 횟수 및 예상 비용 */
+    val apiUsageState: StateFlow<ApiUsageState> = apiUsageTracker.usageMap
+        .map { map ->
+            val sttKeys = listOf(
+                ApiUsageTracker.KEY_GEMINI_STT to "Gemini STT",
+                ApiUsageTracker.KEY_WHISPER_STT to "Whisper (온디바이스)",
+                ApiUsageTracker.KEY_GROQ_STT to "Groq Whisper",
+                ApiUsageTracker.KEY_DEEPGRAM_STT to "Deepgram",
+                ApiUsageTracker.KEY_NAVER_STT to "Naver CLOVA"
+            )
+            val minutesKeys = listOf(
+                ApiUsageTracker.KEY_GEMINI_MINUTES to "Gemini",
+                ApiUsageTracker.KEY_DEEPGRAM_MINUTES to "Deepgram",
+                ApiUsageTracker.KEY_NAVER_MINUTES to "Naver CLOVA"
+            )
+            ApiUsageState(
+                sttEngineStats = sttKeys.map { (key, name) ->
+                    val count = map[key] ?: 0
+                    EngineCallStat(
+                        engineKey = key,
+                        displayName = name,
+                        callCount = count,
+                        estimatedCostUsd = count * (ApiUsageTracker.ESTIMATED_COST_PER_CALL[key] ?: 0.0)
+                    )
+                },
+                minutesEngineStats = minutesKeys.map { (key, name) ->
+                    val count = map[key] ?: 0
+                    EngineCallStat(
+                        engineKey = key,
+                        displayName = name,
+                        callCount = count,
+                        estimatedCostUsd = count * (ApiUsageTracker.ESTIMATED_COST_PER_CALL[key] ?: 0.0)
+                    )
+                }
+            )
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = ApiUsageState(emptyList(), emptyList())
         )
 
     /** Whisper 전사 진행률 (0.0~1.0). 0이면 indeterminate. */
