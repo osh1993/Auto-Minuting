@@ -1,10 +1,17 @@
 # Milestones
 
-## v6.0 멀티 엔진 확장 (In Progress: 2026-03-31)
+## v6.0 멀티 엔진 확장 (Shipped: 2026-04-03)
 
 **Phases:** 39-42 (4 phases, 7 plans)
 
 **Goal:** STT 및 회의록 생성 엔진을 확장하여 Groq Whisper / Deepgram Nova-3 / Naver CLOVA를 설정에서 선택 가능하게 하고, 릴리스 번호가 포함된 APK를 생성한다.
+
+**Key accomplishments:**
+
+- GroqSttEngine, DeepgramSttEngine, NaverClovaSttEngine 구현 (SttEngineType enum 확장)
+- DeepgramMinutesEngine, NaverClovaMinutesEngine 구현 (MinutesEngineType enum 신설)
+- 설정 UI에서 STT 5종 / 회의록 엔진 3종 선택 + Groq/Deepgram/Naver API 키 암호화 저장
+- build.gradle.kts archivesName 설정으로 AutoMinuting-v6.0-release.apk 자동 생성
 
 ---
 

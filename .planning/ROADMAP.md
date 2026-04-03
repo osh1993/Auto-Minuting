@@ -9,7 +9,7 @@
 - ✅ **v3.1 UX 개선 및 정보 표시 강화** — Phases 24-28 (shipped 2026-03-29)
 - ✅ **v4.0 파이프라인 고도화 및 GUI 품질 개선** — Phases 29-35 (shipped 2026-03-30)
 - ✅ **v5.0 전사-회의록 독립 아키텍처** — Phases 36-38
-- **v6.0 멀티 엔진 확장** — Phases 39-42
+- ✅ **v6.0 멀티 엔진 확장** — Phases 39-42 (shipped 2026-04-03)
 
 ## Phases
 
@@ -318,9 +318,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 39-01-PLAN.md — GroqSttEngine 구현 (multipart/form-data, REST)
-- [ ] 39-02-PLAN.md — DeepgramSttEngine 구현 (REST, Nova-3 한국어)
-- [ ] 39-03-PLAN.md — NaverClovaSttEngine 구현 (REST, NEST 모델) + SttEngineType enum 확장 + TranscriptionRepositoryImpl 선택 로직 + Hilt 바인딩
+- [x] 39-01-PLAN.md — GroqSttEngine 구현 (multipart/form-data, REST)
+- [x] 39-02-PLAN.md — DeepgramSttEngine 구현 (REST, Nova-3 한국어)
+- [x] 39-03-PLAN.md — NaverClovaSttEngine 구현 (REST, NEST 모델) + SttEngineType enum 확장 + TranscriptionRepositoryImpl 선택 로직 + Hilt 바인딩
 
 ### Phase 40: 회의록 엔진 확장 (Deepgram Intelligence / Naver CLOVA Summary)
 **Goal**: 사용자가 Deepgram Audio Intelligence 또는 Naver CLOVA Summary를 회의록 엔진으로 선택할 수 있다
@@ -333,8 +333,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 40-01-PLAN.md — DeepgramMinutesEngine 구현 (Text Intelligence /v1/read, 영어 지원 안내 포함)
-- [ ] 40-02-PLAN.md — NaverClovaMinutesEngine 구현 (CLOVA Summary API) + MinutesEngineType enum 신설 + MinutesEngineSelector 확장 + Hilt 바인딩
+- [x] 40-01-PLAN.md — DeepgramMinutesEngine 구현 (Text Intelligence /v1/read, 영어 지원 안내 포함)
+- [x] 40-02-PLAN.md — NaverClovaMinutesEngine 구현 (CLOVA Summary API) + MinutesEngineType enum 신설 + MinutesEngineSelector 확장 + Hilt 바인딩
 
 ### Phase 41: 설정 UI 확장 (엔진 선택 + API 키 관리)
 **Goal**: 설정 화면에서 STT 엔진과 회의록 엔진을 독립적으로 선택하고, 각 서비스의 API 키를 입력/저장할 수 있다
@@ -348,7 +348,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 41-01-PLAN.md — SettingsScreen STT/회의록 엔진 드롭다운 확장 + Groq/Deepgram/Naver API 키 입력 UI
+- [x] 41-01-PLAN.md — SettingsScreen STT/회의록 엔진 드롭다운 확장 + Groq/Deepgram/Naver API 키 입력 UI
 
 ### Phase 42: 버전 번호 포함 APK 빌드
 **Goal**: Release APK 파일명에 버전 번호가 자동으로 포함된다 (AutoMinuting-v6.0-release.apk)
@@ -360,7 +360,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 42-01-PLAN.md — build.gradle.kts archivesName + versionName v6.0 설정 + assembleRelease 검증
+- [x] 42-01-PLAN.md — build.gradle.kts archivesName + versionName v6.0 설정 + assembleRelease 검증
 
 ## Milestone Details
 
@@ -390,7 +390,7 @@ Plans:
 | 36. Minutes 데이터 모델 분리 | v5.0 | 3/3 | Complete | 2026-03-30 |
 | 37. 전사-회의록 독립 삭제 | v5.0 | 1/1 | Complete | 2026-03-31 |
 | 38. 독립 아키텍처 UI 반영 | v5.0 | 2/2 | Complete | 2026-03-31 |
-| 39. STT 엔진 확장 | v6.0 | 0/3 | Pending | — |
-| 40. 회의록 엔진 확장 | v6.0 | 0/2 | Pending | — |
-| 41. 설정 UI 확장 | v6.0 | 0/1 | Pending | — |
-| 42. 버전 번호 포함 APK 빌드 | v6.0 | 0/1 | Pending | — |
+| 39. STT 엔진 확장 | v6.0 | 3/3 | Complete | 2026-04-03 |
+| 40. 회의록 엔진 확장 | v6.0 | 2/2 | Complete | 2026-04-03 |
+| 41. 설정 UI 확장 | v6.0 | 1/1 | Complete | 2026-04-03 |
+| 42. 버전 번호 포함 APK 빌드 | v6.0 | 1/1 | Complete | 2026-04-03 |
