@@ -9,8 +9,6 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Drive REST API 업로드 실패 중 401 응답 시 발생하는 예외.
@@ -26,9 +24,10 @@ class UnauthorizedException(message: String) : Exception(message)
  *
  * 401 응답 → [UnauthorizedException] (재시도 불가)
  * 그 외 HTTP 오류 → [IOException] (WorkManager retry 가능)
+ *
+ * Hilt 바인딩: RepositoryModule.provideDriveUploadRepository()
  */
-@Singleton
-class DriveUploadRepository @Inject constructor(
+class DriveUploadRepository(
     private val okHttpClient: OkHttpClient
 ) {
     companion object {

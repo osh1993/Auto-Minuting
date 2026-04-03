@@ -119,6 +119,8 @@ fun SettingsScreen(
     val authMode by viewModel.authMode.collectAsStateWithLifecycle()
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val driveAuthState by viewModel.driveAuthState.collectAsStateWithLifecycle()
+    val driveTranscriptFolderId by viewModel.driveTranscriptFolderId.collectAsStateWithLifecycle()
+    val driveMinutesFolderId by viewModel.driveMinutesFolderId.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -681,6 +683,15 @@ fun SettingsScreen(
                             },
                             onRevokeDrive = { viewModel.revokeDriveAuth() }
                         )
+                        // Drive 자동 업로드 폴더 ID 입력 섹션 (per DRIVE-04)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        DriveFolderSection(
+                            driveAuthState = driveAuthState,
+                            transcriptFolderId = driveTranscriptFolderId,
+                            minutesFolderId = driveMinutesFolderId,
+                            onTranscriptFolderIdChange = viewModel::setDriveTranscriptFolderId,
+                            onMinutesFolderIdChange = viewModel::setDriveMinutesFolderId
+                        )
                     }
                 } else {
                     // API 키
@@ -921,6 +932,56 @@ private fun GoogleDriveSection(
                 }
             }
         }
+    }
+}
+
+/**
+ * Google Drive 자동 업로드 폴더 ID 입력 섹션.
+ *
+ * Drive 인증 완료(DriveAuthState.Authorized) 상태일 때만 표시된다.
+ * 각 필드를 비워두면 해당 유형의 자동 업로드가 비활성화된다 (per DRIVE-04).
+ *
+ * @param driveAuthState Drive 인증 상태
+ * @param transcriptFolderId 현재 전사 폴더 ID
+ * @param minutesFolderId 현재 회의록 폴더 ID
+ * @param onTranscriptFolderIdChange 전사 폴더 ID 변경 콜백
+ * @param onMinutesFolderIdChange 회의록 폴더 ID 변경 콜백
+ */
+@Composable
+private fun DriveFolderSection(
+    driveAuthState: DriveAuthState,
+    transcriptFolderId: String,
+    minutesFolderId: String,
+    onTranscriptFolderIdChange: (String) -> Unit,
+    onMinutesFolderIdChange: (String) -> Unit
+) {
+    // Drive 인증 완료 상태일 때만 표시 (per DRIVE-04)
+    if (driveAuthState !is DriveAuthState.Authorized) return
+
+    SettingsSection(title = "Google Drive 자동 업로드 폴더") {
+        Text(
+            text = "폴더 ID: Google Drive에서 폴더 열기 → URL 마지막 경로 복사",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = transcriptFolderId,
+            onValueChange = onTranscriptFolderIdChange,
+            label = { Text("전사 파일 폴더 ID (비워두면 업로드 안 함)") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            placeholder = { Text("예: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms") }
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = minutesFolderId,
+            onValueChange = onMinutesFolderIdChange,
+            label = { Text("회의록 폴더 ID (비워두면 업로드 안 함)") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            placeholder = { Text("예: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms") }
+        )
     }
 }
 

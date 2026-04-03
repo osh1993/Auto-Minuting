@@ -119,6 +119,22 @@ class SettingsViewModel @Inject constructor(
     /** Google Drive 인증 상태 */
     val driveAuthState: StateFlow<DriveAuthState> = googleAuthRepository.driveAuthState
 
+    /** 전사 Drive 폴더 ID (per DRIVE-04) */
+    val driveTranscriptFolderId: StateFlow<String> = userPreferencesRepository.driveTranscriptFolderId
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = ""
+        )
+
+    /** 회의록 Drive 폴더 ID (per DRIVE-04) */
+    val driveMinutesFolderId: StateFlow<String> = userPreferencesRepository.driveMinutesFolderId
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = ""
+        )
+
     /** API 키 검증 상태 */
     private val _apiKeyValidationState = MutableStateFlow<ApiKeyValidationState>(ApiKeyValidationState.Idle)
     val apiKeyValidationState: StateFlow<ApiKeyValidationState> = _apiKeyValidationState.asStateFlow()
@@ -290,6 +306,20 @@ class SettingsViewModel @Inject constructor(
      */
     fun onDriveAuthorizationFailed(errorMessage: String?) {
         googleAuthRepository.onDriveAuthorizationFailed(errorMessage)
+    }
+
+    /** 전사 Drive 폴더 ID를 저장한다 (per DRIVE-04). 빈 문자열 저장 시 업로드 비활성 */
+    fun setDriveTranscriptFolderId(folderId: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.setDriveTranscriptFolderId(folderId)
+        }
+    }
+
+    /** 회의록 Drive 폴더 ID를 저장한다 (per DRIVE-04). 빈 문자열 저장 시 업로드 비활성 */
+    fun setDriveMinutesFolderId(folderId: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.setDriveMinutesFolderId(folderId)
+        }
     }
 
     /**

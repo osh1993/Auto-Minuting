@@ -1,5 +1,6 @@
 package com.autominuting.di
 
+import com.autominuting.data.drive.DriveUploadRepository
 import com.autominuting.data.minutes.MinutesEngine
 import com.autominuting.data.minutes.MinutesEngineSelector
 import com.autominuting.data.repository.AudioRepositoryImpl
@@ -16,8 +17,12 @@ import com.autominuting.domain.repository.PromptTemplateRepository
 import com.autominuting.domain.repository.TranscriptionRepository
 import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
+import javax.inject.Singleton
 
 /**
  * Repository 인터페이스와 구현체를 바인딩하는 Hilt 모듈.
@@ -88,4 +93,28 @@ abstract class RepositoryModule {
     abstract fun bindPromptTemplateRepository(
         impl: PromptTemplateRepositoryImpl
     ): PromptTemplateRepository
+
+    companion object {
+        /**
+         * Drive 업로드 전용 OkHttpClient를 제공한다.
+         * Authorization 헤더를 uploadFile() 파라미터로 직접 설정하므로
+         * Bearer 토큰 인터셉터 없이 plain 클라이언트를 사용한다.
+         */
+        @Provides
+        @Singleton
+        fun provideDriveOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .build()
+
+        /**
+         * DriveUploadRepository를 제공한다.
+         * 인터페이스가 없는 @Singleton 클래스이므로 @Provides 방식으로 바인딩한다.
+         */
+        @Provides
+        @Singleton
+        fun provideDriveUploadRepository(okHttpClient: OkHttpClient): DriveUploadRepository =
+            DriveUploadRepository(okHttpClient)
+    }
 }

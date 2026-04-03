@@ -6,10 +6,16 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import java.util.concurrent.TimeUnit
 import com.autominuting.R
 import com.autominuting.data.local.dao.MeetingDao
 import com.autominuting.data.local.dao.MinutesDao
@@ -209,6 +215,23 @@ class MinutesGenerationWorker @AssistedInject constructor(
 
             // 완료 알림 (공유 액션 포함)
             PipelineNotificationHelper.notifyComplete(applicationContext, meetingId, minutesText)
+
+            // DRIVE-03: Drive 업로드 독립 enqueue (파이프라인 체인과 분리)
+            val driveUploadRequest = OneTimeWorkRequestBuilder<DriveUploadWorker>()
+                .setInputData(workDataOf(
+                    DriveUploadWorker.KEY_FILE_PATH to minutesPath,
+                    DriveUploadWorker.KEY_FILE_TYPE to DriveUploadWorker.TYPE_MINUTES,
+                    DriveUploadWorker.KEY_MEETING_ID to meetingId
+                ))
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30L, TimeUnit.SECONDS)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
+                .build()
+            WorkManager.getInstance(applicationContext).enqueue(driveUploadRequest)
+            Log.d(TAG, "Drive 업로드 Worker 독립 enqueue: TYPE_MINUTES, meetingId=$meetingId")
 
             // outputData에 minutesPath 포함
             Result.success(
