@@ -49,6 +49,10 @@ class GoogleAuthRepository @Inject constructor(
         /** 폴백 OAuth 스코프 */
         private const val SCOPE_CLOUD_PLATFORM =
             "https://www.googleapis.com/auth/cloud-platform"
+
+        /** Google Drive 파일 접근 스코프 (앱이 생성한 파일만 — Non-sensitive) */
+        private const val SCOPE_DRIVE_FILE =
+            "https://www.googleapis.com/auth/drive.file"
     }
 
     private val credentialManager = CredentialManager.create(context)
@@ -61,6 +65,14 @@ class GoogleAuthRepository @Inject constructor(
     @Volatile
     private var cachedAccessToken: String? = null
 
+    /** Drive 전용 인증 상태 */
+    private val _driveAuthState = MutableStateFlow<DriveAuthState>(DriveAuthState.NotAuthorized)
+    val driveAuthState: StateFlow<DriveAuthState> = _driveAuthState.asStateFlow()
+
+    /** 캐시된 Drive access token (메모리에만 보관 — 민감 정보) */
+    @Volatile
+    private var cachedDriveAccessToken: String? = null
+
     /**
      * 초기화 시 DataStore에서 저장된 로그인 상태를 복원한다.
      */
@@ -72,6 +84,14 @@ class GoogleAuthRepository @Inject constructor(
                 displayName = savedName ?: "",
                 email = savedEmail
             )
+        }
+
+        // Drive 인증 여부 복원
+        val driveAuthorized = userPreferencesRepository.driveAuthorized.first()
+        if (driveAuthorized && !savedEmail.isNullOrBlank()) {
+            // 토큰은 만료됐을 수 있으므로 Authorized 상태로만 복원
+            // 실제 토큰은 authorizeDrive() 재호출 시 획득
+            _driveAuthState.value = DriveAuthState.Authorized(email = savedEmail)
         }
     }
 
@@ -204,11 +224,99 @@ class GoogleAuthRepository @Inject constructor(
     fun getAccessToken(): String? = cachedAccessToken
 
     /**
+     * Google Drive API drive.file 스코프 권한을 요청한다.
+     *
+     * hasResolution() == true 이면 사용자 동의 화면이 필요하며 NeedsConsent 상태를 반환한다.
+     * Activity에서 rememberLauncherForActivityResult로 PendingIntent를 실행해야 한다.
+     *
+     * hasResolution() == false 이면 이미 동의된 상태이므로 즉시 Authorized를 반환한다.
+     *
+     * @param activity Activity 인스턴스 (AuthorizationClient 필수)
+     */
+    suspend fun authorizeDrive(activity: Activity) {
+        _driveAuthState.value = DriveAuthState.Loading
+        try {
+            val authorizationRequest = AuthorizationRequest.builder()
+                .setRequestedScopes(listOf(Scope(SCOPE_DRIVE_FILE)))
+                .build()
+
+            val result = Identity.getAuthorizationClient(activity)
+                .authorize(authorizationRequest)
+                .await()
+
+            if (result.hasResolution()) {
+                // 최초 승인 요청 — PendingIntent를 UI에서 실행해야 함
+                val pendingIntent = result.pendingIntent
+                if (pendingIntent != null) {
+                    _driveAuthState.value = DriveAuthState.NeedsConsent(pendingIntent)
+                    Log.d(TAG, "Drive 인증: 사용자 동의 화면 필요")
+                } else {
+                    _driveAuthState.value = DriveAuthState.Error("동의 화면 PendingIntent가 null입니다")
+                }
+            } else {
+                // 이미 동의된 계정 — 즉시 token 획득
+                val token = result.accessToken
+                cachedDriveAccessToken = token
+                val email = (authState.value as? AuthState.SignedIn)?.email ?: ""
+                userPreferencesRepository.setDriveAuthorized(true)
+                _driveAuthState.value = DriveAuthState.Authorized(email = email)
+                Log.d(TAG, "Drive 인증 성공 (즉시): $email")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Drive 인증 실패: ${e.message}", e)
+            _driveAuthState.value = DriveAuthState.Error("Drive 인증 실패: ${e.message}")
+        }
+    }
+
+    /**
+     * Activity에서 사용자 동의 결과를 수신한 후 호출한다.
+     * getAuthorizationResultFromIntent()로 access token을 추출하여 Authorized 상태로 전환한다.
+     *
+     * @param accessToken AuthorizationResult에서 추출한 access token
+     */
+    suspend fun onDriveAuthorizationResult(accessToken: String) {
+        cachedDriveAccessToken = accessToken
+        val email = (authState.value as? AuthState.SignedIn)?.email ?: ""
+        userPreferencesRepository.setDriveAuthorized(true)
+        _driveAuthState.value = DriveAuthState.Authorized(email = email)
+        Log.d(TAG, "Drive 인증 성공 (동의 후): $email")
+    }
+
+    /**
+     * Drive 인증 실패 처리.
+     */
+    fun onDriveAuthorizationFailed(errorMessage: String?) {
+        _driveAuthState.value = DriveAuthState.Error(
+            errorMessage ?: "Drive 인증이 취소되었습니다"
+        )
+        Log.w(TAG, "Drive 인증 실패: $errorMessage")
+    }
+
+    /**
+     * Drive 인증을 해제한다. DataStore에서 드라이브 인증 여부를 삭제하고 상태를 초기화한다.
+     */
+    suspend fun revokeDriveAuthorization() {
+        cachedDriveAccessToken = null
+        userPreferencesRepository.setDriveAuthorized(false)
+        _driveAuthState.value = DriveAuthState.NotAuthorized
+        Log.d(TAG, "Drive 인증 해제 완료")
+    }
+
+    /**
+     * 캐시된 Drive access token을 반환한다. null이면 authorizeDrive() 재호출 필요.
+     */
+    fun getDriveAccessToken(): String? = cachedDriveAccessToken
+
+    /**
      * Google 로그아웃을 수행한다.
      * DataStore에서 사용자 정보를 삭제하고 캐시된 토큰을 초기화한다.
      */
     suspend fun signOut() {
         cachedAccessToken = null
+        // Drive 인증 상태도 함께 초기화
+        cachedDriveAccessToken = null
+        userPreferencesRepository.setDriveAuthorized(false)
+        _driveAuthState.value = DriveAuthState.NotAuthorized
         userPreferencesRepository.clearGoogleAccount()
         _authState.value = AuthState.NotSignedIn
         Log.d(TAG, "Google 로그아웃 완료")

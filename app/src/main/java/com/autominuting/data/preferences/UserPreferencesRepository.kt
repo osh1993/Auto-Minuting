@@ -2,6 +2,7 @@ package com.autominuting.data.preferences
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -53,6 +54,9 @@ class UserPreferencesRepository @Inject constructor(
 
         /** 회의록 엔진 유형 설정 키 */
         val MINUTES_ENGINE_KEY = stringPreferencesKey("minutes_engine")
+
+        /** Drive 인증 완료 여부 설정 키 (토큰은 저장하지 않음 — 민감 정보) */
+        val DRIVE_AUTHORIZED_KEY = booleanPreferencesKey("drive_authorized")
     }
 
     /** 현재 자동화 모드 설정을 관찰한다. 기본값: FULL_AUTO */
@@ -107,6 +111,11 @@ class UserPreferencesRepository @Inject constructor(
         prefs[GOOGLE_DISPLAY_NAME_KEY]
     }
 
+    /** Drive 인증 완료 여부를 관찰한다. 기본값: false */
+    val driveAuthorized: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[DRIVE_AUTHORIZED_KEY] ?: false
+    }
+
     /**
      * 자동화 모드를 변경한다.
      * @param mode 새로운 자동화 모드
@@ -156,6 +165,25 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.edit { prefs ->
             prefs.remove(GOOGLE_DISPLAY_NAME_KEY)
             prefs.remove(GOOGLE_EMAIL_KEY)
+        }
+    }
+
+    /**
+     * Drive 인증 완료 여부를 저장한다.
+     * @param authorized true = 인증 완료, false = 인증 해제
+     */
+    suspend fun setDriveAuthorized(authorized: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[DRIVE_AUTHORIZED_KEY] = authorized
+        }
+    }
+
+    /**
+     * Drive 인증 여부를 삭제한다.
+     */
+    suspend fun clearDriveAuthorized() {
+        dataStore.edit { prefs ->
+            prefs.remove(DRIVE_AUTHORIZED_KEY)
         }
     }
 
