@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 
 ## Current Position
 
-Phase: 40 of 42 (회의록 엔진 확장)
-Plan: 01 complete, 02 pending
+Phase: 43 of 43 (UX 개선)
+Plan: 01 of 01 complete
 Status: Executing
-Last activity: 2026-03-31
+Last activity: 2026-04-03
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Last activity: 2026-03-31
 - [v6.0 계획]: 회의록 엔진으로 Deepgram/Naver 요약 결과를 그대로 회의록으로 저장 (Gemini 수준의 구조화는 아님)
 - [v6.0 계획]: APK 파일명 형식 — AutoMinuting-v6.0-release.apk (build.gradle.kts archivesName)
 - [v6.0 계획]: 텍스트 파일 공유 시 파일명을 전사 카드 제목으로 저장 — ShareReceiverActivity 수정 완료 (2026-03-31)
+- [Phase 43]: 카드 제목 클릭 이름변경을 overflow 메뉴로 이동 — UX 일관성 확보 (카드 탭 = 상세 화면 이동)
 
 ### Roadmap
 
@@ -70,6 +71,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-31
-Stopped at: Completed 40-01-PLAN.md (DeepgramMinutesEngine 구현)
+Last session: 2026-04-03
+Stopped at: Completed 43-01-PLAN.md (카드 터치 열기 + 이름 변경 메뉴 이동)
 Resume file: None
