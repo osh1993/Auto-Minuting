@@ -29,8 +29,7 @@
 - Room DB(MeetingEntity/DAO) + PipelineStatus 상태 머신 + 4개 Repository 인터페이스 정의 및 MeetingRepository DI 바인딩 완성
 - Material 3 Dynamic Color 테마가 적용된 4개 빈 화면을 Bottom Navigation으로 연결하고, WorkManager TestWorker로 백그라운드 작업 인프라를 검증
 - Plaud SDK BLE + Cloud API 이중 경로 AudioRepository 구현체 및 Retrofit/OkHttp/Guava 의존성 구성
-- connectedDevice Foreground Service로 백그라운드 BLE 오디오 수집, WorkManager로 전사 파이프라인 자동 트리거, Application에서 Plaud SDK 조건부 초기화
-- 1. [Rule 3 - Blocking] SttModule @Provides 중복 바인딩 방지
+- connectedDevice Foreground Service로 백그라운드 BLE 오디오 수신, WorkManager로 전사 파이프라인 자동 트리거
 - 전사 완료 회의 목록 Card UI + 전사 텍스트 전체 화면 편집/파일 저장 기능 + Navigation 연동
 
 ---

@@ -10,31 +10,14 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 
 ## Current State
 
-**Shipped: v1.0 MVP** (2026-03-24)
-**Phase 8 완료** (2026-03-25) — 기반 강화
-**Phase 9 완료** (2026-03-26) — 삼성 공유 수신
-**Phase 10 완료** (2026-03-26) — NotebookLM 반자동 연동
-**Phase 20 완료** (2026-03-27) — 전사 목록 액션 메뉴 (삭제, 재전사, 공유)
-**Phase 23 완료** (2026-03-28) — STT 엔진 선택 (Gemini 클라우드 / Whisper 온디바이스)
-**v3.1 완료** (2026-03-29) — 카드 정보 표시, 이름 관리, 회의록 제목/액션, URL 다운로드, 설정 정리
-**Whisper NDK 빌드 완료** (2026-03-29) — whisper.cpp submodule + CMake + JNI, 온디바이스 전사 동작 확인
-**Phase 34 완료** (2026-03-30) — Whisper 전사 진행률 표시 (JNI progress_callback → 알림/DashboardScreen/TranscriptsScreen)
-**Phase 35 완료** (2026-03-30) — 회의록 설정 구조 개편 (MinutesFormat 전면 제거, 자동모드 Switch 이동, CUSTOM_PROMPT_MODE_ID 직접 입력)
-**Phase 36 완료** (2026-03-31) — Minutes 독립 테이블 신설, Room DB v5 마이그레이션, 전사-회의록 1:N 분리
-**Phase 37 완료** (2026-03-31) — 전사-회의록 독립 삭제/재생성 (재생성 다이얼로그 텍스트 수정)
-**Phase 38 완료** (2026-03-31) — 독립 아키텍처 UI 반영 (회의록 카드 출처 전사명, 전사 카드 회의록 수 badge)
-**v5.0 완료** (2026-03-31) — 전사-회의록 독립 아키텍처 완성
+**Shipped: v6.0 멀티 엔진 확장** (2026-04-03)
+**42 phases 완료** | **69 plans** | **13,489 Kotlin LOC**
 
-- 65+ Kotlin 파일, 7,000+ LOC
-- Tech stack: Kotlin 2.3.20, Jetpack Compose (BOM 2026.03), Hilt 2.56, Room 2.8.4, WorkManager
-- 파이프라인: Plaud SDK BLE → STT (Gemini 클라우드 / Whisper 온디바이스 선택) → Gemini 2.5 Flash → Markdown 회의록
+- Tech stack: Kotlin 2.3.20, Jetpack Compose (BOM 2026.03), Hilt 2.56, Room 2.8.4, WorkManager, whisper.cpp (NDK/JNI)
+- 파이프라인: Plaud SDK BLE → STT 5종 선택 (Whisper 온디바이스 / Gemini / Groq / Deepgram / Naver CLOVA) → 회의록 엔진 3종 선택 (Gemini / Deepgram Intelligence / Naver CLOVA Summary) → Markdown 회의록
 - UI: Material 3 Dynamic Color, Bottom Navigation 4탭, Markdown 뷰어, 아카이브 검색
-- Phase 8: 회의 삭제(DB+파일 정합성), Gemini API 키 설정 UI(암호화 저장), Room DB v2 마이그레이션, 인증 추상화
-- Phase 9: 삼성 녹음앱 공유 Intent 수신 → Gemini 회의록 자동 생성, 출처 뱃지 표시
-- Phase 10: NotebookLM 공유 버튼 + Custom Tabs 폴백 + MCP 검토 문서
-- Phase 11: 삼성 자동 감지 스파이크 — Partial Go (오디오 감지 가능, 전사 텍스트 직접 감지 불가)
-- Phase 12: Google OAuth 인증 — MinutesEngine 인터페이스, Credential Manager, GeminiOAuthEngine(REST API)
-- Phase 13: Plaud BLE 실기기 디버깅 — SDK 스텁 교체, 실제 BLE 연결 흐름, getFileList 세션 수집, 디버그 UI
+- 데이터: Room DB v5, 전사(Transcript)-회의록(Minutes) 독립 1:N 구조
+- 릴리스: AutoMinuting-v6.0-release.apk (build.gradle.kts archivesName 자동 생성)
 
 ## Requirements
 
@@ -52,9 +35,22 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 - ✓ 전사 텍스트 편집 기능 — v1.0
 - ✓ Clean Architecture + Hilt DI + Room DB + WorkManager 인프라 — v1.0
 
+### Validated (v6.0)
+
+- ✓ Groq Whisper API STT 엔진 선택 및 API 키 관리 — v6.0
+- ✓ Deepgram Nova-3 STT 엔진 선택 및 API 키 관리 — v6.0
+- ✓ Naver CLOVA Speech STT 엔진 선택 및 API 키 관리 — v6.0
+- ✓ STT 5종 실제 한국어 전사 동작 — v6.0
+- ✓ Deepgram Audio Intelligence 회의록 엔진 선택 — v6.0
+- ✓ Naver CLOVA Summary 회의록 엔진 선택 — v6.0
+- ✓ 전사 텍스트 → 요약 결과 회의록 저장 — v6.0
+- ✓ 설정 화면 STT/회의록 엔진 독립 선택 — v6.0
+- ✓ Groq/Deepgram/Naver API 키 암호화 저장 — v6.0
+- ✓ AutoMinuting-v6.0-release.apk 버전 번호 포함 APK 빌드 — v6.0
+
 ### Active
 
-(v2.1 마일스톤 — 아래 Current Milestone 참조)
+(다음 마일스톤에서 정의 예정)
 
 ### Out of Scope
 
@@ -66,8 +62,9 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 ## Context
 
 - **오디오 수집**: Plaud SDK v0.2.8 (공식, MIT)로 BLE 연결. Cloud API를 폴백으로 보유
-- **STT**: Whisper(whisper.cpp small) 온디바이스 1차, ML Kit GenAI 2차. Galaxy AI는 서드파티 접근 불가로 폐기
-- **회의록 생성**: Google AI Client SDK로 Gemini 2.5 Flash 직접 호출. NotebookLM MCP는 PC 의존으로 폴백 유지
+- **STT (5종)**: Whisper(whisper.cpp small) 온디바이스 / Gemini 클라우드 / Groq Whisper / Deepgram Nova-3 / Naver CLOVA Speech — 설정에서 선택
+- **회의록 생성 (3종)**: Gemini 2.5 Flash / Deepgram Audio Intelligence / Naver CLOVA Summary — 설정에서 선택
+- **API 키 관리**: EncryptedSharedPreferences로 Gemini/Groq/Deepgram/Naver 키 암호화 저장
 - **타깃 언어**: 한국어 녹음/전사가 주 대상
 - **타깃 디바이스**: 삼성 갤럭시 스마트폰 (minSdk 31, Android 12+)
 
@@ -91,20 +88,9 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 | AnnotatedString Markdown 렌더링 | 외부 라이브러리 없이 직접 구현 | ✓ v1.0 |
 | Room LIKE 검색 | v1 데이터 규모에 FTS 불필요 | ✓ v1.0 |
 
-## Current Milestone: v6.0 멀티 엔진 확장
+## Current Milestone
 
-**Goal:** STT 및 회의록 생성 엔진을 확장하여 Groq Whisper / Deepgram Nova-3 / Naver CLOVA를 설정에서 선택 가능하게 하고, 릴리스 번호가 포함된 APK를 자동 생성한다.
-
-**Target features:**
-
-- STT 엔진 추가: Groq Whisper API (20 RPM, 100MB, 무료)
-- STT 엔진 추가: Deepgram Nova-3 ($200 크레딧, 한국어 최고 정확도)
-- STT 엔진 추가: Naver CLOVA Speech (한국어 특화 NEST 모델)
-- 회의록 엔진 추가: Deepgram Audio Intelligence (요약/주제 감지)
-- 회의록 엔진 추가: Naver CLOVA Summary API
-- 설정 화면: STT 엔진 / 회의록 엔진 각각 선택 가능
-- API 키 관리: Groq / Deepgram / Naver 키 입력 UI
-- APK 빌드: 파일명에 버전 번호 포함 (AutoMinuting-v6.0-release.apk)
+v6.0 완료. 다음 마일스톤은 `/gsd:new-milestone`으로 시작.
 
 ## Evolution
 

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: 멀티 엔진 확장
-status: complete
-stopped_at: null
-last_updated: "2026-04-03T00:00:00.000Z"
+status: completed
+stopped_at: Completed 42-01-PLAN.md (버전 번호 포함 APK 빌드) — v6.0 전체 완료
+last_updated: "2026-04-03T02:12:50.444Z"
 last_activity: 2026-04-03
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 7
-  completed_plans: 7
+  total_phases: 42
+  completed_phases: 42
+  total_plans: 69
+  completed_plans: 69
 ---
 
 # Project State
