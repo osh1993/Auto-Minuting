@@ -1,241 +1,71 @@
-# Requirements: Auto Minuting
+# Requirements: v7.0 UX 개선 + Google Drive 연동
 
-**Defined:** 2026-03-26
+**Defined:** 2026-04-03
 **Core Value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다.
 
-## v2.1 Requirements
+## Milestone Goal
 
-Requirements for v2.1 milestone. Each maps to roadmap phases.
+이름 변경 UX 개선, Google Drive 자동 업로드 파이프라인, 회의록 편집 기능, Groq 버그 수정, API 사용량 대시보드, 설정 화면 정비를 통해 실사용 완성도를 높인다.
 
-### Plaud 연결 분석
+---
 
-- [x] **PLUD-02**: Plaud 앱의 녹음기 연결 프로토콜을 리버스 엔지니어링하여 연결 방식(BLE/Wi-Fi/기타)을 파악한다 *(No-Go 판정: E2EE + 서버 인증으로 SDK 의존 유지)*
+## v7.0 Requirements
 
-### 회의록 생성 (Minutes)
+### UX 개선
 
-- [x] **MINS-01**: 사용자가 전사 파일을 선택하고 생성 버튼으로 회의록을 수동 생성할 수 있다 (프롬프트 템플릿 선택 또는 수기 입력)
-- [ ] **MINS-02**: 사용자가 프롬프트 템플릿을 추가/삭제/편집하여 관리할 수 있다ㅤ*(폐기 — 3종 프리셋 + 커스텀 직접 입력으로 충분, 별도 관리 UI 불필요)*
+- [ ] **UX-01**: 사용자가 전사목록/회의록 탭에서 카드를 터치하면 해당 파일 상세 화면으로 이동할 수 있다
+- [ ] **UX-02**: 사용자가 전사목록/회의록 탭에서 점3개(overflow) 메뉴를 통해 이름을 변경할 수 있다
 
-### 파일 관리 (File)
+### Google Drive 연동
 
-- [ ] **FILE-02**: 사용자가 회의록을 다중 선택하여 삭제할 수 있고, 전사 파일은 보존된다ㅤ*(폐기 — 개별 삭제로 충분, 다중 선택 UX는 복잡도 대비 필요성 낮음)*
-- [x] **FILE-03**: 사용자가 전사 파일을 별도로 삭제할 수 있다
+- [ ] **DRIVE-01**: 사용자가 설정 화면에서 Google 계정으로 로그인/로그아웃할 수 있다 (OAuth 2.0)
+- [ ] **DRIVE-02**: 전사 파일(BLE 수신 파일 및 공유받은 파일)이 파이프라인 완료 후 설정된 Google Drive 폴더에 자동으로 업로드된다
+- [ ] **DRIVE-03**: 생성된 회의록 파일이 파이프라인 완료 후 설정된 Google Drive 폴더에 자동으로 업로드된다
+- [ ] **DRIVE-04**: 사용자가 설정 화면에서 전사 파일 업로드 폴더와 회의록 파일 업로드 폴더를 각각 지정할 수 있다
 
-### UI/UX 개선
+### 텍스트 편집
 
-- [ ] **UI-01**: 앱 아이콘이 새롭게 디자인되어 교체된다ㅤ*(폐기 — 디자인 리소스 없음, 기본 아이콘 유지)*
-- [ ] **UI-02**: NotebookLM 열기 버튼이 설정 화면에서 메인 화면으로 이동한다ㅤ*(폐기 — NotebookLM MCP REST API 미존재, 연동 기능 자체가 제한적)*
-- [x] **UI-03**: 테스트 도구(spike 패키지) 코드가 삭제된다ㅤ*(Phase 28에서 완료)*
+- [ ] **EDIT-01**: 사용자가 회의록 상세 화면에서 텍스트를 편집하고 저장할 수 있다
 
-### 전사 엔진 (STT)
+### 버그 수정
 
-- [x] **STT-01**: SpeechRecognizer 대신 Gemini STT 클라우드 엔진으로 음성 파일 전사가 동작한다
-- [x] **STT-02**: 사용자가 설정에서 STT 엔진(Gemini/Whisper)을 선택할 수 있다
-- [ ] **STT-03**: Whisper 온디바이스 전사가 NDK 빌드를 통해 동작한다
+- [ ] **BUG-01**: Groq Whisper STT 엔진이 정상적으로 한국어 전사를 수행한다
 
-### 인증 수정
+### API 사용량 대시보드
 
-- [ ] **AUTH-03**: Google OAuth Web Client ID 미설정 오류가 해결되어 Google 계정 로그인이 동작한다ㅤ*(폐기 — OAuth Client ID 발급은 Google Cloud Console 외부 설정 필요, 앱 코드로 해결 불가. 현재 API 키 방식으로 충분)*
+- [ ] **DASH-01**: 사용자가 전용 탭/화면에서 엔진별 API 호출 횟수와 예상 비용을 확인할 수 있다
 
-## v3.1 Requirements
+### 설정 UI 정비
 
-Requirements for v3.1 milestone. Each maps to roadmap phases.
+- [ ] **SETTINGS-01**: 설정 화면의 구조와 정보 배치가 분석되고 수정안이 제시된 후 승인을 거쳐 적용된다
 
-### 카드 정보 표시 (Card)
-
-- [x] **CARD-01**: 전사 카드에 파일 종류 아이콘(텍스트/음원)이 표시된다
-- [x] **CARD-02**: 전사 카드에 전사 완료/미완료 상태 배지가 표시된다
-- [x] **CARD-03**: 전사 카드에 회의록 작성 완료/미작성 상태 배지가 표시된다
-
-### 이름 관리 (Name)
-
-- [x] **NAME-01**: 공유받은 파일의 원본 파일명이 전사 카드 제목으로 자동 설정된다
-- [x] **NAME-02**: 사용자가 전사 카드의 이름을 편집할 수 있다
-- [x] **NAME-03**: 회의록 생성 시 Gemini가 생성한 제목이 회의록 카드 제목으로 자동 설정된다
-- [x] **NAME-04**: 사용자가 회의록 카드의 이름을 편집할 수 있다
-
-### 음성 다운로드 (Download)
-
-- [x] **DL-01**: 사용자가 대시보드에서 URL을 입력하여 음성 파일을 다운로드하고 전사 파이프라인에 진입시킬 수 있다
-
-### UX 개선 (v3.0 이관)
-
-- [x] **UX-01**: 회의록 목록에서 삭제, 공유 액션 메뉴를 사용할 수 있다
-- [x] **UX-02**: 설정 메뉴가 정리되고 테스트 도구(spike) 코드가 삭제된다
-
-## v4.0 Requirements
-
-Requirements for v4.0 milestone. Each maps to roadmap phases.
-
-### 파이프라인 (Pipeline)
-
-- [x] **PIPE-01**: 하이브리드 모드에서 전사 완료 시 대시보드에 "회의록 생성" 확인 버튼이 표시된다
-- [x] **PIPE-02**: 전사 카드의 "회의록 작성/재생성" 버튼이 MoreVert 드롭다운 메뉴 안으로 이동한다
-- [x] **PIPE-03**: 회의록 생성 시 프롬프트 템플릿을 선택할 수 있는 다이얼로그가 표시된다
-- [x] **PIPE-04**: 설정에서 기본 프롬프트 템플릿을 지정하면 선택 없이 자동으로 해당 템플릿으로 생성된다
-
-### 쿼터 관리 (Quota)
-
-- [x] **QUOTA-01**: 대시보드에 Gemini Free 쿼터 사용량이 표시된다
-- [x] **QUOTA-02**: 쿼터 사용량이 90%를 초과하면 알림이 표시된다
-
-### 공유 수신 (Share)
-
-- [x] **SHARE-01**: 다른 앱에서 Plaud 공유 링크(web.plaud.ai)를 공유하면 오디오를 자동 추출하여 전사 파이프라인에 진입한다
-
-### GUI 개선 (GUI)
-
-- [x] **GUI-01**: DashboardScreen과 TranscriptsScreen에 TopAppBar가 추가된다
-- [x] **GUI-02**: 모든 아이콘에 적절한 contentDescription이 설정된다
-- [x] **GUI-03**: 전사 목록과 회의록 목록의 빈 상태가 아이콘+텍스트로 통일된다
-- [x] **GUI-04**: 전사 목록과 회의록 목록의 날짜 포맷이 통일된다 (yyyy.MM.dd HH:mm)
-
-### 설정 구조 개편 (Settings)
-
-- [x] **SET-01**: MinutesFormat enum과 회의록 형식 드롭다운이 코드베이스에서 완전히 제거된다
-- [x] **SET-02**: 자동모드 Switch가 전사 설정에서 회의록 설정 섹션으로 이동한다
-- [ ] **SET-03**: 기본 프롬프트 드롭다운에서 "직접 입력"을 선택하여 커스텀 프롬프트를 기본으로 설정할 수 있다
-
-## v5.0 Requirements
-
-Requirements for v5.0 milestone. Each maps to roadmap phases.
-
-### 데이터 모델 분리 (Data)
-
-- [x] **DATA-01**: Minutes 독립 테이블이 신설되어 회의록이 Meeting과 별도 Row로 저장된다 (Room DB v5 마이그레이션)
-- [x] **DATA-02**: 하나의 전사(Meeting)에서 여러 회의록(Minutes)을 생성할 수 있다 (1:N 관계)
-
-### 파일 독립성 (Independence)
-
-- [x] **IND-01**: 전사 파일을 삭제해도 연결된 회의록 파일은 삭제되지 않는다
-- [x] **IND-02**: 회의록을 삭제해도 전사 파일과 Meeting 상태는 변경되지 않는다
-- [x] **IND-03**: 전사 파일로 회의록을 재생성하면 기존 회의록은 그대로 유지되고 새 회의록이 추가된다
-
-### UI 업데이트 (UI)
-
-- [x] **UI5-01**: 회의록 목록 화면에서 각 회의록이 독립 카드로 표시되며 어느 전사에서 왔는지 표기된다
-- [x] **UI5-02**: 전사 목록 화면의 카드에 연결된 회의록 수(badge)가 표시된다
+---
 
 ## Future Requirements
 
-Deferred to future release.
-
-- **PLUD-F01**: Plaud 리버스 엔지니어링 결과에 따른 연결 본구현 *(대기 — SDK 의존 유지, E2EE + 서버 인증으로 리버스 엔지니어링 불가 판정)*
-- **SREC-F01**: 삼성 녹음앱 자동 감지 본구현 (v2.0 스파이크 Partial Go) *(대기 — 전사 텍스트 직접 감지 불가, 오디오 공유 수신으로 대체 충족)*
-- ~~**NLMK-F01**: MCP 서버 API 본구현~~ → **폐기** (NotebookLM 공식 REST API 미존재, 구현 불가)
-- ~~**STT-03**: Whisper 온디바이스 전사 NDK 빌드~~ → 완료 (2026-03-29)
+- 실시간 스트리밍 전사 — 현재 배치 처리 방식 유지
+- iOS 지원 — Android 전용
+- 커스텀 Gemini 프롬프트 — v1에서 3종 프리셋으로 고정
 
 ## Out of Scope
 
-| Feature | Reason |
-|---------|--------|
-| iOS 지원 | Android 전용 |
-| 실시간 스트리밍 전사 | 배치 처리 방식 |
-| Plaud 클라우드 연동 | 로컬 파이프라인 |
-| Accessibility Service | Play Store 정책 위반 리스크 |
+- Google Drive 파일 목록 탐색 UI — 폴더 ID 직접 입력 또는 기본 폴더 사용
+- 오프라인 Drive 캐싱 — 네트워크 연결 시 즉시 업로드
+- 다른 클라우드 스토리지(OneDrive, Dropbox 등) — Google Drive만 지원
+
+---
 
 ## Traceability
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| PLUD-02 | Phase 14 | Complete (No-Go) |
-| MINS-01 | Phase 15 | Complete |
-| MINS-02 | Phase 15 | Deprecated |
-| FILE-02 | Phase 16 | Deprecated |
-| FILE-03 | Phase 16 | Complete |
-| UI-01 | Phase 17 | Deprecated |
-| UI-02 | Phase 17 | Deprecated |
-| UI-03 | Phase 28 | Complete |
-| AUTH-03 | Phase 18 | Deprecated |
-| STT-01 | Phase 20/23 | Complete |
-| STT-02 | Phase 23 | Complete |
-| CARD-01 | Phase 24 | Complete |
-| CARD-02 | Phase 24 | Complete |
-| CARD-03 | Phase 24 | Complete |
-| NAME-01 | Phase 25 | Complete |
-| NAME-02 | Phase 25 | Complete |
-| NAME-03 | Phase 26 | Complete |
-| NAME-04 | Phase 26 | Complete |
-| UX-01 | Phase 26 | Complete |
-| DL-01 | Phase 27 | Complete |
-| UX-02 | Phase 28 | Complete |
-| PIPE-01 | Phase 29 | Complete |
-| PIPE-02 | Phase 29 | Complete |
-| PIPE-03 | Phase 30 | Complete |
-| PIPE-04 | Phase 30 | Complete |
-| QUOTA-01 | Phase 31 | Complete |
-| QUOTA-02 | Phase 31 | Complete |
-| SHARE-01 | Phase 32 | Complete |
-| GUI-01 | Phase 33 | Complete |
-| GUI-02 | Phase 33 | Complete |
-| GUI-03 | Phase 33 | Complete |
-| GUI-04 | Phase 33 | Complete |
-| SET-01 | Phase 35 | Complete |
-| SET-02 | Phase 35 | Complete |
-| SET-03 | Phase 35 | Pending |
-| DATA-01 | Phase 36 | Complete |
-| DATA-02 | Phase 36 | Complete |
-| IND-01 | Phase 37 | Complete |
-| IND-02 | Phase 37 | Complete |
-| IND-03 | Phase 37 | Complete |
-| UI5-01 | Phase 38 | In Progress |
-| UI5-02 | Phase 38 | In Progress |
-
-**Coverage:**
-
-- v5.0 requirements: 7 total
-- Mapped to phases: 7
-- Unmapped: 0
-
-## v6.0 Requirements
-
-Requirements for v6.0 milestone. Each maps to roadmap phases.
-
-### STT 엔진 확장 (STT)
-
-- [ ] **STT6-01**: 사용자가 설정에서 Groq Whisper API를 STT 엔진으로 선택하고 API 키를 입력할 수 있다
-- [ ] **STT6-02**: 사용자가 설정에서 Deepgram Nova-3를 STT 엔진으로 선택하고 API 키를 입력할 수 있다
-- [ ] **STT6-03**: 사용자가 설정에서 Naver CLOVA Speech를 STT 엔진으로 선택하고 API 키를 입력할 수 있다
-- [ ] **STT6-04**: 각 STT 엔진이 실제로 한국어 오디오 파일을 전사하여 텍스트를 반환한다
-
-### 회의록 엔진 확장 (MIN)
-
-- [ ] **MIN6-01**: 사용자가 설정에서 Deepgram Audio Intelligence를 회의록 엔진으로 선택할 수 있다
-- [ ] **MIN6-02**: 사용자가 설정에서 Naver CLOVA Summary를 회의록 엔진으로 선택할 수 있다
-- [ ] **MIN6-03**: 각 회의록 엔진이 전사 텍스트를 받아 요약 결과를 회의록으로 저장한다
-
-### 설정 UI (SET6)
-
-- [ ] **SET6-01**: 설정 화면에서 STT 엔진과 회의록 엔진을 독립적으로 선택할 수 있다
-- [ ] **SET6-02**: 각 외부 API 키(Groq, Deepgram, Naver)를 설정 화면에서 입력/저장할 수 있다
-
-### 빌드 (BUILD)
-
-- [ ] **BUILD-01**: Release APK 파일명에 버전 번호가 포함된다 (AutoMinuting-v6.0-release.apk)
-
----
-
-### Traceability (v6.0)
-
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| STT6-01 | Phase 39 | Pending |
-| STT6-02 | Phase 39 | Pending |
-| STT6-03 | Phase 39 | Pending |
-| STT6-04 | Phase 39 | Pending |
-| MIN6-01 | Phase 40 | Pending |
-| MIN6-02 | Phase 40 | Pending |
-| MIN6-03 | Phase 40 | Pending |
-| SET6-01 | Phase 41 | Pending |
-| SET6-02 | Phase 41 | Pending |
-| BUILD-01 | Phase 42 | Pending |
-
-**Coverage:**
-
-- v6.0 requirements: 10 total
-- Mapped to phases: 10
-- Unmapped: 0
-
----
-
-*Requirements defined: 2026-03-26, v3.1 추가: 2026-03-28, v4.0 추가: 2026-03-29, v5.0 추가: 2026-03-30, v6.0 추가: 2026-03-31*
+| REQ-ID | Phase | Status |
+| ------ | ----- | ------ |
+| UX-01 | TBD | Pending |
+| UX-02 | TBD | Pending |
+| DRIVE-01 | TBD | Pending |
+| DRIVE-02 | TBD | Pending |
+| DRIVE-03 | TBD | Pending |
+| DRIVE-04 | TBD | Pending |
+| EDIT-01 | TBD | Pending |
+| BUG-01 | TBD | Pending |
+| DASH-01 | TBD | Pending |
+| SETTINGS-01 | TBD | Pending |
