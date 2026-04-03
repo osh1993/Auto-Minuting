@@ -1,6 +1,7 @@
 package com.autominuting.data.stt
 
 import android.util.Log
+import com.autominuting.data.quota.ApiUsageTracker
 import com.autominuting.data.security.SecureApiKeyRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -25,7 +26,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class GroqSttEngine @Inject constructor(
-    private val secureApiKeyRepository: SecureApiKeyRepository
+    private val secureApiKeyRepository: SecureApiKeyRepository,
+    private val apiUsageTracker: ApiUsageTracker
 ) : SttEngine {
 
     companion object {
@@ -154,6 +156,7 @@ class GroqSttEngine @Inject constructor(
                         }
 
                         if (callResult != null) {
+                            apiUsageTracker.record(ApiUsageTracker.KEY_GROQ_STT)
                             return@withContext callResult
                         }
 

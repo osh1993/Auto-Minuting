@@ -2,6 +2,7 @@ package com.autominuting.data.stt
 
 import android.content.Context
 import android.util.Log
+import com.autominuting.data.quota.ApiUsageTracker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,7 +24,8 @@ import javax.inject.Singleton
 @Singleton
 class WhisperEngine @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val audioConverter: AudioConverter
+    private val audioConverter: AudioConverter,
+    private val apiUsageTracker: ApiUsageTracker
 ) : SttEngine {
 
     companion object {
@@ -134,6 +136,7 @@ class WhisperEngine @Inject constructor(
                 }
 
                 Log.d(TAG, "전사 완료: ${result.length}자")
+                apiUsageTracker.record(ApiUsageTracker.KEY_WHISPER_STT)
                 Result.success(result)
             } catch (e: UnsatisfiedLinkError) {
                 Log.e(TAG, "JNI 호출 실패 (스텁 모드): ${e.message}")

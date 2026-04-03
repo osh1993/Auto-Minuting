@@ -3,9 +3,12 @@ package com.autominuting.data.repository
 import android.content.Context
 import android.util.Log
 import com.autominuting.data.minutes.MinutesEngine
+import com.autominuting.data.preferences.UserPreferencesRepository
+import com.autominuting.data.quota.ApiUsageTracker
 import com.autominuting.data.quota.GeminiQuotaTracker
 import com.autominuting.data.quota.QuotaCategory
 import com.google.ai.client.generativeai.type.QuotaExceededException
+import com.autominuting.domain.model.MinutesEngineType
 import com.autominuting.domain.repository.MinutesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +31,9 @@ import javax.inject.Singleton
 class MinutesRepositoryImpl @Inject constructor(
     private val minutesEngine: MinutesEngine,
     @ApplicationContext private val context: Context,
-    private val quotaTracker: GeminiQuotaTracker
+    private val quotaTracker: GeminiQuotaTracker,
+    private val apiUsageTracker: ApiUsageTracker,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : MinutesRepository {
 
     companion object {
@@ -72,6 +77,13 @@ class MinutesRepositoryImpl @Inject constructor(
                     Log.d(TAG, "회의록 생성 성공: ${minutesText.length}자")
                     // 쿼터 사용량 기록 (성공한 호출만 카운트)
                     quotaTracker.recordUsage(QuotaCategory.MINUTES)
+                    val minutesEngineType = userPreferencesRepository.getMinutesEngineTypeOnce()
+                    val usageKey = when (minutesEngineType) {
+                        MinutesEngineType.GEMINI -> ApiUsageTracker.KEY_GEMINI_MINUTES
+                        MinutesEngineType.DEEPGRAM -> ApiUsageTracker.KEY_DEEPGRAM_MINUTES
+                        MinutesEngineType.NAVER_CLOVA -> ApiUsageTracker.KEY_NAVER_MINUTES
+                    }
+                    apiUsageTracker.record(usageKey)
                     return@withContext Result.success(minutesText)
                 }
 

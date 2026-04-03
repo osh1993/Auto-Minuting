@@ -1,6 +1,7 @@
 package com.autominuting.data.stt
 
 import android.util.Log
+import com.autominuting.data.quota.ApiUsageTracker
 import com.autominuting.data.security.SecureApiKeyRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -24,7 +25,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class DeepgramSttEngine @Inject constructor(
-    private val secureApiKeyRepository: SecureApiKeyRepository
+    private val secureApiKeyRepository: SecureApiKeyRepository,
+    private val apiUsageTracker: ApiUsageTracker
 ) : SttEngine {
 
     companion object {
@@ -138,6 +140,7 @@ class DeepgramSttEngine @Inject constructor(
                         }
 
                         Log.d(TAG, "Deepgram STT 전사 완료: ${text.length}자 (시도 $attempt)")
+                        apiUsageTracker.record(ApiUsageTracker.KEY_DEEPGRAM_STT)
                         return@withContext Result.success(text)
                     } catch (e: java.net.SocketTimeoutException) {
                         lastException = e
