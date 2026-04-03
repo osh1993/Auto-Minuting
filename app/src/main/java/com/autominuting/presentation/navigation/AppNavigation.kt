@@ -19,6 +19,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.autominuting.presentation.dashboard.DashboardScreen
 import com.autominuting.presentation.minutes.MinutesDetailScreen
+import com.autominuting.presentation.minutes.MinutesEditScreen
 import com.autominuting.presentation.minutes.MinutesScreen
 import com.autominuting.presentation.settings.SettingsScreen
 import com.autominuting.presentation.templates.PromptTemplateScreen
@@ -100,8 +101,20 @@ fun AppNavigation() {
                 arguments = listOf(
                     navArgument("minutesId") { type = NavType.LongType }
                 )
-            ) {
+            ) { backStackEntry ->
+                val minutesId = backStackEntry.arguments?.getLong("minutesId") ?: return@composable
                 MinutesDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onEditClick = { navController.navigate(Screen.MinutesEdit.createRoute(minutesId)) }
+                )
+            }
+            composable(
+                route = Screen.MinutesEdit.route,
+                arguments = listOf(
+                    navArgument("minutesId") { type = NavType.LongType }
+                )
+            ) {
+                MinutesEditScreen(
                     onBack = { navController.popBackStack() }
                 )
             }

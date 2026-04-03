@@ -14,6 +14,7 @@ import android.content.Intent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
 import com.autominuting.util.NotebookLmHelper
 import androidx.compose.material3.CircularProgressIndicator
@@ -49,6 +50,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun MinutesDetailScreen(
     onBack: () -> Unit = {},
+    onEditClick: () -> Unit = {},
     viewModel: MinutesDetailViewModel = hiltViewModel()
 ) {
     val minutes by viewModel.minutes.collectAsState()
@@ -75,6 +77,13 @@ fun MinutesDetailScreen(
                 actions = {
                     // NotebookLM 전용 버튼 + 공유 버튼: 회의록 내용이 있을 때만 표시
                     if (minutesContent.isNotBlank()) {
+                        // 편집 버튼 (회의록 내용이 있을 때만)
+                        IconButton(onClick = onEditClick) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "편집"
+                            )
+                        }
                         // NotebookLM 전용 버튼
                         IconButton(onClick = {
                             NotebookLmHelper.shareToNotebookLm(

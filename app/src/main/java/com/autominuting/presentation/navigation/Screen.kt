@@ -60,6 +60,16 @@ sealed class Screen(
         fun createRoute(minutesId: Long) = "minutes/$minutesId"
     }
 
+    /** 회의록 편집 - 회의록 텍스트 편집 화면 (Bottom Navigation에 표시되지 않음) */
+    data object MinutesEdit : Screen(
+        "minutes/{minutesId}/edit",
+        "회의록 편집",
+        Icons.Default.Edit
+    ) {
+        /** minutesId를 포함한 실제 Navigation 경로를 생성한다. */
+        fun createRoute(minutesId: Long) = "minutes/$minutesId/edit"
+    }
+
     companion object {
         /** Bottom Navigation에 표시될 화면 목록 */
         val bottomNavItems = listOf(Dashboard, Transcripts, Minutes, Settings)
