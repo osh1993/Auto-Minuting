@@ -59,13 +59,13 @@
 
 | REQ-ID | Phase | Status |
 | ------ | ----- | ------ |
-| UX-01 | TBD | Pending |
-| UX-02 | TBD | Pending |
-| DRIVE-01 | TBD | Pending |
-| DRIVE-02 | TBD | Pending |
-| DRIVE-03 | TBD | Pending |
-| DRIVE-04 | TBD | Pending |
-| EDIT-01 | TBD | Pending |
-| BUG-01 | TBD | Pending |
-| DASH-01 | TBD | Pending |
-| SETTINGS-01 | TBD | Pending |
+| UX-01 | Phase 43 | Pending |
+| UX-02 | Phase 43 | Pending |
+| DRIVE-01 | Phase 45 | Pending |
+| DRIVE-02 | Phase 46 | Pending |
+| DRIVE-03 | Phase 46 | Pending |
+| DRIVE-04 | Phase 46 | Pending |
+| EDIT-01 | Phase 47 | Pending |
+| BUG-01 | Phase 44 | Pending |
+| DASH-01 | Phase 48 | Pending |
+| SETTINGS-01 | Phase 49 | Pending |
