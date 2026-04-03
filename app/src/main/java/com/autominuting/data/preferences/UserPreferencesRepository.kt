@@ -57,6 +57,12 @@ class UserPreferencesRepository @Inject constructor(
 
         /** Drive 인증 완료 여부 설정 키 (토큰은 저장하지 않음 — 민감 정보) */
         val DRIVE_AUTHORIZED_KEY = booleanPreferencesKey("drive_authorized")
+
+        /** DRIVE-04: 전사 파일 Drive 업로드 폴더 ID. 빈 문자열 = 업로드 비활성 */
+        val DRIVE_TRANSCRIPT_FOLDER_KEY = stringPreferencesKey("drive_transcript_folder_id")
+
+        /** DRIVE-04: 회의록 Drive 업로드 폴더 ID. 빈 문자열 = 업로드 비활성 */
+        val DRIVE_MINUTES_FOLDER_KEY = stringPreferencesKey("drive_minutes_folder_id")
     }
 
     /** 현재 자동화 모드 설정을 관찰한다. 기본값: FULL_AUTO */
@@ -114,6 +120,16 @@ class UserPreferencesRepository @Inject constructor(
     /** Drive 인증 완료 여부를 관찰한다. 기본값: false */
     val driveAuthorized: Flow<Boolean> = dataStore.data.map { prefs ->
         prefs[DRIVE_AUTHORIZED_KEY] ?: false
+    }
+
+    /** 전사 Drive 폴더 ID를 관찰한다. 빈 문자열 = 업로드 비활성 (per DRIVE-04) */
+    val driveTranscriptFolderId: Flow<String> = dataStore.data.map { prefs ->
+        prefs[DRIVE_TRANSCRIPT_FOLDER_KEY] ?: ""
+    }
+
+    /** 회의록 Drive 폴더 ID를 관찰한다. 빈 문자열 = 업로드 비활성 (per DRIVE-04) */
+    val driveMinutesFolderId: Flow<String> = dataStore.data.map { prefs ->
+        prefs[DRIVE_MINUTES_FOLDER_KEY] ?: ""
     }
 
     /**
@@ -237,6 +253,24 @@ class UserPreferencesRepository @Inject constructor(
     /** 현재 기본 커스텀 프롬프트를 즉시 조회한다. */
     suspend fun getDefaultCustomPromptOnce(): String =
         dataStore.data.first()[DEFAULT_CUSTOM_PROMPT_KEY] ?: ""
+
+    /** 전사 Drive 폴더 ID를 저장한다. 빈 문자열로 저장하면 업로드 비활성 (per DRIVE-04) */
+    suspend fun setDriveTranscriptFolderId(folderId: String) {
+        dataStore.edit { prefs -> prefs[DRIVE_TRANSCRIPT_FOLDER_KEY] = folderId }
+    }
+
+    /** 회의록 Drive 폴더 ID를 저장한다. 빈 문자열로 저장하면 업로드 비활성 (per DRIVE-04) */
+    suspend fun setDriveMinutesFolderId(folderId: String) {
+        dataStore.edit { prefs -> prefs[DRIVE_MINUTES_FOLDER_KEY] = folderId }
+    }
+
+    /** 전사 Drive 폴더 ID를 즉시 조회한다 (Worker 컨텍스트용) */
+    suspend fun getDriveTranscriptFolderIdOnce(): String =
+        dataStore.data.first()[DRIVE_TRANSCRIPT_FOLDER_KEY] ?: ""
+
+    /** 회의록 Drive 폴더 ID를 즉시 조회한다 (Worker 컨텍스트용) */
+    suspend fun getDriveMinutesFolderIdOnce(): String =
+        dataStore.data.first()[DRIVE_MINUTES_FOLDER_KEY] ?: ""
 
     /** 회의록 엔진 유형을 변경한다. */
     suspend fun setMinutesEngineType(type: MinutesEngineType) {
