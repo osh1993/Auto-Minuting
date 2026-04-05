@@ -121,6 +121,7 @@ fun SettingsScreen(
     val driveAuthState by viewModel.driveAuthState.collectAsStateWithLifecycle()
     val driveTranscriptFolderId by viewModel.driveTranscriptFolderId.collectAsStateWithLifecycle()
     val driveMinutesFolderId by viewModel.driveMinutesFolderId.collectAsStateWithLifecycle()
+    val driveAutoUploadEnabled by viewModel.driveAutoUploadEnabled.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -689,8 +690,10 @@ fun SettingsScreen(
                             driveAuthState = driveAuthState,
                             transcriptFolderId = driveTranscriptFolderId,
                             minutesFolderId = driveMinutesFolderId,
+                            autoUploadEnabled = driveAutoUploadEnabled,
                             onTranscriptFolderIdChange = viewModel::setDriveTranscriptFolderId,
-                            onMinutesFolderIdChange = viewModel::setDriveMinutesFolderId
+                            onMinutesFolderIdChange = viewModel::setDriveMinutesFolderId,
+                            onAutoUploadEnabledChange = viewModel::setDriveAutoUploadEnabled
                         )
                     }
                 } else {
@@ -952,13 +955,31 @@ private fun DriveFolderSection(
     driveAuthState: DriveAuthState,
     transcriptFolderId: String,
     minutesFolderId: String,
+    autoUploadEnabled: Boolean,
     onTranscriptFolderIdChange: (String) -> Unit,
-    onMinutesFolderIdChange: (String) -> Unit
+    onMinutesFolderIdChange: (String) -> Unit,
+    onAutoUploadEnabledChange: (Boolean) -> Unit
 ) {
     // Drive 인증 완료 상태일 때만 표시 (per DRIVE-04)
     if (driveAuthState !is DriveAuthState.Authorized) return
 
     SettingsSection(title = "Google Drive 자동 업로드 폴더") {
+        // 자동 업로드 on/off 토글
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "파이프라인 완료 시 자동 업로드",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Switch(
+                checked = autoUploadEnabled,
+                onCheckedChange = onAutoUploadEnabledChange
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "폴더 ID: Google Drive에서 폴더 열기 → URL 마지막 경로 복사",
             style = MaterialTheme.typography.bodySmall,

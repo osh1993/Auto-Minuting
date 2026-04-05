@@ -20,6 +20,7 @@ import com.autominuting.R
 import com.autominuting.data.local.dao.MeetingDao
 import com.autominuting.data.local.dao.MinutesDao
 import com.autominuting.data.local.entity.MinutesEntity
+import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.data.repository.MinutesRepositoryImpl
 import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.domain.repository.MinutesRepository
@@ -46,7 +47,8 @@ class MinutesGenerationWorker @AssistedInject constructor(
     private val meetingDao: MeetingDao,
     private val minutesDao: MinutesDao,
     private val minutesRepository: MinutesRepository,
-    private val promptTemplateRepository: PromptTemplateRepository
+    private val promptTemplateRepository: PromptTemplateRepository,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : CoroutineWorker(appContext, workerParams) {
 
     /**
@@ -216,22 +218,27 @@ class MinutesGenerationWorker @AssistedInject constructor(
             // 완료 알림 (공유 액션 포함)
             PipelineNotificationHelper.notifyComplete(applicationContext, meetingId, minutesText)
 
-            // DRIVE-03: Drive 업로드 독립 enqueue (파이프라인 체인과 분리)
-            val driveUploadRequest = OneTimeWorkRequestBuilder<DriveUploadWorker>()
-                .setInputData(workDataOf(
-                    DriveUploadWorker.KEY_FILE_PATH to minutesPath,
-                    DriveUploadWorker.KEY_FILE_TYPE to DriveUploadWorker.TYPE_MINUTES,
-                    DriveUploadWorker.KEY_MEETING_ID to meetingId
-                ))
-                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30L, TimeUnit.SECONDS)
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .build()
-                )
-                .build()
-            WorkManager.getInstance(applicationContext).enqueue(driveUploadRequest)
-            Log.d(TAG, "Drive 업로드 Worker 독립 enqueue: TYPE_MINUTES, meetingId=$meetingId")
+            // DRIVE-03: Drive 자동 업로드 활성화 시 독립 enqueue (파이프라인 체인과 분리)
+            val driveAutoUploadEnabled = userPreferencesRepository.getDriveAutoUploadEnabledOnce()
+            if (driveAutoUploadEnabled) {
+                val driveUploadRequest = OneTimeWorkRequestBuilder<DriveUploadWorker>()
+                    .setInputData(workDataOf(
+                        DriveUploadWorker.KEY_FILE_PATH to minutesPath,
+                        DriveUploadWorker.KEY_FILE_TYPE to DriveUploadWorker.TYPE_MINUTES,
+                        DriveUploadWorker.KEY_MEETING_ID to meetingId
+                    ))
+                    .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30L, TimeUnit.SECONDS)
+                    .setConstraints(
+                        Constraints.Builder()
+                            .setRequiredNetworkType(NetworkType.CONNECTED)
+                            .build()
+                    )
+                    .build()
+                WorkManager.getInstance(applicationContext).enqueue(driveUploadRequest)
+                Log.d(TAG, "Drive 자동 업로드 Worker 독립 enqueue: TYPE_MINUTES, meetingId=$meetingId")
+            } else {
+                Log.d(TAG, "Drive 자동 업로드 비활성 — 건너뜀: TYPE_MINUTES, meetingId=$meetingId")
+            }
 
             // outputData에 minutesPath 포함
             Result.success(

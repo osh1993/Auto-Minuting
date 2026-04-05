@@ -63,6 +63,9 @@ class UserPreferencesRepository @Inject constructor(
 
         /** DRIVE-04: 회의록 Drive 업로드 폴더 ID. 빈 문자열 = 업로드 비활성 */
         val DRIVE_MINUTES_FOLDER_KEY = stringPreferencesKey("drive_minutes_folder_id")
+
+        /** Drive 자동 업로드 활성화 여부 설정 키. 기본값: true */
+        val DRIVE_AUTO_UPLOAD_ENABLED_KEY = booleanPreferencesKey("drive_auto_upload_enabled")
     }
 
     /** 현재 자동화 모드 설정을 관찰한다. 기본값: FULL_AUTO */
@@ -130,6 +133,11 @@ class UserPreferencesRepository @Inject constructor(
     /** 회의록 Drive 폴더 ID를 관찰한다. 빈 문자열 = 업로드 비활성 (per DRIVE-04) */
     val driveMinutesFolderId: Flow<String> = dataStore.data.map { prefs ->
         prefs[DRIVE_MINUTES_FOLDER_KEY] ?: ""
+    }
+
+    /** Drive 자동 업로드 활성화 여부를 관찰한다. 기본값: true */
+    val driveAutoUploadEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[DRIVE_AUTO_UPLOAD_ENABLED_KEY] ?: true
     }
 
     /**
@@ -271,6 +279,15 @@ class UserPreferencesRepository @Inject constructor(
     /** 회의록 Drive 폴더 ID를 즉시 조회한다 (Worker 컨텍스트용) */
     suspend fun getDriveMinutesFolderIdOnce(): String =
         dataStore.data.first()[DRIVE_MINUTES_FOLDER_KEY] ?: ""
+
+    /** Drive 자동 업로드 활성화 여부를 저장한다. */
+    suspend fun setDriveAutoUploadEnabled(enabled: Boolean) {
+        dataStore.edit { prefs -> prefs[DRIVE_AUTO_UPLOAD_ENABLED_KEY] = enabled }
+    }
+
+    /** Drive 자동 업로드 활성화 여부를 즉시 조회한다 (Worker 컨텍스트용). 기본값: true */
+    suspend fun getDriveAutoUploadEnabledOnce(): Boolean =
+        dataStore.data.first()[DRIVE_AUTO_UPLOAD_ENABLED_KEY] ?: true
 
     /** 회의록 엔진 유형을 변경한다. */
     suspend fun setMinutesEngineType(type: MinutesEngineType) {

@@ -6,10 +6,13 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import java.util.concurrent.TimeUnit
+import com.autominuting.worker.DriveUploadWorker
 import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.domain.model.Meeting
 import com.autominuting.domain.model.PipelineStatus
@@ -280,6 +283,37 @@ class TranscriptsViewModel @Inject constructor(
             val shareIntent = Intent.createChooser(sendIntent, null)
             activityContext.startActivity(shareIntent)
             Log.d(TAG, "전사 텍스트 공유: meetingId=$meetingId")
+        }
+    }
+
+    /**
+     * 전사 파일을 수동으로 Drive에 업로드한다.
+     * DriveUploadWorker를 독립 enqueue한다.
+     *
+     * @param meetingId 업로드할 전사의 Meeting ID
+     */
+    fun uploadTranscriptToDrive(meetingId: Long) {
+        viewModelScope.launch {
+            val meeting = meetingRepository.getMeetingById(meetingId).first()
+            if (meeting?.transcriptPath == null) {
+                android.util.Log.w(TAG, "전사 파일 없음, Drive 업로드 불가: meetingId=$meetingId")
+                return@launch
+            }
+            val workRequest = OneTimeWorkRequestBuilder<DriveUploadWorker>()
+                .setInputData(workDataOf(
+                    DriveUploadWorker.KEY_FILE_PATH to meeting.transcriptPath,
+                    DriveUploadWorker.KEY_FILE_TYPE to DriveUploadWorker.TYPE_TRANSCRIPT,
+                    DriveUploadWorker.KEY_MEETING_ID to meetingId
+                ))
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30L, TimeUnit.SECONDS)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
+                .build()
+            WorkManager.getInstance(context).enqueue(workRequest)
+            android.util.Log.d(TAG, "전사 Drive 수동 업로드 enqueue: meetingId=$meetingId")
         }
     }
 

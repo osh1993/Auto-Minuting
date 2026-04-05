@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -204,6 +205,7 @@ fun MinutesScreen(
                             minutesToDelete = minutesUiModels.map { it.minutes }.find { it.id == id }
                         },
                         onShare = { id -> viewModel.shareMinutes(id, context) },
+                        onDriveUpload = { id -> viewModel.uploadMinutesToDrive(id) },
                         onSourceClick = { meetingId -> onSourceTranscriptClick(meetingId) }
                     )
                 }
@@ -298,6 +300,7 @@ private fun MinutesCard(
     onRenameRequest: (Minutes) -> Unit,
     onDeleteRequest: (Long) -> Unit,
     onShare: (Long) -> Unit,
+    onDriveUpload: (Long) -> Unit,
     onSourceClick: (Long) -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -394,6 +397,17 @@ private fun MinutesCard(
                             },
                             leadingIcon = {
                                 Icon(Icons.Default.Share, contentDescription = "공유")
+                            }
+                        )
+                        // Drive 업로드: 항상 표시
+                        DropdownMenuItem(
+                            text = { Text("Drive 업로드") },
+                            onClick = {
+                                showMenu = false
+                                onDriveUpload(minutes.id)
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Upload, contentDescription = "Drive 업로드")
                             }
                         )
                         // 이름 변경: 항상 표시

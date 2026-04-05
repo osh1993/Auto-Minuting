@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material.icons.automirrored.filled.TextSnippet
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -177,7 +178,8 @@ fun TranscriptsScreen(
                             recordAudioLauncher.launch(Manifest.permission.RECORD_AUDIO)
                         }
                     },
-                    onShare = { id -> viewModel.shareTranscript(id, context) }
+                    onShare = { id -> viewModel.shareTranscript(id, context) },
+                    onDriveUpload = { id -> viewModel.uploadTranscriptToDrive(id) }
                 )
             }
         }
@@ -287,7 +289,8 @@ private fun TranscriptMeetingCard(
     onGenerateMinutes: (Long) -> Unit,
     onRegenerateMinutes: (Meeting) -> Unit,
     onRetranscribe: (Long) -> Unit,
-    onShare: (Long) -> Unit
+    onShare: (Long) -> Unit,
+    onDriveUpload: (Long) -> Unit
 ) {
     val isEditable = meeting.pipelineStatus.isEditable()
     var showMenu by remember { mutableStateOf(false) }
@@ -381,6 +384,17 @@ private fun TranscriptMeetingCard(
                                 },
                                 leadingIcon = {
                                     Icon(Icons.Default.Share, contentDescription = "공유")
+                                }
+                            )
+                            // Drive 업로드: transcriptPath가 있을 때만 표시
+                            DropdownMenuItem(
+                                text = { Text("Drive 업로드") },
+                                onClick = {
+                                    showMenu = false
+                                    onDriveUpload(meeting.id)
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Upload, contentDescription = "Drive 업로드")
                                 }
                             )
                         }

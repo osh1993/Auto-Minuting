@@ -170,22 +170,27 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
 
             Log.d(TAG, "전사 파이프라인 완료: $transcriptPath")
 
-            // DRIVE-02: Drive 업로드 독립 enqueue (파이프라인 체인과 분리)
-            val driveUploadRequest = OneTimeWorkRequestBuilder<DriveUploadWorker>()
-                .setInputData(workDataOf(
-                    DriveUploadWorker.KEY_FILE_PATH to transcriptPath,
-                    DriveUploadWorker.KEY_FILE_TYPE to DriveUploadWorker.TYPE_TRANSCRIPT,
-                    DriveUploadWorker.KEY_MEETING_ID to meetingId
-                ))
-                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30L, TimeUnit.SECONDS)
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .build()
-                )
-                .build()
-            WorkManager.getInstance(applicationContext).enqueue(driveUploadRequest)
-            Log.d(TAG, "Drive 업로드 Worker 독립 enqueue: TYPE_TRANSCRIPT, meetingId=$meetingId")
+            // DRIVE-02: Drive 자동 업로드 활성화 시 독립 enqueue (파이프라인 체인과 분리)
+            val driveAutoUploadEnabled = userPreferencesRepository.getDriveAutoUploadEnabledOnce()
+            if (driveAutoUploadEnabled) {
+                val driveUploadRequest = OneTimeWorkRequestBuilder<DriveUploadWorker>()
+                    .setInputData(workDataOf(
+                        DriveUploadWorker.KEY_FILE_PATH to transcriptPath,
+                        DriveUploadWorker.KEY_FILE_TYPE to DriveUploadWorker.TYPE_TRANSCRIPT,
+                        DriveUploadWorker.KEY_MEETING_ID to meetingId
+                    ))
+                    .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30L, TimeUnit.SECONDS)
+                    .setConstraints(
+                        Constraints.Builder()
+                            .setRequiredNetworkType(NetworkType.CONNECTED)
+                            .build()
+                    )
+                    .build()
+                WorkManager.getInstance(applicationContext).enqueue(driveUploadRequest)
+                Log.d(TAG, "Drive 자동 업로드 Worker 독립 enqueue: TYPE_TRANSCRIPT, meetingId=$meetingId")
+            } else {
+                Log.d(TAG, "Drive 자동 업로드 비활성 — 건너뜀: TYPE_TRANSCRIPT, meetingId=$meetingId")
+            }
 
             // 직접 입력 모드인 경우 커스텀 프롬프트 조회
             val resolvedCustomPrompt: String? = if (templateId == UserPreferencesRepository.CUSTOM_PROMPT_MODE_ID) {

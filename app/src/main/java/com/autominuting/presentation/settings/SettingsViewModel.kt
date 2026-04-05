@@ -135,6 +135,14 @@ class SettingsViewModel @Inject constructor(
             initialValue = ""
         )
 
+    /** Drive 자동 업로드 활성화 여부 */
+    val driveAutoUploadEnabled: StateFlow<Boolean> = userPreferencesRepository.driveAutoUploadEnabled
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = true
+        )
+
     /** API 키 검증 상태 */
     private val _apiKeyValidationState = MutableStateFlow<ApiKeyValidationState>(ApiKeyValidationState.Idle)
     val apiKeyValidationState: StateFlow<ApiKeyValidationState> = _apiKeyValidationState.asStateFlow()
@@ -319,6 +327,13 @@ class SettingsViewModel @Inject constructor(
     fun setDriveMinutesFolderId(folderId: String) {
         viewModelScope.launch {
             userPreferencesRepository.setDriveMinutesFolderId(folderId)
+        }
+    }
+
+    /** Drive 자동 업로드 활성화 여부를 변경한다. */
+    fun setDriveAutoUploadEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setDriveAutoUploadEnabled(enabled)
         }
     }
 

@@ -2,11 +2,20 @@ package com.autominuting.presentation.minutes
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.autominuting.domain.model.Minutes
 import com.autominuting.domain.repository.MinutesDataRepository
+import com.autominuting.worker.DriveUploadWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,6 +27,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 /** 회의록 목록 UI에 표시할 모델. Minutes + 출처 전사명 포함. */
@@ -32,7 +42,8 @@ data class MinutesUiModel(
  */
 @HiltViewModel
 class MinutesViewModel @Inject constructor(
-    private val minutesDataRepository: MinutesDataRepository
+    private val minutesDataRepository: MinutesDataRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     /** 검색어 내부 상태. */
@@ -134,6 +145,37 @@ class MinutesViewModel @Inject constructor(
     }
 
     /**
+     * 회의록 파일을 수동으로 Drive에 업로드한다.
+     * DriveUploadWorker를 독립 enqueue한다.
+     *
+     * @param minutesId 업로드할 Minutes의 ID
+     */
+    fun uploadMinutesToDrive(minutesId: Long) {
+        viewModelScope.launch {
+            val minutes = minutesDataRepository.getMinutesByIdOnce(minutesId)
+            if (minutes == null) {
+                Log.w(TAG, "회의록 없음, Drive 업로드 불가: minutesId=$minutesId")
+                return@launch
+            }
+            val workRequest = OneTimeWorkRequestBuilder<DriveUploadWorker>()
+                .setInputData(workDataOf(
+                    DriveUploadWorker.KEY_FILE_PATH to minutes.minutesPath,
+                    DriveUploadWorker.KEY_FILE_TYPE to DriveUploadWorker.TYPE_MINUTES,
+                    DriveUploadWorker.KEY_MEETING_ID to (minutes.meetingId ?: 0L)
+                ))
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30L, TimeUnit.SECONDS)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
+                .build()
+            WorkManager.getInstance(context).enqueue(workRequest)
+            Log.d(TAG, "회의록 Drive 수동 업로드 enqueue: minutesId=$minutesId")
+        }
+    }
+
+    /**
      * 회의록 파일의 내용을 읽어 반환한다.
      * 파일이 존재하지 않거나 읽기 실패 시 null을 반환한다.
      *
@@ -147,5 +189,9 @@ class MinutesViewModel @Inject constructor(
         } catch (e: Exception) {
             null
         }
+    }
+
+    companion object {
+        private const val TAG = "MinutesVM"
     }
 }
