@@ -13,8 +13,8 @@
 
 ### UX 개선
 
-- [ ] **UX-01**: 사용자가 전사목록/회의록 탭에서 카드를 터치하면 해당 파일 상세 화면으로 이동할 수 있다
-- [ ] **UX-02**: 사용자가 전사목록/회의록 탭에서 점3개(overflow) 메뉴를 통해 이름을 변경할 수 있다
+- [x] **UX-01**: 사용자가 전사목록/회의록 탭에서 카드를 터치하면 해당 파일 상세 화면으로 이동할 수 있다
+- [x] **UX-02**: 사용자가 전사목록/회의록 탭에서 점3개(overflow) 메뉴를 통해 이름을 변경할 수 있다
 
 ### Google Drive 연동
 
@@ -22,6 +22,8 @@
 - [x] **DRIVE-02**: 전사 파일(BLE 수신 파일 및 공유받은 파일)이 파이프라인 완료 후 설정된 Google Drive 폴더에 자동으로 업로드된다
 - [x] **DRIVE-03**: 생성된 회의록 파일이 파이프라인 완료 후 설정된 Google Drive 폴더에 자동으로 업로드된다
 - [x] **DRIVE-04**: 사용자가 설정 화면에서 전사 파일 업로드 폴더와 회의록 파일 업로드 폴더를 각각 지정할 수 있다
+- [x] **DRIVE-05**: 사용자가 전사목록/회의록 목록에서 파일을 선택해 Drive에 수동으로 업로드할 수 있다 (Phase 46 추가)
+- [x] **DRIVE-06**: 사용자가 설정 화면에서 파이프라인 완료 시 자동 업로드 여부를 on/off 할 수 있다 (Phase 46 추가)
 
 ### 텍스트 편집
 
@@ -59,13 +61,15 @@
 
 | REQ-ID | Phase | Status |
 | ------ | ----- | ------ |
-| UX-01 | Phase 43 | Pending |
-| UX-02 | Phase 43 | Pending |
+| UX-01 | Phase 43 | Complete |
+| UX-02 | Phase 43 | Complete |
 | DRIVE-01 | Phase 45 | Complete |
 | DRIVE-02 | Phase 46 | Complete |
 | DRIVE-03 | Phase 46 | Complete |
 | DRIVE-04 | Phase 46 | Complete |
+| DRIVE-05 | Phase 46 (추가) | Complete |
+| DRIVE-06 | Phase 46 (추가) | Complete |
 | EDIT-01 | Phase 47 | Complete |
-| BUG-01 | Phase 44 | Pending |
+| BUG-01 | Phase 44 | Unresolved |
 | DASH-01 | Phase 48 | Complete |
 | SETTINGS-01 | Phase 49 | Pending |
