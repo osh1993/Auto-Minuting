@@ -38,8 +38,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import android.provider.OpenableColumns
+import com.autominuting.util.WavMerger
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -65,20 +67,30 @@ class ShareReceiverActivity : ComponentActivity() {
     /** 음성 공유 시 RECORD_AUDIO 권한 요청 후 전사 진행 */
     private var pendingAudioUri: android.net.Uri? = null
 
+    /** 다중 음성 공유 시 RECORD_AUDIO 권한 요청 후 합치기 진행 */
+    private var pendingAudioUris: List<android.net.Uri>? = null
+
     private val recordAudioPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         val uri = pendingAudioUri
+        val uris = pendingAudioUris
         pendingAudioUri = null
-        if (granted && uri != null) {
-            lifecycleScope.launch {
-                try {
-                    processSharedAudio(uri)
-                } catch (e: Exception) {
-                    Log.e(TAG, "음성 파일 처리 실패", e)
-                    Toast.makeText(this@ShareReceiverActivity, "음성 파일 처리 중 오류가 발생했습니다", Toast.LENGTH_SHORT).show()
-                } finally {
-                    finish()
+        pendingAudioUris = null
+        if (granted) {
+            if (uris != null) {
+                // 다중 오디오 합치기 경로
+                handleMultipleAudioShare(uris)
+            } else if (uri != null) {
+                lifecycleScope.launch {
+                    try {
+                        processSharedAudio(uri)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "음성 파일 처리 실패", e)
+                        Toast.makeText(this@ShareReceiverActivity, "음성 파일 처리 중 오류가 발생했습니다", Toast.LENGTH_SHORT).show()
+                    } finally {
+                        finish()
+                    }
                 }
             }
         } else {
@@ -123,6 +135,54 @@ class ShareReceiverActivity : ComponentActivity() {
         val isAudioShare = intent.getStringExtra(Intent.EXTRA_TEXT).isNullOrBlank()
             && streamUri != null
             && mimeType?.startsWith("audio/") == true
+
+        // 다중 오디오 파일 합치기 (MERGE-01)
+        if (!isAudioShare && intent?.action == Intent.ACTION_SEND_MULTIPLE) {
+            @Suppress("DEPRECATION")
+            val multiStreamUris = intent.getParcelableArrayListExtra<android.net.Uri>(Intent.EXTRA_STREAM)
+            if (!multiStreamUris.isNullOrEmpty()) {
+                val allAudio = multiStreamUris.all { uri ->
+                    val type = try { contentResolver.getType(uri) } catch (e: Exception) { null }
+                        ?: intent.type
+                    type?.startsWith("audio/") == true
+                }
+                if (allAudio && multiStreamUris.size >= 2) {
+                    Log.d(TAG, "다중 오디오 파일 공유 감지: ${multiStreamUris.size}개 파일")
+                    // RECORD_AUDIO 권한 확인 후 handleMultipleAudioShare 호출
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                        == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        handleMultipleAudioShare(multiStreamUris)
+                    } else {
+                        pendingAudioUris = multiStreamUris
+                        recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+                    return
+                } else if (allAudio && multiStreamUris.size == 1) {
+                    // 단일 파일 SEND_MULTIPLE → 기존 단일 파일 처리로 위임 (Pitfall 5)
+                    Log.d(TAG, "SEND_MULTIPLE 단일 오디오 파일 → 기존 경로로 위임")
+                    val singleUri = multiStreamUris.first()
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                        == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        lifecycleScope.launch {
+                            try {
+                                processSharedAudio(singleUri)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "음성 파일 처리 실패", e)
+                                Toast.makeText(this@ShareReceiverActivity, "음성 파일 처리 중 오류가 발생했습니다", Toast.LENGTH_SHORT).show()
+                            } finally {
+                                finish()
+                            }
+                        }
+                    } else {
+                        pendingAudioUri = singleUri
+                        recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+                    return
+                }
+            }
+        }
 
         if (isAudioShare) {
             Log.d(TAG, "음성 파일 공유 감지: uri=$streamUri, mimeType=$mimeType")
@@ -342,6 +402,94 @@ class ShareReceiverActivity : ComponentActivity() {
                 "전사 데이터가 저장되었습니다. 수동으로 회의록을 생성할 수 있습니다.",
                 Toast.LENGTH_LONG
             ).show()
+        }
+    }
+
+    /**
+     * 다중 오디오 파일을 하나의 WAV로 합쳐 STT 전사 파이프라인에 진입시킨다.
+     * Content URI는 Activity finish() 전에 모두 읽어야 한다 (Content URI 수명 보장).
+     *
+     * @param uris 합칠 오디오 파일들의 content:// URI 리스트
+     */
+    private fun handleMultipleAudioShare(uris: List<android.net.Uri>) {
+        lifecycleScope.launch {
+            val inputStreams = mutableListOf<InputStream>()
+            try {
+                // 첫 번째 URI에서 파일명 추출 (MERGE-02)
+                val firstName = getDisplayName(uris.first()) ?: "합쳐진 회의"
+
+                // 각 URI에서 InputStream 열기
+                for (uri in uris) {
+                    val stream = contentResolver.openInputStream(uri)
+                        ?: throw IOException("URI를 열 수 없습니다: $uri")
+                    inputStreams.add(stream)
+                }
+
+                // 합친 파일 생성
+                val audioDir = File(filesDir, "audio")
+                audioDir.mkdirs()
+                val mergedFile = File(audioDir, "share_${System.currentTimeMillis()}.wav")
+
+                withContext(Dispatchers.IO) {
+                    WavMerger.merge(inputStreams, mergedFile)
+                }
+
+                Log.d(TAG, "다중 오디오 합치기 완료: ${mergedFile.absolutePath} (${mergedFile.length()} bytes, ${uris.size}개 파일)")
+
+                // Meeting 엔티티 생성 + 파이프라인 진입 (MERGE-03)
+                val now = System.currentTimeMillis()
+                val meeting = Meeting(
+                    title = firstName,
+                    recordedAt = Instant.ofEpochMilli(now),
+                    audioFilePath = mergedFile.absolutePath,
+                    pipelineStatus = PipelineStatus.AUDIO_RECEIVED,
+                    source = "SAMSUNG_SHARE",
+                    createdAt = Instant.ofEpochMilli(now),
+                    updatedAt = Instant.ofEpochMilli(now)
+                )
+                val meetingId = meetingRepository.insertMeeting(meeting)
+
+                Log.d(TAG, "다중 합치기 MeetingEntity 생성: meetingId=$meetingId, title=$firstName")
+
+                // TranscriptionTriggerWorker enqueue (processSharedAudio와 동일 패턴)
+                val automationMode = userPreferencesRepository.getAutomationModeOnce()
+                val workRequest = OneTimeWorkRequestBuilder<TranscriptionTriggerWorker>()
+                    .setInputData(
+                        workDataOf(
+                            TranscriptionTriggerWorker.KEY_AUDIO_FILE_PATH to mergedFile.absolutePath,
+                            TranscriptionTriggerWorker.KEY_MEETING_ID to meetingId,
+                            TranscriptionTriggerWorker.KEY_AUTOMATION_MODE to automationMode.name
+                        )
+                    )
+                    .build()
+                WorkManager.getInstance(this@ShareReceiverActivity).enqueue(workRequest)
+
+                Log.d(TAG, "다중 합치기 전사 파이프라인 진입: meetingId=$meetingId, automationMode=$automationMode")
+
+                PipelineNotificationHelper.updateProgress(this@ShareReceiverActivity, "음성 파일 전사 중...")
+                Toast.makeText(this@ShareReceiverActivity, "음성 파일 합치기 완료, 전사 중...", Toast.LENGTH_SHORT).show()
+
+            } catch (e: IllegalArgumentException) {
+                // WAV 포맷 검증 실패 (비WAV 파일 또는 fmt 불일치)
+                Log.e(TAG, "다중 오디오 합치기 실패: ${e.message}", e)
+                val message = when {
+                    e.message?.contains("RIFF") == true || e.message?.contains("WAV") == true ->
+                        "WAV 파일만 합치기를 지원합니다"
+                    e.message?.contains("포맷") == true ->
+                        "오디오 파일 형식이 일치하지 않아 합칠 수 없습니다"
+                    else -> "오디오 합치기 실패: ${e.message}"
+                }
+                Toast.makeText(this@ShareReceiverActivity, message, Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Log.e(TAG, "다중 오디오 합치기 실패", e)
+                Toast.makeText(this@ShareReceiverActivity, "오디오 합치기 실패", Toast.LENGTH_SHORT).show()
+            } finally {
+                // 모든 InputStream 닫기
+                inputStreams.forEach { stream ->
+                    try { stream.close() } catch (_: Exception) {}
+                }
+                finish()
+            }
         }
     }
 
