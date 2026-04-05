@@ -84,11 +84,25 @@ class DriveUploadWorker @AssistedInject constructor(
             return Result.failure(workDataOf(KEY_ERROR to "파일 없음: $filePath"))
         }
 
+        // Drive에 저장될 파일명: 공유 파일명(title) + 유형 접미사 + 원본 확장자
+        val title = inputData.getString(KEY_TITLE)?.ifBlank { null }
+        val ext = file.extension.ifBlank { "txt" }
+        val driveFileName = if (title != null) {
+            val suffix = when (fileType) {
+                TYPE_TRANSCRIPT -> "_전사"
+                TYPE_MINUTES -> "_회의록"
+                else -> ""
+            }
+            "${title}${suffix}.${ext}"
+        } else {
+            file.name
+        }
+
         // Drive 업로드 실행 (mimeType은 txt/md 모두 text/plain)
         val mimeType = "text/plain"
         val uploadResult = driveUploadRepository.uploadFile(
             accessToken = accessToken,
-            fileName = file.name,
+            fileName = driveFileName,
             mimeType = mimeType,
             fileContent = file.readBytes(),
             parentFolderId = folderId
@@ -97,7 +111,7 @@ class DriveUploadWorker @AssistedInject constructor(
         return when {
             uploadResult.isSuccess -> {
                 val fileId = uploadResult.getOrNull() ?: ""
-                Log.d(TAG, "Drive 업로드 성공: fileName=${file.name}, fileId=$fileId")
+                Log.d(TAG, "Drive 업로드 성공: fileName=$driveFileName, fileId=$fileId")
                 Result.success()
             }
             uploadResult.exceptionOrNull() is UnauthorizedException -> {
@@ -154,6 +168,9 @@ class DriveUploadWorker @AssistedInject constructor(
 
         /** inputData: 파일 유형 (TYPE_TRANSCRIPT 또는 TYPE_MINUTES) */
         const val KEY_FILE_TYPE = "driveFileType"
+
+        /** inputData: 공유 파일명(meeting.title) — Drive 저장 파일명 생성에 사용 */
+        const val KEY_TITLE = "driveTitle"
 
         /** inputData: 관련 회의 ID (추적 로깅용) */
         const val KEY_MEETING_ID = "meetingId"

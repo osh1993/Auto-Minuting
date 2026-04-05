@@ -173,11 +173,13 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
             // DRIVE-02: Drive 자동 업로드 활성화 시 독립 enqueue (파이프라인 체인과 분리)
             val driveAutoUploadEnabled = userPreferencesRepository.getDriveAutoUploadEnabledOnce()
             if (driveAutoUploadEnabled) {
+                val meetingTitle = previousEntity?.title ?: ""
                 val driveUploadRequest = OneTimeWorkRequestBuilder<DriveUploadWorker>()
                     .setInputData(workDataOf(
                         DriveUploadWorker.KEY_FILE_PATH to transcriptPath,
                         DriveUploadWorker.KEY_FILE_TYPE to DriveUploadWorker.TYPE_TRANSCRIPT,
-                        DriveUploadWorker.KEY_MEETING_ID to meetingId
+                        DriveUploadWorker.KEY_MEETING_ID to meetingId,
+                        DriveUploadWorker.KEY_TITLE to meetingTitle
                     ))
                     .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30L, TimeUnit.SECONDS)
                     .setConstraints(

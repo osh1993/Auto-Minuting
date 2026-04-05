@@ -221,11 +221,13 @@ class MinutesGenerationWorker @AssistedInject constructor(
             // DRIVE-03: Drive 자동 업로드 활성화 시 독립 enqueue (파이프라인 체인과 분리)
             val driveAutoUploadEnabled = userPreferencesRepository.getDriveAutoUploadEnabledOnce()
             if (driveAutoUploadEnabled) {
+                val meetingTitle = meetingDao.getMeetingByIdOnce(meetingId)?.title ?: ""
                 val driveUploadRequest = OneTimeWorkRequestBuilder<DriveUploadWorker>()
                     .setInputData(workDataOf(
                         DriveUploadWorker.KEY_FILE_PATH to minutesPath,
                         DriveUploadWorker.KEY_FILE_TYPE to DriveUploadWorker.TYPE_MINUTES,
-                        DriveUploadWorker.KEY_MEETING_ID to meetingId
+                        DriveUploadWorker.KEY_MEETING_ID to meetingId,
+                        DriveUploadWorker.KEY_TITLE to meetingTitle
                     ))
                     .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30L, TimeUnit.SECONDS)
                     .setConstraints(

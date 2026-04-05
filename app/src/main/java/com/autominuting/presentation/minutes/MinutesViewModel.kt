@@ -157,11 +157,16 @@ class MinutesViewModel @Inject constructor(
                 Log.w(TAG, "회의록 없음, Drive 업로드 불가: minutesId=$minutesId")
                 return@launch
             }
+            // 현재 UI 목록에서 meetingTitle 조회 (이미 로드된 데이터 재사용)
+            val meetingTitle = minutesUiModels.value
+                .firstOrNull { it.minutes.id == minutesId }
+                ?.meetingTitle
             val workRequest = OneTimeWorkRequestBuilder<DriveUploadWorker>()
                 .setInputData(workDataOf(
                     DriveUploadWorker.KEY_FILE_PATH to minutes.minutesPath,
                     DriveUploadWorker.KEY_FILE_TYPE to DriveUploadWorker.TYPE_MINUTES,
-                    DriveUploadWorker.KEY_MEETING_ID to (minutes.meetingId ?: 0L)
+                    DriveUploadWorker.KEY_MEETING_ID to (minutes.meetingId ?: 0L),
+                    DriveUploadWorker.KEY_TITLE to (meetingTitle ?: "")
                 ))
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30L, TimeUnit.SECONDS)
                 .setConstraints(

@@ -303,7 +303,8 @@ class TranscriptsViewModel @Inject constructor(
                 .setInputData(workDataOf(
                     DriveUploadWorker.KEY_FILE_PATH to meeting.transcriptPath,
                     DriveUploadWorker.KEY_FILE_TYPE to DriveUploadWorker.TYPE_TRANSCRIPT,
-                    DriveUploadWorker.KEY_MEETING_ID to meetingId
+                    DriveUploadWorker.KEY_MEETING_ID to meetingId,
+                    DriveUploadWorker.KEY_TITLE to meeting.title
                 ))
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30L, TimeUnit.SECONDS)
                 .setConstraints(
