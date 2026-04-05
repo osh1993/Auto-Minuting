@@ -450,7 +450,10 @@ Plans:
   2. 합쳐진 파일의 이름이 Intent로 전달된 첫 번째 파일의 파일명과 동일하다
   3. 합쳐진 단일 파일이 기존 STT → 회의록 파이프라인을 변경 없이 그대로 통과하여 회의록이 생성된다
   4. 단일 파일을 Share Intent로 공유한 경우 기존과 동일하게 동작한다 (합치기 로직이 단일 파일에 영향 없음)
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 50-01-PLAN.md 2014 WavMerger C720D2f8B9acD2f0 + ShareReceiverActivity B2e4C911 D30cC77c Bd84Ae30
 
 ## Milestone Details
 
