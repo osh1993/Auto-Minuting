@@ -10,8 +10,12 @@ import com.autominuting.data.auth.GoogleAuthRepository
 import com.autominuting.data.drive.DriveUploadRepository
 import com.autominuting.data.drive.UnauthorizedException
 import com.autominuting.data.preferences.UserPreferencesRepository
+import com.google.android.gms.auth.api.identity.AuthorizationRequest
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.common.api.Scope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.tasks.await
 import java.io.File
 
 /**
@@ -50,15 +54,17 @@ class DriveUploadWorker @AssistedInject constructor(
 
         Log.d(TAG, "Drive 업로드 시작: fileType=$fileType, filePath=$filePath, attempt=$runAttemptCount")
 
-        // Drive access token 확인 — null/blank 이면 재시도로 해결 불가
-        val accessToken = googleAuthRepository.getDriveAccessToken()
+        // 업로드 전 fresh token 획득 시도
+        // drive.file 스코프로 authorize()를 재호출하면 이미 승인된 경우 Activity 없이 즉시 발급됨
+        val accessToken = getFreshDriveToken()
         if (accessToken.isNullOrBlank()) {
             Log.w(TAG, "Drive access token 없음 — 재인증 필요")
             return Result.failure(workDataOf(KEY_ERROR to "Drive access token 없음. 설정에서 Drive 연동 필요."))
         }
 
         // 파일 유형에 따라 대상 폴더 ID 조회
-        val folderId = when (fileType) {
+        // 폴더 미설정 시 "root" 사용 — 내 드라이브 최상위에 업로드
+        val savedFolderId = when (fileType) {
             TYPE_TRANSCRIPT -> userPreferencesRepository.getDriveTranscriptFolderIdOnce()
             TYPE_MINUTES -> userPreferencesRepository.getDriveMinutesFolderIdOnce()
             else -> {
@@ -66,11 +72,9 @@ class DriveUploadWorker @AssistedInject constructor(
                 return Result.failure(workDataOf(KEY_ERROR to "알 수 없는 파일 유형: $fileType"))
             }
         }
-
-        // 폴더 ID 빈 문자열 = 업로드 비활성 (사용자가 폴더를 설정하지 않은 정상 상태)
-        if (folderId.isBlank()) {
-            Log.d(TAG, "Drive 폴더 미설정 — 건너뜀 (fileType=$fileType)")
-            return Result.success()
+        val folderId = savedFolderId.ifBlank {
+            Log.d(TAG, "Drive 폴더 미설정 — root에 업로드 (fileType=$fileType)")
+            "root"
         }
 
         // 파일 존재 확인
@@ -107,6 +111,40 @@ class DriveUploadWorker @AssistedInject constructor(
                 Log.w(TAG, "Drive 업로드 실패 (재시도 예정): $errorMessage")
                 Result.retry()
             }
+        }
+    }
+
+    /**
+     * Drive access token을 fresh하게 획득한다.
+     *
+     * Google Identity Services의 authorize()는 이미 승인된 스코프에 대해
+     * Activity 없이도 즉시 새 access token을 발급할 수 있다.
+     * hasResolution() == false이면 즉시 token 반환.
+     * hasResolution() == true이면 사용자 동의가 필요하므로 저장된 token으로 폴백.
+     */
+    private suspend fun getFreshDriveToken(): String? {
+        return try {
+            val authRequest = AuthorizationRequest.builder()
+                .setRequestedScopes(listOf(Scope("https://www.googleapis.com/auth/drive.file")))
+                .build()
+            val result = Identity.getAuthorizationClient(applicationContext)
+                .authorize(authRequest)
+                .await()
+
+            if (!result.hasResolution()) {
+                val freshToken = result.accessToken
+                if (!freshToken.isNullOrBlank()) {
+                    Log.d(TAG, "Drive fresh token 획득 성공")
+                    return freshToken
+                }
+            }
+            // hasResolution() == true이거나 token null → 저장된 token 폴백
+            val cached = googleAuthRepository.getDriveAccessToken()
+            Log.d(TAG, "Drive fresh token 획득 실패 → 캐시 폴백: ${if (cached.isNullOrBlank()) "없음" else "있음"}")
+            cached
+        } catch (e: Exception) {
+            Log.w(TAG, "Drive fresh token 획득 중 예외 — 캐시 폴백: ${e.message}")
+            googleAuthRepository.getDriveAccessToken()
         }
     }
 

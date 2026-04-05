@@ -67,6 +67,7 @@ import com.autominuting.domain.model.SttEngineType
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.common.api.ApiException
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.filled.Folder
 
 /**
  * 설정 섹션 헤더 + 콘텐츠를 그룹화하는 재사용 가능한 composable.
@@ -122,6 +123,7 @@ fun SettingsScreen(
     val driveTranscriptFolderId by viewModel.driveTranscriptFolderId.collectAsStateWithLifecycle()
     val driveMinutesFolderId by viewModel.driveMinutesFolderId.collectAsStateWithLifecycle()
     val driveAutoUploadEnabled by viewModel.driveAutoUploadEnabled.collectAsStateWithLifecycle()
+    val driveFolderPickerState by viewModel.driveFolderPickerState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -715,16 +717,36 @@ fun SettingsScreen(
                         },
                         onRevokeDrive = { viewModel.revokeDriveAuth() }
                     )
-                    // Drive 폴더 ID 입력 + 자동 업로드 토글
+                    // Drive 폴더 피커 + 자동 업로드 토글
                     Spacer(modifier = Modifier.height(16.dp))
                     DriveFolderSection(
                         driveAuthState = driveAuthState,
                         transcriptFolderId = driveTranscriptFolderId,
                         minutesFolderId = driveMinutesFolderId,
                         autoUploadEnabled = driveAutoUploadEnabled,
-                        onTranscriptFolderIdChange = viewModel::setDriveTranscriptFolderId,
-                        onMinutesFolderIdChange = viewModel::setDriveMinutesFolderId,
-                        onAutoUploadEnabledChange = viewModel::setDriveAutoUploadEnabled
+                        folderPickerState = driveFolderPickerState,
+                        onAutoUploadEnabledChange = viewModel::setDriveAutoUploadEnabled,
+                        onBrowseTranscriptFolder = { viewModel.loadDriveFolders(null) },
+                        onBrowseMinutesFolder = { viewModel.loadDriveFolders(null) },
+                        onFolderSelected = { folder, isTranscript ->
+                            if (isTranscript) viewModel.setDriveTranscriptFolderId(folder.id)
+                            else viewModel.setDriveMinutesFolderId(folder.id)
+                            viewModel.dismissDriveFolderPicker()
+                        },
+                        onNavigateIntoFolder = { viewModel.loadDriveFolders(it.id) },
+                        onCreateFolder = { name, parentId, isTranscript ->
+                            viewModel.createDriveFolder(
+                                folderName = name,
+                                parentId = parentId,
+                                onCreated = { folder ->
+                                    if (isTranscript) viewModel.setDriveTranscriptFolderId(folder.id)
+                                    else viewModel.setDriveMinutesFolderId(folder.id)
+                                    viewModel.dismissDriveFolderPicker()
+                                },
+                                onError = { /* 피커 내 에러 표시는 상태로 처리됨 */ }
+                            )
+                        },
+                        onDismissPicker = { viewModel.dismissDriveFolderPicker() }
                     )
                 }
             }
@@ -966,16 +988,11 @@ private fun GoogleDriveSection(
 }
 
 /**
- * Google Drive 자동 업로드 폴더 ID 입력 섹션.
+ * Google Drive 업로드 폴더 선택 섹션.
  *
  * Drive 인증 완료(DriveAuthState.Authorized) 상태일 때만 표시된다.
- * 각 필드를 비워두면 해당 유형의 자동 업로드가 비활성화된다 (per DRIVE-04).
- *
- * @param driveAuthState Drive 인증 상태
- * @param transcriptFolderId 현재 전사 폴더 ID
- * @param minutesFolderId 현재 회의록 폴더 ID
- * @param onTranscriptFolderIdChange 전사 폴더 ID 변경 콜백
- * @param onMinutesFolderIdChange 회의록 폴더 ID 변경 콜백
+ * 폴더 브라우징 버튼 클릭 시 Drive 폴더 목록을 Dialog로 표시하며,
+ * 폴더 선택 또는 새 폴더 생성이 가능하다.
  */
 @Composable
 private fun DriveFolderSection(
@@ -983,14 +1000,165 @@ private fun DriveFolderSection(
     transcriptFolderId: String,
     minutesFolderId: String,
     autoUploadEnabled: Boolean,
-    onTranscriptFolderIdChange: (String) -> Unit,
-    onMinutesFolderIdChange: (String) -> Unit,
-    onAutoUploadEnabledChange: (Boolean) -> Unit
+    folderPickerState: DriveFolderPickerState,
+    onAutoUploadEnabledChange: (Boolean) -> Unit,
+    onBrowseTranscriptFolder: () -> Unit,
+    onBrowseMinutesFolder: () -> Unit,
+    onFolderSelected: (com.autominuting.data.drive.DriveFolder, Boolean) -> Unit,
+    onNavigateIntoFolder: (com.autominuting.data.drive.DriveFolder) -> Unit,
+    onCreateFolder: (name: String, parentId: String?, isTranscript: Boolean) -> Unit,
+    onDismissPicker: () -> Unit
 ) {
-    // Drive 인증 완료 상태일 때만 표시 (per DRIVE-04)
+    // Drive 인증 완료 상태일 때만 표시
     if (driveAuthState !is DriveAuthState.Authorized) return
 
-    SettingsSection(title = "Google Drive 자동 업로드 폴더") {
+    // 현재 피커가 어떤 폴더 유형을 위한 것인지 추적
+    var pickerTargetIsTranscript by remember { mutableStateOf(true) }
+    // 새 폴더 생성 다이얼로그 상태
+    var showCreateFolderDialog by remember { mutableStateOf(false) }
+    var newFolderName by remember { mutableStateOf("") }
+
+    // 피커 다이얼로그 (Loaded 상태일 때만 표시)
+    if (folderPickerState is DriveFolderPickerState.Loaded) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = onDismissPicker,
+            title = {
+                Text(if (pickerTargetIsTranscript) "전사 파일 폴더 선택" else "회의록 폴더 선택")
+            },
+            text = {
+                Column {
+                    val parentId = folderPickerState.parentId
+                    // 상위 폴더로 이동 버튼
+                    if (parentId != null) {
+                        TextButton(onClick = { onNavigateIntoFolder(
+                            com.autominuting.data.drive.DriveFolder("root", "내 드라이브")
+                        ) }) {
+                            Text("← 내 드라이브")
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+                    // 현재 폴더(내 드라이브 또는 선택 위치)를 직접 선택
+                    OutlinedButton(
+                        onClick = {
+                            onFolderSelected(
+                                com.autominuting.data.drive.DriveFolder(
+                                    parentId ?: "root",
+                                    if (parentId == null) "내 드라이브" else "현재 폴더"
+                                ),
+                                pickerTargetIsTranscript
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("✓ ${if (parentId == null) "내 드라이브 (root)" else "현재 폴더 선택"}")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (folderPickerState.folders.isEmpty()) {
+                        Text(
+                            text = "하위 폴더 없음",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        folderPickerState.folders.forEach { folder ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TextButton(
+                                    onClick = { onFolderSelected(folder, pickerTargetIsTranscript) },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(
+                                        text = folder.name,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                                IconButton(onClick = { onNavigateIntoFolder(folder) }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Folder,
+                                        contentDescription = "하위 폴더 보기"
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCreateFolderDialog = true }) {
+                    Text("+ 새 폴더")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismissPicker) { Text("취소") }
+            }
+        )
+    }
+
+    // 로딩 다이얼로그
+    if (folderPickerState is DriveFolderPickerState.Loading) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = onDismissPicker,
+            title = { Text("폴더 목록 로딩 중...") },
+            text = { CircularProgressIndicator() },
+            confirmButton = {}
+        )
+    }
+
+    // 에러 다이얼로그
+    if (folderPickerState is DriveFolderPickerState.Error) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = onDismissPicker,
+            title = { Text("오류") },
+            text = { Text(folderPickerState.message) },
+            confirmButton = {
+                TextButton(onClick = onDismissPicker) { Text("확인") }
+            }
+        )
+    }
+
+    // 새 폴더 이름 입력 다이얼로그
+    if (showCreateFolderDialog) {
+        val currentParentId = (folderPickerState as? DriveFolderPickerState.Loaded)?.parentId
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = {
+                showCreateFolderDialog = false
+                newFolderName = ""
+            },
+            title = { Text("새 폴더 만들기") },
+            text = {
+                OutlinedTextField(
+                    value = newFolderName,
+                    onValueChange = { newFolderName = it },
+                    label = { Text("폴더 이름") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (newFolderName.isNotBlank()) {
+                            onCreateFolder(newFolderName, currentParentId, pickerTargetIsTranscript)
+                            showCreateFolderDialog = false
+                            newFolderName = ""
+                        }
+                    },
+                    enabled = newFolderName.isNotBlank()
+                ) { Text("만들기") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showCreateFolderDialog = false
+                    newFolderName = ""
+                }) { Text("취소") }
+            }
+        )
+    }
+
+    SettingsSection(title = "Google Drive 업로드 폴더") {
         // 자동 업로드 on/off 토글
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1006,29 +1174,68 @@ private fun DriveFolderSection(
                 onCheckedChange = onAutoUploadEnabledChange
             )
         }
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 전사 파일 폴더
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "전사 파일 폴더",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = if (transcriptFolderId.isBlank()) "미설정 (내 드라이브 root)" else transcriptFolderId,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            OutlinedButton(onClick = {
+                pickerTargetIsTranscript = true
+                onBrowseTranscriptFolder()
+            }) {
+                Text("선택")
+            }
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
+
+        // 회의록 폴더
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "회의록 폴더",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = if (minutesFolderId.isBlank()) "미설정 (내 드라이브 root)" else minutesFolderId,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            OutlinedButton(onClick = {
+                pickerTargetIsTranscript = false
+                onBrowseMinutesFolder()
+            }) {
+                Text("선택")
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "폴더 ID: Google Drive에서 폴더 열기 → URL 마지막 경로 복사",
+            text = "폴더 미선택 시 내 드라이브 최상위(root)에 업로드됩니다",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = transcriptFolderId,
-            onValueChange = onTranscriptFolderIdChange,
-            label = { Text("전사 파일 폴더 ID (비워두면 업로드 안 함)") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            placeholder = { Text("예: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms") }
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = minutesFolderId,
-            onValueChange = onMinutesFolderIdChange,
-            label = { Text("회의록 폴더 ID (비워두면 업로드 안 함)") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            placeholder = { Text("예: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms") }
         )
     }
 }

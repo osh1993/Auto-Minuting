@@ -8,6 +8,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import org.json.JSONArray
 import java.io.IOException
 
 /**
@@ -92,6 +93,130 @@ class DriveUploadRepository(
         } catch (e: Exception) {
             Log.e(TAG, "Drive 업로드 예외: ${e.message}", e)
             Result.failure(e)
+        }
+    }
+
+    /**
+     * 현재 접근 가능한 Drive 폴더 목록을 조회한다.
+     * drive.file 스코프이므로 앱이 생성했거나 접근 권한이 부여된 폴더만 반환된다.
+     * 최초 사용 시에는 "내 드라이브(root)" 항목만 반환될 수 있다.
+     *
+     * @param accessToken Bearer 토큰 (OAuth Drive scope)
+     * @param parentId 조회할 부모 폴더 ID (null이면 root)
+     * @return Result.success(List<DriveFolder>) | Result.failure
+     */
+    suspend fun listFolders(
+        accessToken: String,
+        parentId: String? = null
+    ): Result<List<DriveFolder>> = withContext(Dispatchers.IO) {
+        try {
+            val parent = parentId ?: "root"
+            val query = "mimeType='application/vnd.google-apps.folder' and '$parent' in parents and trashed=false"
+            val url = "https://www.googleapis.com/drive/v3/files" +
+                "?q=${java.net.URLEncoder.encode(query, "UTF-8")}" +
+                "&fields=files(id,name,parents)" +
+                "&orderBy=name"
+
+            val request = Request.Builder()
+                .url(url)
+                .addHeader("Authorization", "Bearer $accessToken")
+                .get()
+                .build()
+
+            val response = okHttpClient.newCall(request).execute()
+            response.use { res ->
+                when {
+                    res.isSuccessful -> {
+                        val body = res.body?.string() ?: ""
+                        val folders = parseFolderList(body)
+                        Log.d(TAG, "Drive 폴더 목록 조회 성공: ${folders.size}개 (parent=$parent)")
+                        Result.success(folders)
+                    }
+                    res.code == 401 -> {
+                        Log.w(TAG, "Drive 폴더 목록 조회 401: 토큰 만료")
+                        Result.failure(UnauthorizedException("Drive access token 만료"))
+                    }
+                    else -> {
+                        Log.w(TAG, "Drive 폴더 목록 조회 실패: HTTP ${res.code}")
+                        Result.failure(IOException("폴더 목록 조회 실패: HTTP ${res.code}"))
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Drive 폴더 목록 조회 예외: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Drive에 새 폴더를 생성한다.
+     *
+     * @param accessToken Bearer 토큰 (OAuth Drive scope)
+     * @param folderName 생성할 폴더 이름
+     * @param parentId 부모 폴더 ID (null이면 root)
+     * @return Result.success(DriveFolder) | Result.failure
+     */
+    suspend fun createFolder(
+        accessToken: String,
+        folderName: String,
+        parentId: String? = null
+    ): Result<DriveFolder> = withContext(Dispatchers.IO) {
+        try {
+            val parent = parentId ?: "root"
+            val metadataJson = """{"name":"$folderName","mimeType":"application/vnd.google-apps.folder","parents":["$parent"]}"""
+
+            val request = Request.Builder()
+                .url("https://www.googleapis.com/drive/v3/files?fields=id,name,parents")
+                .addHeader("Authorization", "Bearer $accessToken")
+                .addHeader("Content-Type", "application/json; charset=UTF-8")
+                .post(metadataJson.toRequestBody("application/json; charset=UTF-8".toMediaTypeOrNull()))
+                .build()
+
+            val response = okHttpClient.newCall(request).execute()
+            response.use { res ->
+                when {
+                    res.isSuccessful -> {
+                        val body = res.body?.string() ?: ""
+                        val json = JSONObject(body)
+                        val folder = DriveFolder(
+                            id = json.optString("id"),
+                            name = json.optString("name", folderName)
+                        )
+                        Log.d(TAG, "Drive 폴더 생성 성공: ${folder.name} (${folder.id})")
+                        Result.success(folder)
+                    }
+                    res.code == 401 -> {
+                        Log.w(TAG, "Drive 폴더 생성 401: 토큰 만료")
+                        Result.failure(UnauthorizedException("Drive access token 만료"))
+                    }
+                    else -> {
+                        Log.w(TAG, "Drive 폴더 생성 실패: HTTP ${res.code}")
+                        Result.failure(IOException("폴더 생성 실패: HTTP ${res.code}"))
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Drive 폴더 생성 예외: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Drive Files.list 응답 JSON에서 폴더 목록을 추출한다.
+     */
+    private fun parseFolderList(json: String): List<DriveFolder> {
+        return try {
+            val filesArray: JSONArray = JSONObject(json).optJSONArray("files") ?: return emptyList()
+            (0 until filesArray.length()).map { i ->
+                val obj = filesArray.getJSONObject(i)
+                DriveFolder(
+                    id = obj.optString("id"),
+                    name = obj.optString("name")
+                )
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Drive 폴더 목록 파싱 실패: ${e.message}")
+            emptyList()
         }
     }
 

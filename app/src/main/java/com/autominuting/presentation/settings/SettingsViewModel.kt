@@ -9,6 +9,8 @@ import com.autominuting.data.auth.AuthMode
 import com.autominuting.data.auth.AuthState
 import com.autominuting.data.auth.DriveAuthState
 import com.autominuting.data.auth.GoogleAuthRepository
+import com.autominuting.data.drive.DriveFolder
+import com.autominuting.data.drive.DriveUploadRepository
 import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.data.security.SecureApiKeyRepository
 import com.autominuting.data.stt.WhisperModelManager
@@ -18,13 +20,18 @@ import com.autominuting.domain.model.PromptTemplate
 import com.autominuting.domain.model.SttEngineType
 import com.autominuting.domain.repository.PromptTemplateRepository
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.android.gms.auth.api.identity.AuthorizationRequest
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.common.api.Scope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
@@ -40,11 +47,21 @@ sealed interface ApiKeyValidationState {
     data class Error(val message: String) : ApiKeyValidationState
 }
 
+/** Drive 폴더 피커 상태 */
+sealed interface DriveFolderPickerState {
+    data object Idle : DriveFolderPickerState
+    data object Loading : DriveFolderPickerState
+    data class Loaded(val folders: List<DriveFolder>, val parentId: String?) : DriveFolderPickerState
+    data class Error(val message: String) : DriveFolderPickerState
+}
+
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val secureApiKeyRepository: SecureApiKeyRepository,
     private val googleAuthRepository: GoogleAuthRepository,
+    private val driveUploadRepository: DriveUploadRepository,
     private val whisperModelManager: WhisperModelManager,
     private val promptTemplateRepository: PromptTemplateRepository
 ) : ViewModel() {
@@ -142,6 +159,10 @@ class SettingsViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = true
         )
+
+    /** Drive 폴더 피커 상태 — 전사/회의록 공용 */
+    private val _driveFolderPickerState = MutableStateFlow<DriveFolderPickerState>(DriveFolderPickerState.Idle)
+    val driveFolderPickerState: StateFlow<DriveFolderPickerState> = _driveFolderPickerState.asStateFlow()
 
     /** API 키 검증 상태 */
     private val _apiKeyValidationState = MutableStateFlow<ApiKeyValidationState>(ApiKeyValidationState.Idle)
@@ -334,6 +355,84 @@ class SettingsViewModel @Inject constructor(
     fun setDriveAutoUploadEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setDriveAutoUploadEnabled(enabled)
+        }
+    }
+
+    /**
+     * Drive 폴더 목록을 로드한다. Fresh token을 획득하여 API를 호출한다.
+     *
+     * @param parentId 탐색할 부모 폴더 ID (null이면 root)
+     */
+    fun loadDriveFolders(parentId: String? = null) {
+        viewModelScope.launch {
+            _driveFolderPickerState.value = DriveFolderPickerState.Loading
+            val token = getFreshDriveToken()
+            if (token.isNullOrBlank()) {
+                _driveFolderPickerState.value = DriveFolderPickerState.Error("Drive 인증이 필요합니다")
+                return@launch
+            }
+            val result = driveUploadRepository.listFolders(token, parentId)
+            _driveFolderPickerState.value = if (result.isSuccess) {
+                DriveFolderPickerState.Loaded(result.getOrDefault(emptyList()), parentId)
+            } else {
+                DriveFolderPickerState.Error(result.exceptionOrNull()?.message ?: "폴더 목록 조회 실패")
+            }
+        }
+    }
+
+    /**
+     * Drive에 새 폴더를 생성하고 즉시 선택 상태로 전환한다.
+     *
+     * @param folderName 생성할 폴더 이름
+     * @param parentId 부모 폴더 ID (null이면 root)
+     * @param onCreated 생성된 폴더 ID를 전달하는 콜백
+     */
+    fun createDriveFolder(
+        folderName: String,
+        parentId: String?,
+        onCreated: (DriveFolder) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            val token = getFreshDriveToken()
+            if (token.isNullOrBlank()) {
+                onError("Drive 인증이 필요합니다")
+                return@launch
+            }
+            val result = driveUploadRepository.createFolder(token, folderName, parentId)
+            if (result.isSuccess) {
+                onCreated(result.getOrThrow())
+                // 생성 후 현재 위치의 폴더 목록을 새로 고침
+                loadDriveFolders(parentId)
+            } else {
+                onError(result.exceptionOrNull()?.message ?: "폴더 생성 실패")
+            }
+        }
+    }
+
+    /** Drive 폴더 피커 상태를 초기화한다. */
+    fun dismissDriveFolderPicker() {
+        _driveFolderPickerState.value = DriveFolderPickerState.Idle
+    }
+
+    /**
+     * Drive fresh token을 획득한다.
+     * 이미 승인된 스코프는 Activity 없이 즉시 발급 가능하다.
+     */
+    private suspend fun getFreshDriveToken(): String? {
+        return try {
+            val authRequest = AuthorizationRequest.builder()
+                .setRequestedScopes(listOf(Scope("https://www.googleapis.com/auth/drive.file")))
+                .build()
+            val result = Identity.getAuthorizationClient(context).authorize(authRequest).await()
+            if (!result.hasResolution()) {
+                val token = result.accessToken
+                if (!token.isNullOrBlank()) return token
+            }
+            googleAuthRepository.getDriveAccessToken()
+        } catch (e: Exception) {
+            Log.w(TAG, "Drive fresh token 획득 실패 — 캐시 폴백: ${e.message}")
+            googleAuthRepository.getDriveAccessToken()
         }
     }
 
