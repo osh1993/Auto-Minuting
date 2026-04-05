@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Phase 46 추가 기능 구현 완료 (Drive 수동 업로드 + 자동 업로드 토글)
-last_updated: "2026-04-05T00:00:00.000Z"
+stopped_at: Phase 49 Plan 01 완료 (설정 화면 구조 분석 및 수정안 작성)
+last_updated: "2026-04-05T14:10:00.000Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 49
   completed_phases: 48
-  total_plans: 76
-  completed_plans: 76
+  total_plans: 77
+  completed_plans: 77
 ---
 
 # Project State
@@ -24,9 +24,9 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 
 ## Current Position
 
-Phase: 48 of 49 완료 (Phase 46 추가 기능 포함)
-Plan: 전체 완료
-Status: Phase 46 추가 기능 구현 및 기기 설치 완료 — Phase 49 준비
+Phase: 49 진행 중 (Plan 01 완료)
+Plan: 49-01 완료, 49-02/03 대기
+Status: 설정 화면 구조 분석 완료, 수정안 사용자 승인 대기
 Last activity: 2026-04-05
 
 ## Performance Metrics
@@ -41,11 +41,15 @@ Last activity: 2026-04-05
 - Phase 47 완료 (회의록 편집, EDIT-01)
 - Phase 48 완료 (API 사용량 대시보드, DASH-01)
 - Phase 46 추가 기능 완료 (Drive 수동 업로드 + 자동 업로드 토글)
+- Phase 49 Plan 01 완료 (설정 화면 구조 분석 + 수정안 제시)
 
 ## Accumulated Context
 
 ### Decisions
 
+- [Phase 49-01]: Option A (5개 섹션 적극적 재구성) 권장 — 사용자 멘탈 모델 기준 배치
+- [Phase 49-01]: ViewModel 변경 불필요 확인 — UI 레이아웃만 변경
+- [Phase 49-01]: LaunchedEffect/rememberLauncherForActivityResult는 이동 불가 (Compose lifecycle 제약)
 - [Phase 43]: 카드 제목 클릭 이름변경을 overflow 메뉴로 이동 — UX 일관성 확보 (카드 탭 = 상세 화면 이동)
 - [v7.0 계획]: Google Drive 연동은 OAuth 2.0 (Google Sign-In) 기반 — Phase 45
 - [v7.0 계획]: API 사용량 대시보드는 별도 탭/화면 — Phase 48
@@ -67,11 +71,11 @@ Last activity: 2026-04-05
 - Phase 46: Google Drive 업로드 파이프라인 (DRIVE-02, 03, 04) — 완료 + 추가 기능(수동 업로드, 자동 업로드 토글)
 - Phase 47: 회의록 편집 기능 (EDIT-01) — 완료
 - Phase 48: API 사용량 대시보드 (DASH-01) — 완료
-- Phase 49: 설정 UI 정비 (SETTINGS-01) — 대기
+- Phase 49: 설정 UI 정비 (SETTINGS-01) — Plan 01 완료 (수정안 제시), Plan 02/03 대기
 
 ### Pending Todos
 
-- Phase 49 실행 (SETTINGS-01 — 설정 화면 구조 분석 및 수정안 제시)
+- Phase 49 Plan 02/03 실행 대기 (사용자 승인 후 설정 화면 재구성 적용)
 
 ### Blockers/Concerns
 
@@ -80,6 +84,6 @@ Last activity: 2026-04-05
 
 ## Session Continuity
 
-Last session: 2026-04-05T00:00:00.000Z
-Stopped at: Phase 46 추가 기능 구현 완료 — commit b154962
+Last session: 2026-04-05T14:10:00.000Z
+Stopped at: Phase 49 Plan 01 완료 — commit 7bfa132
 Resume file: None
