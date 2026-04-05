@@ -35,6 +35,17 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 - ✓ 전사 텍스트 편집 기능 — v1.0
 - ✓ Clean Architecture + Hilt DI + Room DB + WorkManager 인프라 — v1.0
 
+### Validated (v7.0)
+
+- ✓ Google Sign-In OAuth + Google Drive 자동 업로드 파이프라인 — v7.0
+- ✓ 전사/회의록 Google Drive 폴더 독립 지정 — v7.0
+- ✓ Drive 수동 업로드 + 자동 업로드 토글 — v7.0
+- ✓ 회의록 텍스트 편집 기능 — v7.0
+- ✓ API 사용량 대시보드 — v7.0
+- ✓ 설정 화면 5개 섹션 재구성 (파이프라인/Google계정/Drive/API키/모델관리) — v7.0
+- ✓ Groq Whisper STT BUG-01 해결 — v7.0
+- ✓ 카드 터치 → 상세 화면 이동, overflow 메뉴로 이름 변경 — v7.0
+
 ### Validated (v6.0)
 
 - ✓ Groq Whisper API STT 엔진 선택 및 API 키 관리 — v6.0
@@ -88,18 +99,14 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 | AnnotatedString Markdown 렌더링 | 외부 라이브러리 없이 직접 구현 | ✓ v1.0 |
 | Room LIKE 검색 | v1 데이터 규모에 FTS 불필요 | ✓ v1.0 |
 
-## Current Milestone: v7.0 UX 개선 + Google Drive 연동
+## Current Milestone: v8.0 다중 파일 합치기
 
-**Goal:** 이름 변경 UX 개선, Google Drive 자동 업로드 파이프라인, 회의록 편집 기능, Groq 버그 수정, API 사용량 대시보드, 설정 화면 정비를 통해 실사용 완성도를 높인다.
+**Goal:** Share Intent로 여러 오디오 파일을 받았을 때 첫 번째 파일명으로 하나로 합쳐 단일 파이프라인으로 처리한다.
 
 **Target features:**
-- [UX] 이름 변경을 점3개 메뉴로 이동, 터치 시 파일 열기 (전사목록/회의록 탭)
-- [Drive] Google Sign-In OAuth + 전사/회의록 Google Drive 자동 업로드 파이프라인
-- [Drive] 설정에서 업로드 폴더 지정 (전사 폴더 / 회의록 폴더 별도)
-- [편집] 회의록 파일 텍스트 편집 + 저장 기능 추가
-- [버그] Groq Whisper STT 미동작 원인 파악 및 수정
-- [대시보드] API 사용량 전용 탭/화면 (엔진별 호출 횟수, 예상 비용)
-- [설정] 현재 설정 화면 분석 → 수정안 제시 → 승인 후 적용
+- [MERGE] Share Intent 수신 시 여러 파일 감지 → 즉시 바이트 이어붙이기로 하나로 합침
+- [MERGE] 합친 파일명은 첫 번째 파일명 사용
+- [MERGE] 합친 단일 파일을 기존 파이프라인(STT → 회의록)에 그대로 전달
 
 ## Evolution
 
@@ -124,4 +131,4 @@ This document evolves at phase transitions and milestone boundaries.
 **v1.0 Roadmap archived to:** `.planning/milestones/v1.0-ROADMAP.md`
 
 ---
-*Last updated: 2026-03-31 — v5.0 완료, v6.0 멀티 엔진 확장 시작*
+*Last updated: 2026-04-05 — v7.0 완료, v8.0 다중 파일 합치기 시작*

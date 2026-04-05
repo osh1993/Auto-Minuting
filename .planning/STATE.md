@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: complete
-stopped_at: Phase 49 완료 (설정 UI 정비 3/3 plans 완료)
-last_updated: "2026-04-05T16:00:00.000Z"
+milestone: v8.0
+milestone_name: 다중 파일 합치기
+status: in_progress
+stopped_at: v8.0 마일스톤 시작 — 요구사항 정의 중
+last_updated: "2026-04-05T17:00:00.000Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 49
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다.
-**Current focus:** v7.0 UX 개선 + Google Drive 연동 — 완료
+**Current focus:** v8.0 다중 파일 합치기 — 요구사항 정의 중
 
 ## Current Position
 
-Phase: 49 완료 (3/3 plans)
-Plan: 49-01, 49-02, 49-03 모두 완료
-Status: v7.0 마일스톤 완료 -- 설정 UI 정비 포함 전체 Phase 49 완료
-Last activity: 2026-04-05
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-05 — Milestone v8.0 시작
 
 ## Performance Metrics
 
@@ -70,7 +70,7 @@ Last activity: 2026-04-05
 ### Roadmap
 
 - Phase 43: UX 개선 (카드 터치 + 이름 변경 메뉴) — 완료
-- Phase 44: Groq Whisper STT 버그 수정 (BUG-01) — 완료 (미해결 — UAT 실패, 원인 미파악)
+- Phase 44: Groq Whisper STT 버그 수정 (BUG-01) — 완료 (해결 완료 확인 2026-04-05)
 - Phase 45: Google Drive 인증 (DRIVE-01) — 완료
 - Phase 46: Google Drive 업로드 파이프라인 (DRIVE-02, 03, 04) — 완료 + 추가 기능(수동 업로드, 자동 업로드 토글)
 - Phase 47: 회의록 편집 기능 (EDIT-01) — 완료
@@ -79,15 +79,15 @@ Last activity: 2026-04-05
 
 ### Pending Todos
 
-- v7.0 마일스톤 완료 -- 다음 마일스톤 계획 필요
+- v8.0 요구사항 REQUIREMENTS.md 작성 필요
+- v8.0 ROADMAP.md 작성 필요
 
 ### Blockers/Concerns
 
-- BUG-01 (Groq Whisper STT 미동작): UAT에서 재현 확인, 원인 미파악 상태로 Phase 44 종료
 - DRIVE-01 Web Client ID: Google Cloud Console에서 OAuth Web Client ID를 local.properties에 설정해야 Drive 로그인 동작
 
 ## Session Continuity
 
-Last session: 2026-04-05T16:00:00.000Z
-Stopped at: Phase 49 완료 (v7.0 마일스톤 완료)
+Last session: 2026-04-05T17:00:00.000Z
+Stopped at: v8.0 마일스톤 시작 — 요구사항 정의 중
 Resume file: None
