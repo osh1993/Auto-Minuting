@@ -19,9 +19,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import com.autominuting.worker.DriveUploadWorker
 import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.domain.model.Meeting
 import com.autominuting.domain.model.PipelineStatus
@@ -266,7 +269,28 @@ class ShareReceiverActivity : ComponentActivity() {
 
         val transcriptPath = if (finalFile.exists()) finalFile.absolutePath else tempFile.absolutePath
 
-        // 4. 자동모드 확인 후 회의록 생성 (HYBRID 모드이면 자동 생성 안 함)
+        // 4. Drive 자동 업로드 활성화 시 전사 파일 업로드 enqueue
+        val driveAutoUploadEnabled = userPreferencesRepository.getDriveAutoUploadEnabledOnce()
+        if (driveAutoUploadEnabled) {
+            val driveUploadRequest = OneTimeWorkRequestBuilder<DriveUploadWorker>()
+                .setInputData(workDataOf(
+                    DriveUploadWorker.KEY_FILE_PATH to transcriptPath,
+                    DriveUploadWorker.KEY_FILE_TYPE to DriveUploadWorker.TYPE_TRANSCRIPT,
+                    DriveUploadWorker.KEY_MEETING_ID to meetingId,
+                    DriveUploadWorker.KEY_TITLE to title
+                ))
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30L, TimeUnit.SECONDS)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
+                .build()
+            WorkManager.getInstance(this@ShareReceiverActivity).enqueue(driveUploadRequest)
+            Log.d(TAG, "Drive 자동 업로드 enqueue: TYPE_TRANSCRIPT, meetingId=$meetingId, title=$title")
+        }
+
+        // 5. 자동모드 확인 후 회의록 생성 (HYBRID 모드이면 자동 생성 안 함)
         val automationMode = userPreferencesRepository.getAutomationModeOnce()
         if (automationMode == com.autominuting.domain.model.AutomationMode.HYBRID) {
             Log.d(TAG, "HYBRID 모드 — 회의록 자동 생성 건너뜀: meetingId=$meetingId")
