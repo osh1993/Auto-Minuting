@@ -178,8 +178,8 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            // === 회의록 설정 섹션 ===
-            SettingsSection(title = "회의록 설정") {
+            // === 섹션 1: 파이프라인 ===
+            SettingsSection(title = "파이프라인") {
                 // 자동화 모드
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -214,6 +214,142 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.tertiary
                     )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // STT 엔진 드롭다운
+                Text(
+                    text = "STT 엔진",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "음성을 텍스트로 변환할 엔진을 선택합니다",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                var sttDropdownExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = sttDropdownExpanded,
+                    onExpandedChange = { sttDropdownExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = when (sttEngineType) {
+                            SttEngineType.GEMINI -> "Gemini STT (클라우드)"
+                            SttEngineType.WHISPER -> "Whisper (온디바이스)"
+                            SttEngineType.GROQ -> "Groq Whisper (클라우드)"
+                            SttEngineType.DEEPGRAM -> "Deepgram Nova-3 (클라우드)"
+                            SttEngineType.NAVER_CLOVA -> "Naver CLOVA Speech (클라우드)"
+                        },
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sttDropdownExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = sttDropdownExpanded,
+                        onDismissRequest = { sttDropdownExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Gemini STT (클라우드)") },
+                            onClick = {
+                                viewModel.setSttEngineType(SttEngineType.GEMINI)
+                                sttDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Whisper (온디바이스)") },
+                            onClick = {
+                                viewModel.setSttEngineType(SttEngineType.WHISPER)
+                                sttDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Groq Whisper (클라우드)") },
+                            onClick = {
+                                viewModel.setSttEngineType(SttEngineType.GROQ)
+                                sttDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Deepgram Nova-3 (클라우드)") },
+                            onClick = {
+                                viewModel.setSttEngineType(SttEngineType.DEEPGRAM)
+                                sttDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Naver CLOVA Speech (클라우드)") },
+                            onClick = {
+                                viewModel.setSttEngineType(SttEngineType.NAVER_CLOVA)
+                                sttDropdownExpanded = false
+                            }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 회의록 엔진 선택
+                Text(
+                    text = "회의록 생성 엔진",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "회의록 텍스트를 생성할 엔진을 선택합니다",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                var minutesDropdownExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = minutesDropdownExpanded,
+                    onExpandedChange = { minutesDropdownExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = when (minutesEngineType) {
+                            MinutesEngineType.GEMINI -> "Gemini (클라우드)"
+                            MinutesEngineType.DEEPGRAM -> "Deepgram Intelligence (클라우드)"
+                            MinutesEngineType.NAVER_CLOVA -> "Naver CLOVA Summary (클라우드)"
+                        },
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = minutesDropdownExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = minutesDropdownExpanded,
+                        onDismissRequest = { minutesDropdownExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Gemini (클라우드)") },
+                            onClick = {
+                                viewModel.setMinutesEngineType(MinutesEngineType.GEMINI)
+                                minutesDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Deepgram Intelligence (클라우드)") },
+                            onClick = {
+                                viewModel.setMinutesEngineType(MinutesEngineType.DEEPGRAM)
+                                minutesDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Naver CLOVA Summary (클라우드)") },
+                            onClick = {
+                                viewModel.setMinutesEngineType(MinutesEngineType.NAVER_CLOVA)
+                                minutesDropdownExpanded = false
+                            }
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -327,150 +463,262 @@ fun SettingsScreen(
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 회의록 엔진 선택
-                Text(
-                    text = "회의록 생성 엔진",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = "회의록 텍스트를 생성할 엔진을 선택합니다",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                var minutesDropdownExpanded by remember { mutableStateOf(false) }
-                ExposedDropdownMenuBox(
-                    expanded = minutesDropdownExpanded,
-                    onExpandedChange = { minutesDropdownExpanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = when (minutesEngineType) {
-                            MinutesEngineType.GEMINI -> "Gemini (클라우드)"
-                            MinutesEngineType.DEEPGRAM -> "Deepgram Intelligence (클라우드)"
-                            MinutesEngineType.NAVER_CLOVA -> "Naver CLOVA Summary (클라우드)"
-                        },
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = minutesDropdownExpanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = minutesDropdownExpanded,
-                        onDismissRequest = { minutesDropdownExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Gemini (클라우드)") },
-                            onClick = {
-                                viewModel.setMinutesEngineType(MinutesEngineType.GEMINI)
-                                minutesDropdownExpanded = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Deepgram Intelligence (클라우드)") },
-                            onClick = {
-                                viewModel.setMinutesEngineType(MinutesEngineType.DEEPGRAM)
-                                minutesDropdownExpanded = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Naver CLOVA Summary (클라우드)") },
-                            onClick = {
-                                viewModel.setMinutesEngineType(MinutesEngineType.NAVER_CLOVA)
-                                minutesDropdownExpanded = false
-                            }
-                        )
-                    }
-                }
-
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // === 전사 설정 섹션 ===
-            SettingsSection(title = "전사 설정") {
-                // STT 엔진
+            // === 섹션 2: Google 계정 ===
+            SettingsSection(title = "Google 계정") {
                 Text(
-                    text = "STT 엔진",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = "음성을 텍스트로 변환할 엔진을 선택합니다",
+                    text = "Google 계정 로그인 및 Gemini 인증을 설정합니다",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(8.dp))
 
-                // STT 엔진 드롭다운
-                var sttDropdownExpanded by remember { mutableStateOf(false) }
-                ExposedDropdownMenuBox(
-                    expanded = sttDropdownExpanded,
-                    onExpandedChange = { sttDropdownExpanded = it }
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Google 계정 로그인/로그아웃
+                GoogleAccountSection(
+                    authState = authState,
+                    onSignIn = { viewModel.signInWithGoogle(context) },
+                    onSignOut = { viewModel.signOut() }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Gemini 인증 모드 RadioButton
+                Text(
+                    text = "Gemini API 호출 시 사용할 인증 방식을 선택합니다",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    OutlinedTextField(
-                        value = when (sttEngineType) {
-                            SttEngineType.GEMINI -> "Gemini STT (클라우드)"
-                            SttEngineType.WHISPER -> "Whisper (온디바이스)"
-                            SttEngineType.GROQ -> "Groq Whisper (클라우드)"
-                            SttEngineType.DEEPGRAM -> "Deepgram Nova-3 (클라우드)"
-                            SttEngineType.NAVER_CLOVA -> "Naver CLOVA Speech (클라우드)"
-                        },
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sttDropdownExpanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor()
+                    RadioButton(
+                        selected = authMode == AuthMode.API_KEY,
+                        onClick = { viewModel.setAuthMode(AuthMode.API_KEY) }
                     )
-                    ExposedDropdownMenu(
-                        expanded = sttDropdownExpanded,
-                        onDismissRequest = { sttDropdownExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Gemini STT (클라우드)") },
-                            onClick = {
-                                viewModel.setSttEngineType(SttEngineType.GEMINI)
-                                sttDropdownExpanded = false
-                            }
+                    Text(
+                        text = "API 키",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(end = 24.dp)
+                    )
+
+                    RadioButton(
+                        selected = authMode == AuthMode.OAUTH,
+                        onClick = { viewModel.setAuthMode(AuthMode.OAUTH) }
+                    )
+                    Text(
+                        text = "Google 계정 (OAuth)",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 인증 모드별 UI
+                if (authMode == AuthMode.OAUTH) {
+                    // OAuth Client ID 입력
+                    OAuthClientIdSection(viewModel = viewModel)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    // Gemini API OAuth 권한 부여 버튼 -- 로그인 후 수동 재요청용
+                    if (authState is AuthState.SignedIn) {
+                        OutlinedButton(
+                            onClick = { viewModel.authorizeGeminiAccess(context as Activity) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Gemini API 권한 부여 (재시도)")
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Google 계정 로그인 후 Gemini API 접근 권한이 필요합니다. 회의록 생성이 안 될 경우 이 버튼을 눌러주세요.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        DropdownMenuItem(
-                            text = { Text("Whisper (온디바이스)") },
-                            onClick = {
-                                viewModel.setSttEngineType(SttEngineType.WHISPER)
-                                sttDropdownExpanded = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Groq Whisper (클라우드)") },
-                            onClick = {
-                                viewModel.setSttEngineType(SttEngineType.GROQ)
-                                sttDropdownExpanded = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Deepgram Nova-3 (클라우드)") },
-                            onClick = {
-                                viewModel.setSttEngineType(SttEngineType.DEEPGRAM)
-                                sttDropdownExpanded = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Naver CLOVA Speech (클라우드)") },
-                            onClick = {
-                                viewModel.setSttEngineType(SttEngineType.NAVER_CLOVA)
-                                sttDropdownExpanded = false
-                            }
+                    }
+                } else {
+                    // API 키
+                    ApiKeySection(viewModel = viewModel)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // === 섹션 3: Google Drive (로그인 시에만 표시) ===
+            if (authState is AuthState.SignedIn) {
+                SettingsSection(title = "Google Drive") {
+                    Text(
+                        text = "Google Drive 자동/수동 업로드를 설정합니다",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Drive 연결/해제
+                    GoogleDriveSection(
+                        driveAuthState = driveAuthState,
+                        onConnectDrive = {
+                            viewModel.authorizeDrive(context as Activity)
+                        },
+                        onRevokeDrive = { viewModel.revokeDriveAuth() }
+                    )
+
+                    // Drive 폴더 피커 + 자동 업로드 토글 (Drive 연결 시)
+                    if (driveAuthState is DriveAuthState.Authorized) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        DriveFolderSection(
+                            driveAuthState = driveAuthState,
+                            transcriptFolderId = driveTranscriptFolderId,
+                            minutesFolderId = driveMinutesFolderId,
+                            autoUploadEnabled = driveAutoUploadEnabled,
+                            folderPickerState = driveFolderPickerState,
+                            onAutoUploadEnabledChange = viewModel::setDriveAutoUploadEnabled,
+                            onBrowseTranscriptFolder = { viewModel.loadDriveFolders(null) },
+                            onBrowseMinutesFolder = { viewModel.loadDriveFolders(null) },
+                            onFolderSelected = { folder, isTranscript ->
+                                if (isTranscript) viewModel.setDriveTranscriptFolderId(folder.id)
+                                else viewModel.setDriveMinutesFolderId(folder.id)
+                                viewModel.dismissDriveFolderPicker()
+                            },
+                            onNavigateIntoFolder = { viewModel.navigateIntoFolder(it) },
+                            onNavigateUp = { viewModel.navigateUpFolder() },
+                            onCreateFolder = { name, isTranscript ->
+                                viewModel.createDriveFolder(
+                                    folderName = name,
+                                    onCreated = { /* 생성만, 자동 선택 안 함 -- 목록에서 직접 선택 */ },
+                                    onError = { /* 피커 내 에러 표시는 상태로 처리됨 */ }
+                                )
+                            },
+                            onDismissPicker = { viewModel.dismissDriveFolderPicker() }
                         )
                     }
                 }
 
-                // Whisper 모델 관리
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            // === 섹션 4: API 키 (엔진 선택에 따라 조건부 표시) ===
+            @Suppress("KotlinConstantConditions")
+            val showApiKeySection = sttEngineType == SttEngineType.GROQ ||
+                sttEngineType == SttEngineType.DEEPGRAM || minutesEngineType == MinutesEngineType.DEEPGRAM ||
+                sttEngineType == SttEngineType.NAVER_CLOVA || minutesEngineType == MinutesEngineType.NAVER_CLOVA
+
+            if (showApiKeySection) {
+                SettingsSection(title = "API 키") {
+                    // Groq API 키 (STT 엔진이 GROQ일 때만)
+                    if (sttEngineType == SttEngineType.GROQ) {
+                        ApiKeyInputField(
+                            label = "Groq API 키",
+                            hasKey = hasGroqApiKey,
+                            onSave = { viewModel.saveGroqApiKey(it) },
+                            onClear = { viewModel.clearGroqApiKey() }
+                        )
+                        if (!hasGroqApiKey) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Groq API 키가 필요합니다. console.groq.com에서 발급받으세요.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+
+                    // Deepgram API 키 (STT 엔진이 DEEPGRAM이거나 회의록 엔진이 DEEPGRAM일 때)
+                    if (sttEngineType == SttEngineType.DEEPGRAM || minutesEngineType == MinutesEngineType.DEEPGRAM) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        ApiKeyInputField(
+                            label = "Deepgram API 키",
+                            hasKey = hasDeepgramApiKey,
+                            onSave = { viewModel.saveDeepgramApiKey(it) },
+                            onClear = { viewModel.clearDeepgramApiKey() }
+                        )
+                        if (!hasDeepgramApiKey) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Deepgram API 키가 필요합니다. console.deepgram.com에서 발급받으세요.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+
+                    // Naver CLOVA Speech 설정 (STT 엔진이 NAVER_CLOVA일 때)
+                    if (sttEngineType == SttEngineType.NAVER_CLOVA) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Naver CLOVA Speech (STT)",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ApiKeyInputField(
+                            label = "CLOVA Speech Invoke URL",
+                            hasKey = hasClovaInvokeUrl,
+                            onSave = { viewModel.saveClovaInvokeUrl(it) },
+                            onClear = { viewModel.clearClovaInvokeUrl() }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ApiKeyInputField(
+                            label = "CLOVA Speech Secret Key",
+                            hasKey = hasClovaSecretKey,
+                            onSave = { viewModel.saveClovaSecretKey(it) },
+                            onClear = { viewModel.clearClovaSecretKey() }
+                        )
+                        if (!hasClovaInvokeUrl || !hasClovaSecretKey) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "CLOVA Speech Invoke URL과 Secret Key가 모두 필요합니다. NAVER Cloud Console에서 발급받으세요.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+
+                    // Naver CLOVA Summary 설정 (회의록 엔진이 NAVER_CLOVA일 때)
+                    if (minutesEngineType == MinutesEngineType.NAVER_CLOVA) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Naver CLOVA Summary (회의록)",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ApiKeyInputField(
+                            label = "CLOVA Summary Client ID",
+                            hasKey = hasClovaSummaryClientId,
+                            onSave = { viewModel.saveClovaSummaryClientId(it) },
+                            onClear = { viewModel.clearClovaSummaryClientId() }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ApiKeyInputField(
+                            label = "CLOVA Summary Client Secret",
+                            hasKey = hasClovaSummaryClientSecret,
+                            onSave = { viewModel.saveClovaSummaryClientSecret(it) },
+                            onClear = { viewModel.clearClovaSummaryClientSecret() }
+                        )
+                        if (!hasClovaSummaryClientId || !hasClovaSummaryClientSecret) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "CLOVA Summary Client ID와 Client Secret이 모두 필요합니다. NAVER Cloud Console에서 발급받으세요.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            // === 섹션 5: 모델 관리 ===
+            SettingsSection(title = "모델 관리") {
+                // Whisper 모델 다운로드/삭제
                 when (val state = whisperModelState) {
                     is WhisperModelManager.ModelState.NotDownloaded -> {
                         Text(
@@ -516,234 +764,6 @@ fun SettingsScreen(
                             Text("다시 시도")
                         }
                     }
-                }
-
-                // === STT 엔진별 API 키 입력 ===
-
-                // Groq API 키 (STT 엔진이 GROQ일 때만)
-                if (sttEngineType == SttEngineType.GROQ) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ApiKeyInputField(
-                        label = "Groq API 키",
-                        hasKey = hasGroqApiKey,
-                        onSave = { viewModel.saveGroqApiKey(it) },
-                        onClear = { viewModel.clearGroqApiKey() }
-                    )
-                    if (!hasGroqApiKey) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Groq API 키가 필요합니다. console.groq.com에서 발급받으세요.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-
-                // Deepgram API 키 (STT 엔진이 DEEPGRAM이거나 회의록 엔진이 DEEPGRAM일 때)
-                if (sttEngineType == SttEngineType.DEEPGRAM || minutesEngineType == MinutesEngineType.DEEPGRAM) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ApiKeyInputField(
-                        label = "Deepgram API 키",
-                        hasKey = hasDeepgramApiKey,
-                        onSave = { viewModel.saveDeepgramApiKey(it) },
-                        onClear = { viewModel.clearDeepgramApiKey() }
-                    )
-                    if (!hasDeepgramApiKey) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Deepgram API 키가 필요합니다. console.deepgram.com에서 발급받으세요.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-
-                // Naver CLOVA Speech 설정 (STT 엔진이 NAVER_CLOVA일 때)
-                if (sttEngineType == SttEngineType.NAVER_CLOVA) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Naver CLOVA Speech (STT)",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    ApiKeyInputField(
-                        label = "CLOVA Speech Invoke URL",
-                        hasKey = hasClovaInvokeUrl,
-                        onSave = { viewModel.saveClovaInvokeUrl(it) },
-                        onClear = { viewModel.clearClovaInvokeUrl() }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    ApiKeyInputField(
-                        label = "CLOVA Speech Secret Key",
-                        hasKey = hasClovaSecretKey,
-                        onSave = { viewModel.saveClovaSecretKey(it) },
-                        onClear = { viewModel.clearClovaSecretKey() }
-                    )
-                    if (!hasClovaInvokeUrl || !hasClovaSecretKey) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "CLOVA Speech Invoke URL과 Secret Key가 모두 필요합니다. NAVER Cloud Console에서 발급받으세요.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-
-                // Naver CLOVA Summary 설정 (회의록 엔진이 NAVER_CLOVA일 때)
-                if (minutesEngineType == MinutesEngineType.NAVER_CLOVA) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Naver CLOVA Summary (회의록)",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    ApiKeyInputField(
-                        label = "CLOVA Summary Client ID",
-                        hasKey = hasClovaSummaryClientId,
-                        onSave = { viewModel.saveClovaSummaryClientId(it) },
-                        onClear = { viewModel.clearClovaSummaryClientId() }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    ApiKeyInputField(
-                        label = "CLOVA Summary Client Secret",
-                        hasKey = hasClovaSummaryClientSecret,
-                        onSave = { viewModel.saveClovaSummaryClientSecret(it) },
-                        onClear = { viewModel.clearClovaSummaryClientSecret() }
-                    )
-                    if (!hasClovaSummaryClientId || !hasClovaSummaryClientSecret) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "CLOVA Summary Client ID와 Client Secret이 모두 필요합니다. NAVER Cloud Console에서 발급받으세요.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // === Gemini 인증 섹션 (API 키 / OAuth 선택) ===
-            SettingsSection(title = "Gemini 인증") {
-                Text(
-                    text = "Gemini API 호출 시 사용할 인증 방식을 선택합니다",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // 인증 모드 RadioButton
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    RadioButton(
-                        selected = authMode == AuthMode.API_KEY,
-                        onClick = { viewModel.setAuthMode(AuthMode.API_KEY) }
-                    )
-                    Text(
-                        text = "API 키",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(end = 24.dp)
-                    )
-
-                    RadioButton(
-                        selected = authMode == AuthMode.OAUTH,
-                        onClick = { viewModel.setAuthMode(AuthMode.OAUTH) }
-                    )
-                    Text(
-                        text = "Google 계정 (OAuth)",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // 인증 모드별 UI
-                if (authMode == AuthMode.OAUTH) {
-                    // OAuth Client ID 입력
-                    OAuthClientIdSection(viewModel = viewModel)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    // Gemini API OAuth 권한 부여 버튼 — 로그인 후 수동 재요청용
-                    if (authState is AuthState.SignedIn) {
-                        OutlinedButton(
-                            onClick = { viewModel.authorizeGeminiAccess(context as Activity) },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Gemini API 권한 부여 (재시도)")
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Google 계정 로그인 후 Gemini API 접근 권한이 필요합니다. 회의록 생성이 안 될 경우 이 버튼을 눌러주세요.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                } else {
-                    // API 키
-                    ApiKeySection(viewModel = viewModel)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // === Google 계정 & Drive 섹션 (인증 모드와 독립) ===
-            SettingsSection(title = "Google 계정 & Drive") {
-                Text(
-                    text = "Google Drive 자동/수동 업로드에 사용할 Google 계정을 설정합니다",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Google 계정 로그인/로그아웃
-                GoogleAccountSection(
-                    authState = authState,
-                    onSignIn = { viewModel.signInWithGoogle(context) },
-                    onSignOut = { viewModel.signOut() }
-                )
-
-                // Google Drive 연결 섹션 — 로그인된 경우에만 표시
-                if (authState is AuthState.SignedIn) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    GoogleDriveSection(
-                        driveAuthState = driveAuthState,
-                        onConnectDrive = {
-                            viewModel.authorizeDrive(context as Activity)
-                        },
-                        onRevokeDrive = { viewModel.revokeDriveAuth() }
-                    )
-                    // Drive 폴더 피커 + 자동 업로드 토글
-                    Spacer(modifier = Modifier.height(16.dp))
-                    DriveFolderSection(
-                        driveAuthState = driveAuthState,
-                        transcriptFolderId = driveTranscriptFolderId,
-                        minutesFolderId = driveMinutesFolderId,
-                        autoUploadEnabled = driveAutoUploadEnabled,
-                        folderPickerState = driveFolderPickerState,
-                        onAutoUploadEnabledChange = viewModel::setDriveAutoUploadEnabled,
-                        onBrowseTranscriptFolder = { viewModel.loadDriveFolders(null) },
-                        onBrowseMinutesFolder = { viewModel.loadDriveFolders(null) },
-                        onFolderSelected = { folder, isTranscript ->
-                            if (isTranscript) viewModel.setDriveTranscriptFolderId(folder.id)
-                            else viewModel.setDriveMinutesFolderId(folder.id)
-                            viewModel.dismissDriveFolderPicker()
-                        },
-                        onNavigateIntoFolder = { viewModel.navigateIntoFolder(it) },
-                        onNavigateUp = { viewModel.navigateUpFolder() },
-                        onCreateFolder = { name, isTranscript ->
-                            viewModel.createDriveFolder(
-                                folderName = name,
-                                onCreated = { /* 생성만, 자동 선택 안 함 — 목록에서 직접 선택 */ },
-                                onError = { /* 피커 내 에러 표시는 상태로 처리됨 */ }
-                            )
-                        },
-                        onDismissPicker = { viewModel.dismissDriveFolderPicker() }
-                    )
                 }
             }
 
