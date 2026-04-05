@@ -431,10 +431,12 @@ Plans:
 **Goal**: 설정 화면이 v7.0 신규 기능을 포함하여 논리적으로 재구성된다
 **Depends on**: Phase 45, Phase 46, Phase 47, Phase 48
 **Requirements**: SET7-01
-**Plans**: 1 plan
+**Plans**: 3 plans
 
 Plans:
-- [ ] 49-01-PLAN.md — 설정 화면 Drive/편집/사용량 섹션 추가 및 재구성
+- [ ] 49-01-PLAN.md — 설정 화면 구조 분석 및 재구성 수정안 작성
+- [ ] 49-02-PLAN.md — 재구성안 사용자 승인 체크포인트
+- [ ] 49-03-PLAN.md — 승인된 재구성안 적용 및 시각 확인
 
 ## Milestone Details
 
