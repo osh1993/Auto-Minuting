@@ -59,6 +59,12 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 - ✓ Groq/Deepgram/Naver API 키 암호화 저장 — v6.0
 - ✓ AutoMinuting-v6.0-release.apk 버전 번호 포함 APK 빌드 — v6.0
 
+### Validated (v8.0)
+
+- ✓ Share Intent로 여러 오디오 파일 수신 시 자동으로 하나의 WAV로 합쳐 처리 (MERGE-01) — v8.0
+- ✓ 합쳐진 파일명 = 첫 번째 파일명 (MERGE-02) — v8.0
+- ✓ 합쳐진 파일이 기존 STT → 회의록 파이프라인 통과 (MERGE-03) — v8.0
+
 ### Active
 
 (다음 마일스톤에서 정의 예정)
@@ -131,4 +137,4 @@ This document evolves at phase transitions and milestone boundaries.
 **v1.0 Roadmap archived to:** `.planning/milestones/v1.0-ROADMAP.md`
 
 ---
-*Last updated: 2026-04-05 — v7.0 완료, v8.0 다중 파일 합치기 시작*
+*Last updated: 2026-04-06 — v8.0 완료 (Phase 50 다중 파일 합치기)*
