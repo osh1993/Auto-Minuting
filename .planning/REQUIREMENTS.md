@@ -13,9 +13,9 @@ Share Intent로 여러 오디오 파일을 받았을 때 첫 번째 파일명으
 
 ### 다중 파일 합치기
 
-- [ ] **MERGE-01**: 사용자가 Share Intent로 여러 오디오 파일을 공유했을 때 앱이 자동으로 하나의 파일로 합쳐 처리한다
-- [ ] **MERGE-02**: 합쳐진 파일의 파일명은 Intent로 전달된 첫 번째 파일의 파일명을 사용한다
-- [ ] **MERGE-03**: 합쳐진 단일 파일이 기존 STT → 회의록 파이프라인에 그대로 전달된다
+- [x] **MERGE-01**: 사용자가 Share Intent로 여러 오디오 파일을 공유했을 때 앱이 자동으로 하나의 파일로 합쳐 처리한다
+- [x] **MERGE-02**: 합쳐진 파일의 파일명은 Intent로 전달된 첫 번째 파일의 파일명을 사용한다
+- [x] **MERGE-03**: 합쳐진 단일 파일이 기존 STT → 회의록 파이프라인에 그대로 전달된다
 
 ---
 
@@ -35,6 +35,6 @@ Share Intent로 여러 오디오 파일을 받았을 때 첫 번째 파일명으
 
 | REQ-ID   | Phase    | Status  |
 |----------|----------|---------|
-| MERGE-01 | Phase 50 | Pending |
-| MERGE-02 | Phase 50 | Pending |
-| MERGE-03 | Phase 50 | Pending |
+| MERGE-01 | Phase 50 | Complete |
+| MERGE-02 | Phase 50 | Complete |
+| MERGE-03 | Phase 50 | Complete |

@@ -441,7 +441,7 @@ Plans:
 
 ## Phase Details (v8.0)
 
-### Phase 50: 다중 파일 합치기
+### Phase 50: 다중 파일 합치기 (1/1 plans) — completed 2026-04-05
 **Goal**: Share Intent로 여러 오디오 파일을 받았을 때 자동으로 하나의 파일로 합쳐 기존 파이프라인으로 처리한다
 **Depends on**: Nothing (기존 Share Intent 수신 인프라 위에 합치기 로직 추가)
 **Requirements**: MERGE-01, MERGE-02, MERGE-03
@@ -453,7 +453,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 50-01-PLAN.md 2014 WavMerger C720D2f8B9acD2f0 + ShareReceiverActivity B2e4C911 D30cC77c Bd84Ae30
+- [x] 50-01-PLAN.md — WavMerger 유틸리티 + ShareReceiverActivity 다중 오디오 합치기 분기
 
 ## Milestone Details
 
@@ -494,4 +494,4 @@ Plans:
 | 47. 회의록 편집 기능 | v7.0 | 1/1 | Complete   | 2026-04-03 |
 | 48. API 사용량 대시보드 | v7.0 | 1/1 | Complete   | 2026-04-03 |
 | 49. 설정 UI 정비 | v7.0 | 3/3 | Complete | 2026-04-05 |
-| 50. 다중 파일 합치기 | v8.0 | 0/0 | Not started | — |
+| 50. 다중 파일 합치기 | v8.0 | 1/1 | Complete | 2026-04-05 |
