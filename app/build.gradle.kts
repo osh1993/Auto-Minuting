@@ -138,6 +138,7 @@ dependencies {
     // 테스트
     testImplementation(libs.junit5.api)
     testRuntimeOnly(libs.junit5.engine)
+    testRuntimeOnly(libs.junit5.launcher)
 }
 
 tasks.withType<Test> {
