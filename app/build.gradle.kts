@@ -134,4 +134,12 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.core.ktx)
+
+    // 테스트
+    testImplementation(libs.junit5.api)
+    testRuntimeOnly(libs.junit5.engine)
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
