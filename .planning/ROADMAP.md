@@ -10,7 +10,8 @@
 - ✅ **v4.0 파이프라인 고도화 및 GUI 품질 개선** — Phases 29-35 (shipped 2026-03-30)
 - ✅ **v5.0 전사-회의록 독립 아키텍처** — Phases 36-38
 - **v6.0 멀티 엔진 확장** — Phases 39-42
-- **v7.0 Drive 연동 + UX 개선** — Phases 43-49 (shipped 2026-04-05)
+- ✅ **v7.0 Drive 연동 + UX 개선** — Phases 43-49 (shipped 2026-04-05)
+- **v8.0 다중 파일 합치기** — Phase 50
 
 ## Phases
 
@@ -438,6 +439,19 @@ Plans:
 - [x] 49-02-PLAN.md — 재구성안 사용자 승인 체크포인트
 - [x] 49-03-PLAN.md — 승인된 재구성안 적용 및 시각 확인
 
+## Phase Details (v8.0)
+
+### Phase 50: 다중 파일 합치기
+**Goal**: Share Intent로 여러 오디오 파일을 받았을 때 자동으로 하나의 파일로 합쳐 기존 파이프라인으로 처리한다
+**Depends on**: Nothing (기존 Share Intent 수신 인프라 위에 합치기 로직 추가)
+**Requirements**: MERGE-01, MERGE-02, MERGE-03
+**Success Criteria** (what must be TRUE):
+  1. 사용자가 외부 앱에서 여러 오디오 파일을 선택하여 Share Intent로 공유하면 앱이 자동으로 하나의 파일로 합쳐서 전사를 시작한다
+  2. 합쳐진 파일의 이름이 Intent로 전달된 첫 번째 파일의 파일명과 동일하다
+  3. 합쳐진 단일 파일이 기존 STT → 회의록 파이프라인을 변경 없이 그대로 통과하여 회의록이 생성된다
+  4. 단일 파일을 Share Intent로 공유한 경우 기존과 동일하게 동작한다 (합치기 로직이 단일 파일에 영향 없음)
+**Plans**: TBD
+
 ## Milestone Details
 
 - v1.0 (Phases 1-7): `.planning/milestones/v1.0-ROADMAP.md`
@@ -477,3 +491,4 @@ Plans:
 | 47. 회의록 편집 기능 | v7.0 | 1/1 | Complete   | 2026-04-03 |
 | 48. API 사용량 대시보드 | v7.0 | 1/1 | Complete   | 2026-04-03 |
 | 49. 설정 UI 정비 | v7.0 | 3/3 | Complete | 2026-04-05 |
+| 50. 다중 파일 합치기 | v8.0 | 0/0 | Not started | — |

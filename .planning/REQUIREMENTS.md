@@ -33,8 +33,8 @@ Share Intent로 여러 오디오 파일을 받았을 때 첫 번째 파일명으
 
 ## Traceability
 
-| REQ-ID   | Phase | Status  |
-|----------|-------|---------|
-| MERGE-01 | TBD   | Pending |
-| MERGE-02 | TBD   | Pending |
-| MERGE-03 | TBD   | Pending |
+| REQ-ID   | Phase    | Status  |
+|----------|----------|---------|
+| MERGE-01 | Phase 50 | Pending |
+| MERGE-02 | Phase 50 | Pending |
+| MERGE-03 | Phase 50 | Pending |
