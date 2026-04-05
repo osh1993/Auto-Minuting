@@ -234,6 +234,18 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
             val errorMessage = error?.message ?: "알 수 없는 전사 오류"
             Log.e(TAG, "전사 실패: $errorMessage", error)
 
+            // 파일 크기 초과 에러 감지 — STT 엔진 변경 안내 알림
+            val fileSizeMatch = Regex("파일 크기\\((\\d+)MB\\)가 .+ 제한\\((\\d+)MB\\)을 초과").find(errorMessage)
+            if (fileSizeMatch != null) {
+                val actualMb = fileSizeMatch.groupValues[1].toLongOrNull() ?: 0L
+                val limitMb = fileSizeMatch.groupValues[2].toLongOrNull() ?: 0L
+                // 엔진 이름 추출 (에러 메시지 앞부분 "전사 실패 — EngineNAME:" 형식)
+                val engineName = Regex("전사 실패 — (.+?):").find(errorMessage)
+                    ?.groupValues?.getOrNull(1) ?: "STT 엔진"
+                Log.d(TAG, "파일 크기 초과 알림: ${actualMb}MB > ${limitMb}MB ($engineName)")
+                PipelineNotificationHelper.notifyFileTooLarge(applicationContext, engineName, actualMb, limitMb)
+            }
+
             // 재전사 실패 시: 기존 전사 파일이 있으면 안정 상태로 복원
             if (!previousTranscriptPath.isNullOrBlank() && java.io.File(previousTranscriptPath).exists()) {
                 // 진행 중 상태(TRANSCRIBING, GENERATING_MINUTES)로는 복원하지 않음

@@ -139,6 +139,49 @@ object PipelineNotificationHelper {
      * @param meetingId 회의 ID
      * @param transcriptPath 전사 텍스트 파일 경로
      */
+    /**
+     * 전사 파일 크기 초과 알림을 표시한다.
+     * 선택된 STT 엔진의 파일 크기 제한을 초과했을 때 사용자에게 엔진 변경을 안내한다.
+     *
+     * @param context 컨텍스트
+     * @param engineName 초과된 엔진 이름 (예: "Groq Whisper (Cloud)")
+     * @param fileSizeMb 실제 파일 크기 (MB)
+     * @param limitMb 엔진 제한 크기 (MB)
+     */
+    fun notifyFileTooLarge(context: Context, engineName: String, fileSizeMb: Long, limitMb: Long) {
+        val launchIntent = context.packageManager
+            .getLaunchIntentForPackage(context.packageName)
+            ?.apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP }
+        val pendingIntent = launchIntent?.let {
+            PendingIntent.getActivity(
+                context,
+                0,
+                it,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+
+        val notification = NotificationCompat.Builder(context, PIPELINE_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("전사 엔진 변경 필요")
+            .setContentText("파일(${fileSizeMb}MB)이 ${engineName} 제한(${limitMb}MB)을 초과합니다")
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(
+                        "합쳐진 오디오 파일(${fileSizeMb}MB)이 ${engineName}의 파일 크기 제한(${limitMb}MB)을 초과합니다.\n\n" +
+                        "설정 화면에서 다른 STT 엔진(Whisper 온디바이스, Gemini, Deepgram 등)으로 변경하면 파일 크기 제한 없이 전사할 수 있습니다."
+                    )
+            )
+            .setAutoCancel(true)
+            .setOngoing(false)
+            .apply { pendingIntent?.let { setContentIntent(it) } }
+            .build()
+
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(PIPELINE_NOTIFICATION_ID, notification)
+    }
+
     fun notifyTranscriptionComplete(
         context: Context,
         meetingId: Long,

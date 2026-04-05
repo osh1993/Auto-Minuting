@@ -10,14 +10,15 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 
 ## Current State
 
-**Shipped: v6.0 멀티 엔진 확장** (2026-04-03)
-**42 phases 완료** | **69 plans** | **13,489 Kotlin LOC**
+**Shipped: v8.0 다중 파일 합치기** (2026-04-06)
+**50 phases 완료** | **80 plans**
 
 - Tech stack: Kotlin 2.3.20, Jetpack Compose (BOM 2026.03), Hilt 2.56, Room 2.8.4, WorkManager, whisper.cpp (NDK/JNI)
-- 파이프라인: Plaud SDK BLE → STT 5종 선택 (Whisper 온디바이스 / Gemini / Groq / Deepgram / Naver CLOVA) → 회의록 엔진 3종 선택 (Gemini / Deepgram Intelligence / Naver CLOVA Summary) → Markdown 회의록
-- UI: Material 3 Dynamic Color, Bottom Navigation 4탭, Markdown 뷰어, 아카이브 검색
+- 파이프라인: Plaud SDK BLE / Share Intent(단일+다중) → STT 5종 선택 (Whisper 온디바이스 / Gemini / Groq / Deepgram / Naver CLOVA) → 회의록 엔진 3종 선택 (Gemini / Deepgram Intelligence / Naver CLOVA Summary) → Markdown 회의록
+- 다중 파일: Share Intent로 여러 M4A 공유 시 MediaMuxer로 자동 합치기 (재인코딩 없음)
+- Drive 연동: Google OAuth + Google Drive 자동/수동 업로드 + 폴더 독립 지정
+- UI: Material 3 Dynamic Color, Bottom Navigation 4탭, Markdown 뷰어, 아카이브 검색, API 사용량 대시보드
 - 데이터: Room DB v5, 전사(Transcript)-회의록(Minutes) 독립 1:N 구조
-- 릴리스: AutoMinuting-v6.0-release.apk (build.gradle.kts archivesName 자동 생성)
 
 ## Requirements
 
@@ -61,7 +62,7 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 
 ### Validated (v8.0)
 
-- ✓ Share Intent로 여러 오디오 파일 수신 시 자동으로 하나의 WAV로 합쳐 처리 (MERGE-01) — v8.0
+- ✓ Share Intent로 여러 M4A 파일 수신 시 MediaMuxer로 자동 합쳐 처리 (MERGE-01) — v8.0
 - ✓ 합쳐진 파일명 = 첫 번째 파일명 (MERGE-02) — v8.0
 - ✓ 합쳐진 파일이 기존 STT → 회의록 파이프라인 통과 (MERGE-03) — v8.0
 
@@ -105,14 +106,9 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 | AnnotatedString Markdown 렌더링 | 외부 라이브러리 없이 직접 구현 | ✓ v1.0 |
 | Room LIKE 검색 | v1 데이터 규모에 FTS 불필요 | ✓ v1.0 |
 
-## Current Milestone: v8.0 다중 파일 합치기
+## Current Milestone: 미정
 
-**Goal:** Share Intent로 여러 오디오 파일을 받았을 때 첫 번째 파일명으로 하나로 합쳐 단일 파이프라인으로 처리한다.
-
-**Target features:**
-- [MERGE] Share Intent 수신 시 여러 파일 감지 → 즉시 바이트 이어붙이기로 하나로 합침
-- [MERGE] 합친 파일명은 첫 번째 파일명 사용
-- [MERGE] 합친 단일 파일을 기존 파이프라인(STT → 회의록)에 그대로 전달
+*v8.0 완료. 다음 마일스톤은 `/gsd:new-milestone`으로 정의 예정.*
 
 ## Evolution
 

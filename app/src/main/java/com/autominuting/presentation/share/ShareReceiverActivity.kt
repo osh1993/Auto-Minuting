@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import android.provider.OpenableColumns
-import com.autominuting.util.WavMerger
+import com.autominuting.util.AudioMerger
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -406,32 +406,40 @@ class ShareReceiverActivity : ComponentActivity() {
     }
 
     /**
-     * 다중 오디오 파일을 하나의 WAV로 합쳐 STT 전사 파이프라인에 진입시킨다.
+     * 다중 오디오 파일을 하나의 M4A로 합쳐 STT 전사 파이프라인에 진입시킨다.
      * Content URI는 Activity finish() 전에 모두 읽어야 한다 (Content URI 수명 보장).
+     * MediaExtractor + MediaMuxer를 사용하여 재인코딩 없이 M4A/WAV 등 모든 오디오 포맷을 지원한다.
      *
      * @param uris 합칠 오디오 파일들의 content:// URI 리스트
      */
     private fun handleMultipleAudioShare(uris: List<android.net.Uri>) {
         lifecycleScope.launch {
-            val inputStreams = mutableListOf<InputStream>()
+            val tempFiles = mutableListOf<File>()
             try {
                 // 첫 번째 URI에서 파일명 추출 (MERGE-02)
                 val firstName = getDisplayName(uris.first()) ?: "합쳐진 회의"
 
-                // 각 URI에서 InputStream 열기
-                for (uri in uris) {
-                    val stream = contentResolver.openInputStream(uri)
-                        ?: throw IOException("URI를 열 수 없습니다: $uri")
-                    inputStreams.add(stream)
+                // Content URI → 임시 파일로 복사 (MediaExtractor는 절대 경로 필요)
+                val tempDir = File(cacheDir, "merge_temp")
+                tempDir.mkdirs()
+                withContext(Dispatchers.IO) {
+                    for ((index, uri) in uris.withIndex()) {
+                        val ext = getDisplayName(uri)?.substringAfterLast('.') ?: "m4a"
+                        val tempFile = File(tempDir, "input_${index}_${System.currentTimeMillis()}.$ext")
+                        contentResolver.openInputStream(uri)?.use { input ->
+                            tempFile.outputStream().use { output -> input.copyTo(output) }
+                        } ?: throw IOException("URI를 열 수 없습니다: $uri")
+                        tempFiles.add(tempFile)
+                    }
                 }
 
-                // 합친 파일 생성
+                // AudioMerger로 M4A 합치기
                 val audioDir = File(filesDir, "audio")
                 audioDir.mkdirs()
-                val mergedFile = File(audioDir, "share_${System.currentTimeMillis()}.wav")
+                val mergedFile = File(audioDir, "share_${System.currentTimeMillis()}.m4a")
 
                 withContext(Dispatchers.IO) {
-                    WavMerger.merge(inputStreams, mergedFile)
+                    AudioMerger.merge(tempFiles.map { it.absolutePath }, mergedFile)
                 }
 
                 Log.d(TAG, "다중 오디오 합치기 완료: ${mergedFile.absolutePath} (${mergedFile.length()} bytes, ${uris.size}개 파일)")
@@ -469,24 +477,13 @@ class ShareReceiverActivity : ComponentActivity() {
                 PipelineNotificationHelper.updateProgress(this@ShareReceiverActivity, "음성 파일 전사 중...")
                 Toast.makeText(this@ShareReceiverActivity, "음성 파일 합치기 완료, 전사 중...", Toast.LENGTH_SHORT).show()
 
-            } catch (e: IllegalArgumentException) {
-                // WAV 포맷 검증 실패 (비WAV 파일 또는 fmt 불일치)
-                Log.e(TAG, "다중 오디오 합치기 실패: ${e.message}", e)
-                val message = when {
-                    e.message?.contains("RIFF") == true || e.message?.contains("WAV") == true ->
-                        "WAV 파일만 합치기를 지원합니다"
-                    e.message?.contains("포맷") == true ->
-                        "오디오 파일 형식이 일치하지 않아 합칠 수 없습니다"
-                    else -> "오디오 합치기 실패: ${e.message}"
-                }
-                Toast.makeText(this@ShareReceiverActivity, message, Toast.LENGTH_LONG).show()
             } catch (e: Exception) {
-                Log.e(TAG, "다중 오디오 합치기 실패", e)
-                Toast.makeText(this@ShareReceiverActivity, "오디오 합치기 실패", Toast.LENGTH_SHORT).show()
+                Log.e(TAG, "다중 오디오 합치기 실패: ${e.message}", e)
+                Toast.makeText(this@ShareReceiverActivity, "오디오 합치기 실패: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
-                // 모든 InputStream 닫기
-                inputStreams.forEach { stream ->
-                    try { stream.close() } catch (_: Exception) {}
+                // 임시 파일 정리
+                tempFiles.forEach { file ->
+                    try { file.delete() } catch (_: Exception) {}
                 }
                 finish()
             }

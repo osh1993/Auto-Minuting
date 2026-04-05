@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: Phase 50 완료
-stopped_at: Phase 50-01 완료 — 다중 파일 합치기 구현 완료
-last_updated: "2026-04-05T15:22:07.453Z"
-last_activity: 2026-04-05
+milestone: v8.0
+milestone_name: 다중 파일 합치기
+status: v8.0 완료 — 아카이브됨
+stopped_at: v8.0 complete-milestone 완료
+last_updated: "2026-04-06T00:00:00.000Z"
+last_activity: 2026-04-06
 progress:
   total_phases: 50
-  completed_phases: 45
+  completed_phases: 50
   total_plans: 80
-  completed_plans: 78
+  completed_plans: 80
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 
 ## Current Position
 
-Phase: 50
-Plan: Not started
-Status: Phase 50 완료
-Last activity: 2026-04-05
+Phase: 50 (완료)
+Plan: 완료
+Status: v8.0 아카이브 완료 — 다음 마일스톤 대기
+Last activity: 2026-04-06
 
 ## Performance Metrics
 
