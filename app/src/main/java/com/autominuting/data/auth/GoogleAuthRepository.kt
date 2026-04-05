@@ -256,7 +256,10 @@ class GoogleAuthRepository @Inject constructor(
             } else {
                 // 이미 동의된 계정 — 즉시 token 획득
                 val token = result.accessToken
-                cachedDriveAccessToken = token
+                if (!token.isNullOrBlank()) {
+                    cachedDriveAccessToken = token
+                    secureApiKeyRepository.saveDriveAccessToken(token)
+                }
                 val email = (authState.value as? AuthState.SignedIn)?.email ?: ""
                 userPreferencesRepository.setDriveAuthorized(true)
                 _driveAuthState.value = DriveAuthState.Authorized(email = email)
@@ -276,6 +279,9 @@ class GoogleAuthRepository @Inject constructor(
      */
     suspend fun onDriveAuthorizationResult(accessToken: String) {
         cachedDriveAccessToken = accessToken
+        if (accessToken.isNotBlank()) {
+            secureApiKeyRepository.saveDriveAccessToken(accessToken)
+        }
         val email = (authState.value as? AuthState.SignedIn)?.email ?: ""
         userPreferencesRepository.setDriveAuthorized(true)
         _driveAuthState.value = DriveAuthState.Authorized(email = email)
@@ -297,15 +303,27 @@ class GoogleAuthRepository @Inject constructor(
      */
     suspend fun revokeDriveAuthorization() {
         cachedDriveAccessToken = null
+        secureApiKeyRepository.clearDriveAccessToken()
         userPreferencesRepository.setDriveAuthorized(false)
         _driveAuthState.value = DriveAuthState.NotAuthorized
         Log.d(TAG, "Drive 인증 해제 완료")
     }
 
     /**
-     * 캐시된 Drive access token을 반환한다. null이면 authorizeDrive() 재호출 필요.
+     * Drive access token을 반환한다.
+     * 메모리 캐시 우선 조회, 없으면 EncryptedSharedPreferences 폴백 (앱 재시작 대응).
      */
-    fun getDriveAccessToken(): String? = cachedDriveAccessToken
+    fun getDriveAccessToken(): String? {
+        val cached = cachedDriveAccessToken
+        if (!cached.isNullOrBlank()) return cached
+        // 앱 재시작 후 메모리 캐시 소실 시 저장된 token으로 폴백
+        val stored = secureApiKeyRepository.getDriveAccessToken()
+        if (!stored.isNullOrBlank()) {
+            cachedDriveAccessToken = stored  // 메모리 캐시 복원
+            Log.d(TAG, "Drive access token 저장소에서 복원됨")
+        }
+        return stored
+    }
 
     /**
      * Google 로그아웃을 수행한다.
@@ -315,6 +333,7 @@ class GoogleAuthRepository @Inject constructor(
         cachedAccessToken = null
         // Drive 인증 상태도 함께 초기화
         cachedDriveAccessToken = null
+        secureApiKeyRepository.clearDriveAccessToken()
         userPreferencesRepository.setDriveAuthorized(false)
         _driveAuthState.value = DriveAuthState.NotAuthorized
         userPreferencesRepository.clearGoogleAccount()

@@ -28,6 +28,9 @@ class SecureApiKeyRepository @Inject constructor(
         private const val KEY_CLOVA_SECRET_KEY = "clova_secret_key"
         private const val KEY_CLOVA_SUMMARY_CLIENT_ID = "clova_summary_client_id"
         private const val KEY_CLOVA_SUMMARY_CLIENT_SECRET = "clova_summary_client_secret"
+
+        /** Drive access token — 메모리 캐시 소실 대비 단기 저장 (Worker 실행 시 사용) */
+        private const val KEY_DRIVE_ACCESS_TOKEN = "drive_access_token"
     }
 
     @Suppress("DEPRECATION")
@@ -165,6 +168,21 @@ class SecureApiKeyRepository @Inject constructor(
     /** 저장된 CLOVA Summary Client Secret을 삭제한다. */
     fun clearClovaSummaryClientSecret() {
         encryptedPrefs?.edit()?.remove(KEY_CLOVA_SUMMARY_CLIENT_SECRET)?.apply()
+    }
+
+    /** Drive access token을 반환한다. 없거나 초기화 실패 시 null. */
+    fun getDriveAccessToken(): String? =
+        encryptedPrefs?.getString(KEY_DRIVE_ACCESS_TOKEN, null)
+
+    /** Drive access token을 암호화하여 저장한다. */
+    fun saveDriveAccessToken(token: String) {
+        encryptedPrefs?.edit()?.putString(KEY_DRIVE_ACCESS_TOKEN, token)?.apply()
+            ?: Log.w(TAG, "Drive access token 저장 실패: EncryptedSharedPreferences 사용 불가")
+    }
+
+    /** Drive access token을 삭제한다. */
+    fun clearDriveAccessToken() {
+        encryptedPrefs?.edit()?.remove(KEY_DRIVE_ACCESS_TOKEN)?.apply()
     }
 
     /** EncryptedSharedPreferences가 정상 초기화되었는지 반환한다. */

@@ -623,8 +623,8 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // === 인증 섹션 ===
-            SettingsSection(title = "인증") {
+            // === Gemini 인증 섹션 (API 키 / OAuth 선택) ===
+            SettingsSection(title = "Gemini 인증") {
                 Text(
                     text = "Gemini API 호출 시 사용할 인증 방식을 선택합니다",
                     style = MaterialTheme.typography.bodySmall,
@@ -653,7 +653,7 @@ fun SettingsScreen(
                         onClick = { viewModel.setAuthMode(AuthMode.OAUTH) }
                     )
                     Text(
-                        text = "Google 계정",
+                        text = "Google 계정 (OAuth)",
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
@@ -664,41 +664,68 @@ fun SettingsScreen(
                 if (authMode == AuthMode.OAUTH) {
                     // OAuth Client ID 입력
                     OAuthClientIdSection(viewModel = viewModel)
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Google 계정 (OAuth)
-                    GoogleAccountSection(
-                        authState = authState,
-                        onSignIn = { viewModel.signInWithGoogle(context) },
-                        onSignOut = { viewModel.signOut() }
-                    )
-
-                    // Google Drive 연결 섹션 — Google 계정으로 로그인된 경우에만 표시
+                    Spacer(modifier = Modifier.height(12.dp))
+                    // Gemini API OAuth 권한 부여 버튼 — 로그인 후 수동 재요청용
                     if (authState is AuthState.SignedIn) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        GoogleDriveSection(
-                            driveAuthState = driveAuthState,
-                            onConnectDrive = {
-                                viewModel.authorizeDrive(context as Activity)
-                            },
-                            onRevokeDrive = { viewModel.revokeDriveAuth() }
-                        )
-                        // Drive 자동 업로드 폴더 ID 입력 섹션 (per DRIVE-04)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        DriveFolderSection(
-                            driveAuthState = driveAuthState,
-                            transcriptFolderId = driveTranscriptFolderId,
-                            minutesFolderId = driveMinutesFolderId,
-                            autoUploadEnabled = driveAutoUploadEnabled,
-                            onTranscriptFolderIdChange = viewModel::setDriveTranscriptFolderId,
-                            onMinutesFolderIdChange = viewModel::setDriveMinutesFolderId,
-                            onAutoUploadEnabledChange = viewModel::setDriveAutoUploadEnabled
+                        OutlinedButton(
+                            onClick = { viewModel.authorizeGeminiAccess(context as Activity) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Gemini API 권한 부여 (재시도)")
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Google 계정 로그인 후 Gemini API 접근 권한이 필요합니다. 회의록 생성이 안 될 경우 이 버튼을 눌러주세요.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 } else {
                     // API 키
                     ApiKeySection(viewModel = viewModel)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // === Google 계정 & Drive 섹션 (인증 모드와 독립) ===
+            SettingsSection(title = "Google 계정 & Drive") {
+                Text(
+                    text = "Google Drive 자동/수동 업로드에 사용할 Google 계정을 설정합니다",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Google 계정 로그인/로그아웃
+                GoogleAccountSection(
+                    authState = authState,
+                    onSignIn = { viewModel.signInWithGoogle(context) },
+                    onSignOut = { viewModel.signOut() }
+                )
+
+                // Google Drive 연결 섹션 — 로그인된 경우에만 표시
+                if (authState is AuthState.SignedIn) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    GoogleDriveSection(
+                        driveAuthState = driveAuthState,
+                        onConnectDrive = {
+                            viewModel.authorizeDrive(context as Activity)
+                        },
+                        onRevokeDrive = { viewModel.revokeDriveAuth() }
+                    )
+                    // Drive 폴더 ID 입력 + 자동 업로드 토글
+                    Spacer(modifier = Modifier.height(16.dp))
+                    DriveFolderSection(
+                        driveAuthState = driveAuthState,
+                        transcriptFolderId = driveTranscriptFolderId,
+                        minutesFolderId = driveMinutesFolderId,
+                        autoUploadEnabled = driveAutoUploadEnabled,
+                        onTranscriptFolderIdChange = viewModel::setDriveTranscriptFolderId,
+                        onMinutesFolderIdChange = viewModel::setDriveMinutesFolderId,
+                        onAutoUploadEnabledChange = viewModel::setDriveAutoUploadEnabled
+                    )
                 }
             }
 

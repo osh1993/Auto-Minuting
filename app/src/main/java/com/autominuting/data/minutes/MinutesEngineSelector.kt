@@ -60,7 +60,7 @@ class MinutesEngineSelector @Inject constructor(
 
         return when (engineType) {
             MinutesEngineType.GEMINI -> {
-                // 기존 authMode 기반 Gemini 엔진 선택 로직 유지
+                // authMode 기반 Gemini 엔진 선택
                 val authMode = userPreferencesRepository.authMode.first()
                 when (authMode) {
                     AuthMode.OAUTH -> {
@@ -68,8 +68,16 @@ class MinutesEngineSelector @Inject constructor(
                         if (oauthEngine.isAvailable()) {
                             oauthEngine
                         } else {
-                            Log.w(TAG, "OAuth 엔진 사용 불가 — API 키 엔진으로 폴백")
-                            geminiEngineProvider.get()
+                            // OAuth 토큰 없음 — API 키 엔진으로 폴백
+                            val apiKeyEngine = geminiEngineProvider.get()
+                            if (apiKeyEngine.isAvailable()) {
+                                Log.w(TAG, "OAuth 토큰 없음 — API 키 엔진으로 폴백 (설정 화면에서 Gemini 권한 부여 또는 API 키 입력 필요)")
+                                apiKeyEngine
+                            } else {
+                                // 둘 다 불가 — OAuth 엔진 반환하여 명확한 에러 메시지 전달
+                                Log.e(TAG, "OAuth 토큰 없음 + API 키 없음 — 회의록 생성 불가")
+                                oauthEngine
+                            }
                         }
                     }
                     AuthMode.API_KEY -> geminiEngineProvider.get()

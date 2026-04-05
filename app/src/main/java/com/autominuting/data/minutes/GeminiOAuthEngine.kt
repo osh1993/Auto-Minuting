@@ -89,6 +89,10 @@ class GeminiOAuthEngine @Inject constructor(
     /** 엔진 이름을 반환한다 (로깅용). */
     override fun engineName(): String = "Gemini 2.5 Flash (OAuth)"
 
-    /** Google 계정으로 로그인되어 있으면 사용 가능하다. */
-    override fun isAvailable(): Boolean = googleAuthRepository.isSignedIn()
+    /**
+     * Google 계정 로그인 + access token 보유 시 사용 가능하다.
+     * token이 없으면 API 호출이 401로 실패하므로 false를 반환한다.
+     */
+    override fun isAvailable(): Boolean =
+        googleAuthRepository.isSignedIn() && !googleAuthRepository.getAccessToken().isNullOrBlank()
 }
