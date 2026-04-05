@@ -51,7 +51,16 @@ sealed interface ApiKeyValidationState {
 sealed interface DriveFolderPickerState {
     data object Idle : DriveFolderPickerState
     data object Loading : DriveFolderPickerState
-    data class Loaded(val folders: List<DriveFolder>, val parentId: String?) : DriveFolderPickerState
+    /**
+     * @param folders 현재 위치의 하위 폴더 목록
+     * @param currentFolder 현재 위치 폴더 (null이면 root)
+     * @param navStack 탐색 경로 스택 (root→현재까지의 조상 폴더들, 뒤로가기에 사용)
+     */
+    data class Loaded(
+        val folders: List<DriveFolder>,
+        val currentFolder: DriveFolder?,
+        val navStack: List<DriveFolder> = emptyList()
+    ) : DriveFolderPickerState
     data class Error(val message: String) : DriveFolderPickerState
 }
 
@@ -359,9 +368,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
-     * Drive 폴더 목록을 로드한다. Fresh token을 획득하여 API를 호출한다.
-     *
-     * @param parentId 탐색할 부모 폴더 ID (null이면 root)
+     * Drive 폴더 목록을 로드한다. root에서 시작하는 새 탐색을 시작한다.
      */
     fun loadDriveFolders(parentId: String? = null) {
         viewModelScope.launch {
@@ -373,7 +380,11 @@ class SettingsViewModel @Inject constructor(
             }
             val result = driveUploadRepository.listFolders(token, parentId)
             _driveFolderPickerState.value = if (result.isSuccess) {
-                DriveFolderPickerState.Loaded(result.getOrDefault(emptyList()), parentId)
+                DriveFolderPickerState.Loaded(
+                    folders = result.getOrDefault(emptyList()),
+                    currentFolder = null,
+                    navStack = emptyList()
+                )
             } else {
                 DriveFolderPickerState.Error(result.exceptionOrNull()?.message ?: "폴더 목록 조회 실패")
             }
@@ -381,18 +392,70 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
-     * Drive에 새 폴더를 생성하고 즉시 선택 상태로 전환한다.
+     * 하위 폴더로 탐색한다. 현재 상태를 navStack에 쌓는다.
+     */
+    fun navigateIntoFolder(folder: DriveFolder) {
+        val currentState = _driveFolderPickerState.value as? DriveFolderPickerState.Loaded ?: return
+        viewModelScope.launch {
+            _driveFolderPickerState.value = DriveFolderPickerState.Loading
+            val token = getFreshDriveToken()
+            if (token.isNullOrBlank()) {
+                _driveFolderPickerState.value = DriveFolderPickerState.Error("Drive 인증이 필요합니다")
+                return@launch
+            }
+            val result = driveUploadRepository.listFolders(token, folder.id)
+            _driveFolderPickerState.value = if (result.isSuccess) {
+                DriveFolderPickerState.Loaded(
+                    folders = result.getOrDefault(emptyList()),
+                    currentFolder = folder,
+                    navStack = currentState.navStack + listOfNotNull(currentState.currentFolder)
+                )
+            } else {
+                DriveFolderPickerState.Error(result.exceptionOrNull()?.message ?: "폴더 목록 조회 실패")
+            }
+        }
+    }
+
+    /**
+     * 상위 폴더로 이동한다. navStack의 마지막 항목으로 복귀한다.
+     */
+    fun navigateUpFolder() {
+        val currentState = _driveFolderPickerState.value as? DriveFolderPickerState.Loaded ?: return
+        val stack = currentState.navStack
+        val parentFolder = stack.lastOrNull() // null이면 root
+        viewModelScope.launch {
+            _driveFolderPickerState.value = DriveFolderPickerState.Loading
+            val token = getFreshDriveToken()
+            if (token.isNullOrBlank()) {
+                _driveFolderPickerState.value = DriveFolderPickerState.Error("Drive 인증이 필요합니다")
+                return@launch
+            }
+            val result = driveUploadRepository.listFolders(token, parentFolder?.id)
+            _driveFolderPickerState.value = if (result.isSuccess) {
+                DriveFolderPickerState.Loaded(
+                    folders = result.getOrDefault(emptyList()),
+                    currentFolder = parentFolder,
+                    navStack = stack.dropLast(1)
+                )
+            } else {
+                DriveFolderPickerState.Error(result.exceptionOrNull()?.message ?: "폴더 목록 조회 실패")
+            }
+        }
+    }
+
+    /**
+     * Drive에 새 폴더를 생성한다. 생성 후 현재 위치의 목록을 새로 고침한다.
      *
      * @param folderName 생성할 폴더 이름
-     * @param parentId 부모 폴더 ID (null이면 root)
-     * @param onCreated 생성된 폴더 ID를 전달하는 콜백
+     * @param onCreated 생성된 폴더를 전달하는 콜백 (자동 선택 여부는 호출부에서 결정)
      */
     fun createDriveFolder(
         folderName: String,
-        parentId: String?,
         onCreated: (DriveFolder) -> Unit,
         onError: (String) -> Unit
     ) {
+        val currentState = _driveFolderPickerState.value as? DriveFolderPickerState.Loaded
+        val parentId = currentState?.currentFolder?.id  // null이면 root
         viewModelScope.launch {
             val token = getFreshDriveToken()
             if (token.isNullOrBlank()) {
@@ -401,9 +464,15 @@ class SettingsViewModel @Inject constructor(
             }
             val result = driveUploadRepository.createFolder(token, folderName, parentId)
             if (result.isSuccess) {
-                onCreated(result.getOrThrow())
-                // 생성 후 현재 위치의 폴더 목록을 새로 고침
-                loadDriveFolders(parentId)
+                val folder = result.getOrThrow()
+                onCreated(folder)
+                // 생성 후 현재 위치 목록 새로 고침 (새 폴더 반영)
+                val refreshResult = driveUploadRepository.listFolders(token, parentId)
+                if (refreshResult.isSuccess && currentState != null) {
+                    _driveFolderPickerState.value = currentState.copy(
+                        folders = refreshResult.getOrDefault(emptyList())
+                    )
+                }
             } else {
                 onError(result.exceptionOrNull()?.message ?: "폴더 생성 실패")
             }

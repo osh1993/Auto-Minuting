@@ -733,16 +733,12 @@ fun SettingsScreen(
                             else viewModel.setDriveMinutesFolderId(folder.id)
                             viewModel.dismissDriveFolderPicker()
                         },
-                        onNavigateIntoFolder = { viewModel.loadDriveFolders(it.id) },
-                        onCreateFolder = { name, parentId, isTranscript ->
+                        onNavigateIntoFolder = { viewModel.navigateIntoFolder(it) },
+                        onNavigateUp = { viewModel.navigateUpFolder() },
+                        onCreateFolder = { name, isTranscript ->
                             viewModel.createDriveFolder(
                                 folderName = name,
-                                parentId = parentId,
-                                onCreated = { folder ->
-                                    if (isTranscript) viewModel.setDriveTranscriptFolderId(folder.id)
-                                    else viewModel.setDriveMinutesFolderId(folder.id)
-                                    viewModel.dismissDriveFolderPicker()
-                                },
+                                onCreated = { /* 생성만, 자동 선택 안 함 — 목록에서 직접 선택 */ },
                                 onError = { /* 피커 내 에러 표시는 상태로 처리됨 */ }
                             )
                         },
@@ -1006,7 +1002,8 @@ private fun DriveFolderSection(
     onBrowseMinutesFolder: () -> Unit,
     onFolderSelected: (com.autominuting.data.drive.DriveFolder, Boolean) -> Unit,
     onNavigateIntoFolder: (com.autominuting.data.drive.DriveFolder) -> Unit,
-    onCreateFolder: (name: String, parentId: String?, isTranscript: Boolean) -> Unit,
+    onNavigateUp: () -> Unit,
+    onCreateFolder: (name: String, isTranscript: Boolean) -> Unit,
     onDismissPicker: () -> Unit
 ) {
     // Drive 인증 완료 상태일 때만 표시
@@ -1020,37 +1017,47 @@ private fun DriveFolderSection(
 
     // 피커 다이얼로그 (Loaded 상태일 때만 표시)
     if (folderPickerState is DriveFolderPickerState.Loaded) {
+        val currentFolder = folderPickerState.currentFolder
+        val navStack = folderPickerState.navStack
+
         androidx.compose.material3.AlertDialog(
             onDismissRequest = onDismissPicker,
             title = {
-                Text(if (pickerTargetIsTranscript) "전사 파일 폴더 선택" else "회의록 폴더 선택")
+                Column {
+                    Text(if (pickerTargetIsTranscript) "전사 파일 폴더 선택" else "회의록 폴더 선택")
+                    // 현재 경로 표시 (breadcrumb)
+                    val breadcrumb = buildString {
+                        append("내 드라이브")
+                        navStack.forEach { append(" > ${it.name}") }
+                        if (currentFolder != null) append(" > ${currentFolder.name}")
+                    }
+                    Text(
+                        text = breadcrumb,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             },
             text = {
                 Column {
-                    val parentId = folderPickerState.parentId
-                    // 상위 폴더로 이동 버튼
-                    if (parentId != null) {
-                        TextButton(onClick = { onNavigateIntoFolder(
-                            com.autominuting.data.drive.DriveFolder("root", "내 드라이브")
-                        ) }) {
-                            Text("← 내 드라이브")
+                    // 뒤로가기 버튼 (root가 아닐 때)
+                    if (currentFolder != null) {
+                        TextButton(onClick = onNavigateUp) {
+                            Text("← ${navStack.lastOrNull()?.name ?: "내 드라이브"}")
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                     }
-                    // 현재 폴더(내 드라이브 또는 선택 위치)를 직접 선택
+                    // 현재 폴더를 선택하는 버튼
                     OutlinedButton(
                         onClick = {
                             onFolderSelected(
-                                com.autominuting.data.drive.DriveFolder(
-                                    parentId ?: "root",
-                                    if (parentId == null) "내 드라이브" else "현재 폴더"
-                                ),
+                                currentFolder ?: com.autominuting.data.drive.DriveFolder("root", "내 드라이브"),
                                 pickerTargetIsTranscript
                             )
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("✓ ${if (parentId == null) "내 드라이브 (root)" else "현재 폴더 선택"}")
+                        Text("✓ ${currentFolder?.name ?: "내 드라이브 (root)"} 선택")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -1066,6 +1073,7 @@ private fun DriveFolderSection(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                // 폴더 이름 클릭 → 선택
                                 TextButton(
                                     onClick = { onFolderSelected(folder, pickerTargetIsTranscript) },
                                     modifier = Modifier.weight(1f)
@@ -1075,6 +1083,7 @@ private fun DriveFolderSection(
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                 }
+                                // 폴더 아이콘 클릭 → 하위 탐색
                                 IconButton(onClick = { onNavigateIntoFolder(folder) }) {
                                     Icon(
                                         imageVector = Icons.Default.Folder,
@@ -1121,7 +1130,8 @@ private fun DriveFolderSection(
 
     // 새 폴더 이름 입력 다이얼로그
     if (showCreateFolderDialog) {
-        val currentParentId = (folderPickerState as? DriveFolderPickerState.Loaded)?.parentId
+        val currentFolderName = (folderPickerState as? DriveFolderPickerState.Loaded)
+            ?.currentFolder?.name ?: "내 드라이브"
         androidx.compose.material3.AlertDialog(
             onDismissRequest = {
                 showCreateFolderDialog = false
@@ -1129,19 +1139,27 @@ private fun DriveFolderSection(
             },
             title = { Text("새 폴더 만들기") },
             text = {
-                OutlinedTextField(
-                    value = newFolderName,
-                    onValueChange = { newFolderName = it },
-                    label = { Text("폴더 이름") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column {
+                    Text(
+                        text = "위치: $currentFolderName",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newFolderName,
+                        onValueChange = { newFolderName = it },
+                        label = { Text("폴더 이름") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
                         if (newFolderName.isNotBlank()) {
-                            onCreateFolder(newFolderName, currentParentId, pickerTargetIsTranscript)
+                            onCreateFolder(newFolderName, pickerTargetIsTranscript)
                             showCreateFolderDialog = false
                             newFolderName = ""
                         }
