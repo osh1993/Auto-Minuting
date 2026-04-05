@@ -10,7 +10,7 @@
 - ✅ **v4.0 파이프라인 고도화 및 GUI 품질 개선** — Phases 29-35 (shipped 2026-03-30)
 - ✅ **v5.0 전사-회의록 독립 아키텍처** — Phases 36-38
 - **v6.0 멀티 엔진 확장** — Phases 39-42
-- **v7.0 Drive 연동 + UX 개선** — Phases 43-49
+- **v7.0 Drive 연동 + UX 개선** — Phases 43-49 (shipped 2026-04-05)
 
 ## Phases
 
@@ -427,16 +427,16 @@ Plans:
 Plans:
 - [x] 48-01-PLAN.md — API 사용량 추적 레이어 + 대시보드 위젯
 
-### Phase 49: 설정 UI 정비
+### Phase 49: 설정 UI 정비 (3/3 plans) — completed 2026-04-05
 **Goal**: 설정 화면이 v7.0 신규 기능을 포함하여 논리적으로 재구성된다
 **Depends on**: Phase 45, Phase 46, Phase 47, Phase 48
 **Requirements**: SET7-01
-**Plans**: 3 plans
+**Plans**: 3/3 plans complete
 
 Plans:
-- [ ] 49-01-PLAN.md — 설정 화면 구조 분석 및 재구성 수정안 작성
-- [ ] 49-02-PLAN.md — 재구성안 사용자 승인 체크포인트
-- [ ] 49-03-PLAN.md — 승인된 재구성안 적용 및 시각 확인
+- [x] 49-01-PLAN.md — 설정 화면 구조 분석 및 재구성 수정안 작성
+- [x] 49-02-PLAN.md — 재구성안 사용자 승인 체크포인트
+- [x] 49-03-PLAN.md — 승인된 재구성안 적용 및 시각 확인
 
 ## Milestone Details
 
@@ -476,4 +476,4 @@ Plans:
 | 46. Google Drive 업로드 파이프라인 | v7.0 | 2/2 | Complete   | 2026-04-03 |
 | 47. 회의록 편집 기능 | v7.0 | 1/1 | Complete   | 2026-04-03 |
 | 48. API 사용량 대시보드 | v7.0 | 1/1 | Complete   | 2026-04-03 |
-| 49. 설정 UI 정비 | v7.0 | 0/1 | Pending | — |
+| 49. 설정 UI 정비 | v7.0 | 3/3 | Complete | 2026-04-05 |
