@@ -143,6 +143,19 @@ Use these entry points:
 Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
 <!-- GSD:workflow-end -->
 
+## 마일스톤 완료 후처리 (자동 실행)
+
+`/gsd:complete-milestone` 완료 직후 사용자가 별도로 요청하지 않아도 반드시 아래 순서로 실행한다:
+
+1. **app/build.gradle.kts 버전 업데이트**: `versionCode`와 `versionName`을 마일스톤 버전으로 갱신
+2. **MANUAL.md 갱신**: `docs/MANUAL.md` — 버전 번호·날짜·신기능·문제해결 섹션 업데이트
+3. **QUICK_START.md 갱신**: `docs/QUICK_START.md` — 신기능·핵심 팁 표 갱신
+4. **Release APK 빌드**: `./gradlew assembleRelease`
+5. **기기 설치**: `adb install -r <apk경로>` (기존 앱 제거 후 재설치가 필요하면 uninstall 먼저)
+6. **GitHub Release 생성**: `gh release create vX.Y <apk파일> --title "..." --notes "..."`
+7. **README 업데이트**: APK 다운로드 표에 새 버전 행 추가, 버전 히스토리 갱신
+8. **git commit + push**: 문서·버전 변경사항 커밋 후 `git push origin master`
+
 
 
 <!-- GSD:profile-start -->
