@@ -509,7 +509,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 55-01-PLAN.md — AudioChunker 유틸 신설 (PCM → 600초/10초 오버랩 WAV 청크) + AudioConverter internal 가시성
+- [x] 55-01-PLAN.md — AudioChunker 유틸 신설 (PCM → 600초/10초 오버랩 WAV 청크) + AudioConverter internal 가시성
 - [ ] 55-02-PLAN.md — GroqSttEngine 크기 분기 + transcribeChunked 순차 전사 + 청크 concat + 임시 파일 정리
 
 ## Milestone Details
@@ -558,4 +558,4 @@ Plans:
 | 52. Gemini 라운드로빈 + 오류 자동 전환 | v9.0 | 0/? | Not started | — |
 | 53. MP3 파일 합치기 지원 | v9.0 | 2/2 | Complete   | 2026-04-15 |
 | 54. 홈 화면 파일 직접 입력 | v9.0 | 0/? | Not started | — |
-| 55. Groq 대용량 파일 자동 분할 전사 | v9.0 | 0/? | Not started | — |
+| 55. Groq 대용량 파일 자동 분할 전사 | v9.0 | 1/2 | In Progress|  |

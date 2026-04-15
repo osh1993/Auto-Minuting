@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 53 Plan 02 완료 — MERGE-04, MERGE-05 요구사항 충족, 실기기 approved
-last_updated: "2026-04-15T12:24:22.484Z"
+status: executing
+stopped_at: Phase 55 Plan 01 완료 — AudioChunker 신설, AudioChunkerTest 10개 통과
+last_updated: "2026-04-15T12:51:04.448Z"
 last_activity: 2026-04-15
 progress:
   total_phases: 54
   completed_phases: 47
-  total_plans: 83
-  completed_plans: 81
+  total_plans: 87
+  completed_plans: 82
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다.
-**Current focus:** Phase 53 — MP3 파일 합치기 지원
+**Current focus:** Phase 54 — home-file-input
 
 ## Current Position
 
-Phase: 53 (MP3 파일 합치기 지원) — EXECUTING
+Phase: 54 (home-file-input) — EXECUTING
 Plan: 2 of 2
-Status: Phase complete — ready for verification
+Status: Ready to execute
 Last activity: 2026-04-15
 
 ## Performance Metrics
@@ -76,6 +76,8 @@ Last activity: 2026-04-15
 - [Phase 53-02]: 포맷 분류는 MIME 우선(mpeg/mp3) + 파일명 .mp3 확장자 폴백 — Content Provider MIME 누락 방어
 - [Phase 53-02]: 혼재 케이스 Meeting 제목에 (MP3)/(M4A) 접미사 추가 + 단일 파일 그룹(size==1)은 Merger 스킵하고 copyTo 만 수행
 - [Phase 53-02]: 포맷 분류는 MIME 우선(mpeg/mp3) + DISPLAY_NAME 원본 쿼리 확장자 폴백 — getDisplayName() 확장자 제거 버그 + Content Provider MIME 누락 이중 방어
+- [Phase 55-groq]: AudioConverter.decodeAudioToPcm/writeWavFile을 internal로 상향하여 AudioChunker에서 재사용 — 코드 중복 없는 청크 분할 구현
+- [Phase 55-groq]: splitPcmForTest() internal 순수 함수 분리 — Android 환경 없이 JVM 단위 테스트 가능
 
 ### Roadmap
 
@@ -95,6 +97,6 @@ Last activity: 2026-04-15
 
 ## Session Continuity
 
-Last session: 2026-04-15T12:24:22.475Z
-Stopped at: Phase 53 Plan 02 완료 — MERGE-04, MERGE-05 요구사항 충족, 실기기 approved
+Last session: 2026-04-15T12:51:04.425Z
+Stopped at: Phase 55 Plan 01 완료 — AudioChunker 신설, AudioChunkerTest 10개 통과
 Resume file: None
