@@ -10,15 +10,16 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 
 ## Current State
 
-**Shipped: v8.0 다중 파일 합치기** (2026-04-06)
-**Phase 54 완료** — 홈 화면 로컬 파일 직접 입력 (INPUT-01, INPUT-02)
+**Shipped: v9.0 다중 Gemini 계정 + 파일 입력 확장 + Groq 대용량 처리** (2026-04-15)
 
 - Tech stack: Kotlin 2.3.20, Jetpack Compose (BOM 2026.03), Hilt 2.56, Room 2.8.4, WorkManager, whisper.cpp (NDK/JNI)
-- 파이프라인: Plaud SDK BLE / Share Intent(단일+다중) / **홈 화면 SAF 파일 직접 선택** → STT 5종 선택 (Whisper 온디바이스 / Gemini / Groq / Deepgram / Naver CLOVA) → 회의록 엔진 3종 선택 (Gemini / Deepgram Intelligence / Naver CLOVA Summary) → Markdown 회의록
-- 다중 파일: Share Intent로 여러 M4A 공유 시 MediaMuxer로 자동 합치기 (재인코딩 없음)
+- 파이프라인: Plaud SDK BLE / Share Intent(단일+다중 M4A+MP3) / **홈 화면 SAF 파일 직접 선택** → STT 5종 (Whisper 온디바이스 / Gemini / Groq / Deepgram / Naver CLOVA) → 회의록 엔진 3종 (Gemini / Deepgram Intelligence / Naver CLOVA Summary) → Markdown 회의록
+- 다중 파일: M4A(MediaMuxer) + MP3(재인코딩 없음) + 혼재(포맷별 분리) 자동 합치기
+- Gemini 다중 키: 여러 API 키 라운드로빈 순환, 오류 시 알림 + 자동 다음 키 전환, 암호화 저장
+- Groq 대용량: 25MB 초과 파일 MediaCodec 스트리밍 청크 분할(600초) → 순차 전사 → 이어붙이기
 - Drive 연동: Google OAuth + Google Drive 자동/수동 업로드 + 폴더 독립 지정
 - UI: Material 3 Dynamic Color, Bottom Navigation 4탭, Markdown 뷰어, 아카이브 검색, API 사용량 대시보드
-- 데이터: Room DB v5, 전사(Transcript)-회의록(Minutes) 독립 1:N 구조
+- 데이터: Room DB v5, 전사(Transcript)-회의록(Minutes) 독립 1:N 구조, 16,804 LOC Kotlin
 
 ## Requirements
 
@@ -66,6 +67,20 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 - ✓ 합쳐진 파일명 = 첫 번째 파일명 (MERGE-02) — v8.0
 - ✓ 합쳐진 파일이 기존 STT → 회의록 파이프라인 통과 (MERGE-03) — v8.0
 
+### Validated (v9.0)
+
+- ✓ Gemini API 키 다중 등록/삭제 설정 UI (GEMINI-01) — v9.0
+- ✓ Gemini 호출 시 등록된 키를 라운드로빈으로 순환 (GEMINI-02) — v9.0
+- ✓ 오류 키 알림 + 자동 다음 키 전환 (GEMINI-03) — v9.0
+- ✓ 등록된 Gemini API 키 암호화 저장 (GEMINI-04) — v9.0
+- ✓ Share Intent로 여러 MP3 파일 자동 합치기 재인코딩 없이 처리 (MERGE-04) — v9.0
+- ✓ M4A+MP3 혼재 파일 포맷별 분리 처리 (MERGE-05) — v9.0
+- ✓ 홈 화면 '파일 불러오기' 버튼으로 로컬 M4A/MP3 선택 (INPUT-01) — v9.0
+- ✓ 선택한 파일이 STT → 회의록 파이프라인으로 처리 (INPUT-02) — v9.0
+- ✓ Groq 25MB 초과 파일 자동 청크 분할 (GROQ-01) — v9.0
+- ✓ 분할 청크 순서대로 Groq API 전사 요청 (GROQ-02) — v9.0
+- ✓ 전사 청크 결과 순서대로 이어붙이기 (GROQ-03) — v9.0
+
 ### Active
 
 (다음 마일스톤에서 정의 예정)
@@ -106,16 +121,13 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 | AnnotatedString Markdown 렌더링 | 외부 라이브러리 없이 직접 구현 | ✓ v1.0 |
 | Room LIKE 검색 | v1 데이터 규모에 FTS 불필요 | ✓ v1.0 |
 
-## Current Milestone: v9.0 다중 Gemini 계정 + 파일 입력 확장 + Groq 대용량 처리
+## Completed Milestone: v9.0 다중 Gemini 계정 + 파일 입력 확장 + Groq 대용량 처리
 
-**Goal:** Gemini API 키 다중 등록/라운드로빈 전환, MP3 파일 합치기 지원, 홈 화면 파일 직접 입력, Groq 대용량 파일 자동 분할 전사
+**Shipped:** 2026-04-15 | **Phases:** 51–55 (5개, 8플랜) | **Archive:** [v9.0-ROADMAP.md](.planning/milestones/v9.0-ROADMAP.md)
 
-**Target features:**
+## Next Milestone
 
-- Gemini 다중 API 키 등록 및 라운드로빈 전환 (오류 시 알림 후 자동 다음 키)
-- MP3 파일 합치기 지원 (MP3끼리 별도 로직, M4A 혼재 처리)
-- 홈 화면 '파일 불러오기' 버튼 (SAF → STT → 회의록 파이프라인)
-- Groq Whisper 대용량 파일 자동 분할 전사 (25MB 초과 시 청크 분할 → 결과 이어붙이기)
+(미정 — `/gsd:new-milestone` 으로 다음 마일스톤 계획 시작)
 
 ## Evolution
 
@@ -140,4 +152,4 @@ This document evolves at phase transitions and milestone boundaries.
 **v1.0 Roadmap archived to:** `.planning/milestones/v1.0-ROADMAP.md`
 
 ---
-*Last updated: 2026-04-06 — v8.0 완료 (Phase 50 다중 파일 합치기)*
+Last updated: 2026-04-15 — v9.0 완료 (Phase 55 Groq 대용량 파일 분할 전사)
