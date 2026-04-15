@@ -542,7 +542,7 @@ Plans:
 | 48. API 사용량 대시보드 | v7.0 | 1/1 | Complete   | 2026-04-03 |
 | 49. 설정 UI 정비 | v7.0 | 3/3 | Complete | 2026-04-05 |
 | 50. 다중 파일 합치기 | v8.0 | 1/1 | Complete    | 2026-04-05 |
-| 51. Gemini 다중 API 키 설정 UI | v9.0 | 0/? | Not started | — |
+| 51. Gemini 다중 API 키 설정 UI | v9.0 | 1/1 | Complete   | 2026-04-15 |
 | 52. Gemini 라운드로빈 + 오류 자동 전환 | v9.0 | 0/? | Not started | — |
 | 53. MP3 파일 합치기 지원 | v9.0 | 0/? | Not started | — |
 | 54. 홈 화면 파일 직접 입력 | v9.0 | 0/? | Not started | — |
