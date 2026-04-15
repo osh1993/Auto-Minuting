@@ -1,5 +1,14 @@
 package com.autominuting.presentation.dashboard
 
+import android.annotation.SuppressLint
+import android.net.Uri
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,16 +20,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -28,25 +39,20 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import android.annotation.SuppressLint
-import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.ui.platform.LocalContext
 import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.presentation.transcripts.ManualMinutesDialog
@@ -73,9 +79,29 @@ fun DashboardScreen(
     val transcriptionProgress by viewModel.transcriptionProgress.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
+    val localFileState by viewModel.localFileState.collectAsStateWithLifecycle()
+
     var urlText by remember { mutableStateOf("") }
     // 하이브리드 모드에서 템플릿 선택 다이얼로그 표시 여부
     var showPipelineTemplateDialog by remember { mutableStateOf(false) }
+
+    // 제목 입력 다이얼로그 제어용 state
+    var pendingFileUri by remember { mutableStateOf<Uri?>(null) }
+    var pendingFileTitle by remember { mutableStateOf("") }
+
+    // SAF 파일 피커 런처 — audio/* MIME (M4A/MP3 모두 포함)
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            // 파일명에서 확장자 제외한 기본 제목 추출 (D-05)
+            val displayName = uri.lastPathSegment?.substringAfterLast("/") ?: ""
+            val defaultTitle = displayName.substringBeforeLast(".", displayName)
+                .ifBlank { "로컬 파일 회의" }
+            pendingFileUri = uri
+            pendingFileTitle = defaultTitle
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -361,6 +387,57 @@ fun DashboardScreen(
                         }
                     }
                 }
+
+                // 로컬 파일 불러오기 섹션 (D-01/D-02)
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "로컬 파일 불러오기",
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    text = "기기에 저장된 M4A/MP3 파일을 선택하여 전사합니다",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                when (val lfs = localFileState) {
+                    is DashboardViewModel.LocalFileState.Idle -> {
+                        OutlinedButton(
+                            onClick = { filePickerLauncher.launch("audio/*") },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FolderOpen,
+                                contentDescription = null
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("파일 불러오기")
+                        }
+                    }
+                    is DashboardViewModel.LocalFileState.Processing -> {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "파일 처리 중...",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    is DashboardViewModel.LocalFileState.Error -> {
+                        Text(
+                            text = lfs.message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedButton(onClick = { viewModel.clearLocalFileError() }) {
+                            Text("다시 시도")
+                        }
+                    }
+                }
             }
         }
 
@@ -397,6 +474,46 @@ fun DashboardScreen(
         } else {
             showPipelineTemplateDialog = false
         }
+    }
+
+    // 로컬 파일 제목 입력 다이얼로그 (D-04 ~ D-07)
+    pendingFileUri?.let { uri ->
+        AlertDialog(
+            onDismissRequest = {
+                pendingFileUri = null
+                pendingFileTitle = ""
+            },
+            title = { Text("회의 제목 입력") },
+            text = {
+                OutlinedTextField(
+                    value = pendingFileTitle,
+                    onValueChange = { pendingFileTitle = it },
+                    label = { Text("제목") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.processLocalFile(uri, pendingFileTitle.trim())
+                        pendingFileUri = null
+                        pendingFileTitle = ""
+                    },
+                    enabled = pendingFileTitle.isNotBlank()
+                ) {
+                    Text("확인")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    pendingFileUri = null
+                    pendingFileTitle = ""
+                }) {
+                    Text("취소")
+                }
+            }
+        )
     }
 }
 
