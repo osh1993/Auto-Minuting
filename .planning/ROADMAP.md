@@ -489,10 +489,10 @@ Plans:
   2. 버튼 탭 시 SAF 파일 피커가 열리고 M4A/MP3 파일만 선택 가능하다
   3. 파일 선택 후 기존 STT → 회의록 파이프라인이 자동으로 시작된다
   4. 파이프라인 진행 상태가 기존과 동일하게 표시된다
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 54-01-PLAN.md — DashboardViewModel.processLocalFile() 메서드 + LocalFileState 추가 (INPUT-02)
+- [x] 54-01-PLAN.md — DashboardViewModel.processLocalFile() 메서드 + LocalFileState 추가 (INPUT-02)
 - [ ] 54-02-PLAN.md — DashboardScreen '파일 불러오기' 버튼 + SAF 런처 + 제목 입력 AlertDialog (INPUT-01, INPUT-02)
 **UI hint**: yes
 
@@ -510,7 +510,7 @@ Plans:
 
 Plans:
 - [x] 55-01-PLAN.md — AudioChunker 유틸 신설 (PCM → 600초/10초 오버랩 WAV 청크) + AudioConverter internal 가시성
-- [ ] 55-02-PLAN.md — GroqSttEngine 크기 분기 + transcribeChunked 순차 전사 + 청크 concat + 임시 파일 정리
+- [x] 55-02-PLAN.md — GroqSttEngine 크기 분기 + transcribeChunked 순차 전사 + 청크 concat + 임시 파일 정리
 
 ## Milestone Details
 
@@ -557,5 +557,5 @@ Plans:
 | 51. Gemini 다중 API 키 설정 UI | v9.0 | 1/1 | Complete   | 2026-04-15 |
 | 52. Gemini 라운드로빈 + 오류 자동 전환 | v9.0 | 0/? | Not started | — |
 | 53. MP3 파일 합치기 지원 | v9.0 | 2/2 | Complete   | 2026-04-15 |
-| 54. 홈 화면 파일 직접 입력 | v9.0 | 0/? | Not started | — |
-| 55. Groq 대용량 파일 자동 분할 전사 | v9.0 | 1/2 | In Progress|  |
+| 54. 홈 화면 파일 직접 입력 | v9.0 | 1/2 | In Progress|  |
+| 55. Groq 대용량 파일 자동 분할 전사 | v9.0 | 2/2 | Complete   | 2026-04-15 |
