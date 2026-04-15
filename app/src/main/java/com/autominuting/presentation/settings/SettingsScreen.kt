@@ -15,9 +15,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -51,8 +57,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -60,6 +68,7 @@ import com.autominuting.data.auth.AuthMode
 import com.autominuting.data.auth.AuthState
 import com.autominuting.data.auth.DriveAuthState
 import com.autominuting.data.preferences.UserPreferencesRepository
+import com.autominuting.data.security.GeminiApiKeyEntry
 import com.autominuting.data.stt.WhisperModelManager
 import com.autominuting.domain.model.AutomationMode
 import com.autominuting.domain.model.MinutesEngineType
@@ -543,7 +552,7 @@ fun SettingsScreen(
                     }
                 } else {
                     // API 키
-                    ApiKeySection(viewModel = viewModel)
+                    GeminiApiKeySection(viewModel = viewModel)
                 }
             }
 
@@ -1389,112 +1398,260 @@ private fun OAuthClientIdSection(viewModel: SettingsViewModel) {
 }
 
 /**
- * API 키 입력 섹션.
- *
- * @param viewModel 설정 ViewModel
+ * Gemini API 키 다중 관리 섹션 (GEMINI-01, GEMINI-04).
+ * 목록 뷰 + 인라인 추가 폼 + 삭제 확인 다이얼로그를 포함한다.
  */
 @Composable
-private fun ApiKeySection(viewModel: SettingsViewModel) {
+private fun GeminiApiKeySection(viewModel: SettingsViewModel) {
     val apiKeyValidationState by viewModel.apiKeyValidationState.collectAsStateWithLifecycle()
-    val hasApiKey by viewModel.hasApiKey.collectAsStateWithLifecycle()
-    var apiKeyInput by remember { mutableStateOf("") }
+    val geminiApiKeys by viewModel.geminiApiKeys.collectAsStateWithLifecycle()
+
+    // 추가 폼 표시 여부 (로컬 UI 상태)
+    var showAddForm by remember { mutableStateOf(false) }
+    // 추가 폼 입력 값
+    var labelInput by remember { mutableStateOf("") }
+    var keyInput by remember { mutableStateOf("") }
     var isKeyVisible by remember { mutableStateOf(false) }
+    // 삭제 확인 다이얼로그 대상
+    var deleteTarget by remember { mutableStateOf<GeminiApiKeyEntry?>(null) }
 
-    Text(
-        text = "Gemini API 키를 입력하면 내장 키 대신 사용합니다",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    // API 키 입력 필드
-    OutlinedTextField(
-        value = apiKeyInput,
-        onValueChange = {
-            apiKeyInput = it
-            viewModel.resetApiKeyValidationState()
-        },
-        label = { Text("Gemini API 키") },
-        visualTransformation = if (isKeyVisible)
-            VisualTransformation.None
-        else
-            PasswordVisualTransformation(),
-        trailingIcon = {
-            IconButton(onClick = { isKeyVisible = !isKeyVisible }) {
-                Icon(
-                    imageVector = if (isKeyVisible)
-                        Icons.Default.VisibilityOff
-                    else
-                        Icons.Default.Visibility,
-                    contentDescription = if (isKeyVisible) "숨기기" else "보기"
-                )
-            }
-        },
-        singleLine = true,
-        enabled = apiKeyValidationState !is ApiKeyValidationState.Validating,
-        modifier = Modifier.fillMaxWidth()
-    )
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    // 저장 버튼 + 상태 표시
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Button(
-            onClick = { viewModel.validateAndSaveApiKey(apiKeyInput.trim()) },
-            enabled = apiKeyInput.isNotBlank() && apiKeyValidationState !is ApiKeyValidationState.Validating
-        ) {
-            if (apiKeyValidationState is ApiKeyValidationState.Validating) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-            Text("검증 후 저장")
-        }
-
-        if (hasApiKey) {
-            OutlinedButton(onClick = {
-                viewModel.clearApiKey()
-                apiKeyInput = ""
-            }) {
-                Text("키 삭제")
-            }
+    // 검증 성공 시 폼 닫기 + 입력 초기화
+    LaunchedEffect(apiKeyValidationState) {
+        if (apiKeyValidationState is ApiKeyValidationState.Success) {
+            showAddForm = false
+            labelInput = ""
+            keyInput = ""
+            isKeyVisible = false
         }
     }
 
-    // 검증 결과 메시지
-    when (val state = apiKeyValidationState) {
-        is ApiKeyValidationState.Success -> {
+    // 섹션 타이틀
+    Text(
+        text = "Gemini API 키",
+        style = MaterialTheme.typography.titleMedium
+    )
+    Spacer(modifier = Modifier.height(4.dp))
+    // 헬퍼 텍스트
+    Text(
+        text = "등록된 키는 회의록 생성 시 순환 사용됩니다",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // 키 목록 또는 빈 상태
+    if (geminiApiKeys.isEmpty()) {
+        // 빈 상태 컴포넌트
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "등록된 Gemini API 키가 없습니다",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "API 키가 저장되었습니다",
+                text = "아래 '새 키 추가' 버튼으로 첫 API 키를 등록하세요.\naistudio.google.com에서 발급받을 수 있습니다.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+        }
+    } else {
+        // 키 목록 — LazyColumn 대신 Column + forEach 사용
+        // (SettingsScreen 자체가 verticalScroll Column 안에 있어 중첩 스크롤 금지)
+        geminiApiKeys.forEach { entry ->
+            OutlinedCard(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = entry.label,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = entry.maskedKey,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontFamily = FontFamily.Monospace
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    IconButton(
+                        onClick = { deleteTarget = entry },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "'${entry.label}' 키 삭제",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // 추가 폼 or "새 키 추가" 버튼
+    if (!showAddForm) {
+        FilledTonalButton(
+            onClick = {
+                showAddForm = true
+                viewModel.resetApiKeyValidationState()
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("새 키 추가")
+        }
+    } else {
+        // 인라인 추가 폼
+        val isValidating = apiKeyValidationState is ApiKeyValidationState.Validating
+
+        // 별명 입력
+        OutlinedTextField(
+            value = labelInput,
+            onValueChange = {
+                labelInput = it
+                viewModel.resetApiKeyValidationState()
+            },
+            label = { Text("별명") },
+            placeholder = { Text("별명 (예: 회사용, 개인용)") },
+            singleLine = true,
+            enabled = !isValidating,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // API 키 입력
+        OutlinedTextField(
+            value = keyInput,
+            onValueChange = {
+                keyInput = it
+                viewModel.resetApiKeyValidationState()
+            },
+            label = { Text("Gemini API 키") },
+            visualTransformation = if (isKeyVisible)
+                VisualTransformation.None
+            else
+                PasswordVisualTransformation(),
+            trailingIcon = {
+                IconButton(onClick = { isKeyVisible = !isKeyVisible }) {
+                    Icon(
+                        imageVector = if (isKeyVisible)
+                            Icons.Default.VisibilityOff
+                        else
+                            Icons.Default.Visibility,
+                        contentDescription = if (isKeyVisible) "키 숨기기" else "키 보기"
+                    )
+                }
+            },
+            singleLine = true,
+            readOnly = isValidating,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // 검증 오류 메시지 (필드 아래, 버튼 위)
+        if (apiKeyValidationState is ApiKeyValidationState.Error) {
+            Text(
+                text = (apiKeyValidationState as ApiKeyValidationState.Error).message,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+
+        // 검증 후 추가 + 취소 버튼
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = {
+                    viewModel.validateAndAddApiKey(labelInput.trim(), keyInput.trim())
+                },
+                enabled = labelInput.isNotBlank() && keyInput.isNotBlank() && !isValidating
+            ) {
+                if (isValidating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("검증 중...")
+                } else {
+                    Text("검증 후 추가")
+                }
+            }
+            TextButton(
+                onClick = {
+                    showAddForm = false
+                    labelInput = ""
+                    keyInput = ""
+                    isKeyVisible = false
+                    viewModel.resetApiKeyValidationState()
+                },
+                enabled = !isValidating
+            ) {
+                Text("취소")
+            }
+        }
+
+        // 검증 성공 메시지 (Success 상태는 LaunchedEffect에서 폼 닫힘 처리 — 이 분기는 도달 안 함)
+        if (apiKeyValidationState is ApiKeyValidationState.Success) {
+            val addedLabel = (apiKeyValidationState as ApiKeyValidationState.Success).addedLabel
+            Text(
+                text = "'$addedLabel' 키가 추가되었습니다",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary
             )
         }
-        is ApiKeyValidationState.Error -> {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = state.message,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error
-            )
-        }
-        else -> {}
     }
 
-    if (hasApiKey) {
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "사용자 API 키 사용 중",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.tertiary
+    // 삭제 확인 다이얼로그
+    deleteTarget?.let { target ->
+        AlertDialog(
+            onDismissRequest = { deleteTarget = null },
+            title = { Text("API 키 삭제") },
+            text = { Text("\"${target.label}\" 키를 삭제할까요? 이 작업은 되돌릴 수 없습니다.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.removeGeminiApiKey(target.index)
+                        deleteTarget = null
+                    }
+                ) {
+                    Text(
+                        text = "삭제",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteTarget = null }) {
+                    Text("취소")
+                }
+            }
         )
     }
 }
