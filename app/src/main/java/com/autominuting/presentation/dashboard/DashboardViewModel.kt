@@ -1,6 +1,7 @@
 package com.autominuting.presentation.dashboard
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -463,6 +464,101 @@ class DashboardViewModel @Inject constructor(
     /** 다운로드 에러 상태를 초기화한다 */
     fun clearDownloadError() {
         _downloadState.value = DownloadState.Idle
+    }
+
+    // --- 로컬 파일 입력 기능 ---
+
+    /** 로컬 파일 처리 상태 */
+    sealed interface LocalFileState {
+        /** 대기 중 */
+        data object Idle : LocalFileState
+        /** 파일 복사 및 파이프라인 진입 중 */
+        data object Processing : LocalFileState
+        /** 오류 발생 */
+        data class Error(val message: String) : LocalFileState
+    }
+
+    private val _localFileState = MutableStateFlow<LocalFileState>(LocalFileState.Idle)
+    val localFileState: StateFlow<LocalFileState> = _localFileState.asStateFlow()
+
+    /**
+     * SAF 피커로 선택한 로컬 오디오 파일을 앱 내부 저장소로 복사하고
+     * 기존 STT → 회의록 파이프라인(TranscriptionTriggerWorker)에 진입시킨다.
+     *
+     * @param uri SAF 피커에서 반환된 content:// URI
+     * @param title 회의 제목 (사용자가 입력한 값)
+     */
+    fun processLocalFile(uri: Uri, title: String) {
+        if (_localFileState.value is LocalFileState.Processing) return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _localFileState.value = LocalFileState.Processing
+                val now = System.currentTimeMillis()
+
+                // 1. 확장자 결정 (MIME 우선, 폴백 m4a) — ShareReceiverActivity 패턴 복제
+                val mimeType = context.contentResolver.getType(uri) ?: "audio/mp4"
+                val extension = when {
+                    mimeType.contains("m4a") || mimeType.contains("mp4") -> "m4a"
+                    mimeType.contains("mp3") || mimeType.contains("mpeg") -> "mp3"
+                    mimeType.contains("wav") -> "wav"
+                    mimeType.contains("ogg") -> "ogg"
+                    mimeType.contains("flac") -> "flac"
+                    else -> "m4a"
+                }
+
+                // 2. 앱 내부 저장소로 복사
+                val audioDir = File(context.filesDir, "audio")
+                audioDir.mkdirs()
+                val audioFile = File(audioDir, "local_${now}.$extension")
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    audioFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                } ?: run {
+                    _localFileState.value = LocalFileState.Error("파일을 읽을 수 없습니다")
+                    return@launch
+                }
+                Log.d(TAG, "로컬 파일 복사 완료: ${audioFile.absolutePath} (${audioFile.length()} bytes)")
+
+                // 3. Meeting insert (source = "LOCAL_FILE")
+                val instantNow = Instant.ofEpochMilli(now)
+                val meeting = Meeting(
+                    title = title,
+                    recordedAt = instantNow,
+                    audioFilePath = audioFile.absolutePath,
+                    pipelineStatus = PipelineStatus.AUDIO_RECEIVED,
+                    source = "LOCAL_FILE",
+                    createdAt = instantNow,
+                    updatedAt = instantNow
+                )
+                val meetingId = meetingRepository.insertMeeting(meeting)
+
+                // 4. TranscriptionTriggerWorker enqueue — automationMode 전달 필수
+                val currentAutomationMode = automationMode.value
+                val workRequest = OneTimeWorkRequestBuilder<TranscriptionTriggerWorker>()
+                    .setInputData(
+                        workDataOf(
+                            TranscriptionTriggerWorker.KEY_AUDIO_FILE_PATH to audioFile.absolutePath,
+                            TranscriptionTriggerWorker.KEY_MEETING_ID to meetingId,
+                            TranscriptionTriggerWorker.KEY_AUTOMATION_MODE to currentAutomationMode.name
+                        )
+                    )
+                    .build()
+                WorkManager.getInstance(context).enqueue(workRequest)
+                observeTranscriptionProgress(workRequest.id)
+
+                Log.d(TAG, "로컬 파일 파이프라인 진입: meetingId=$meetingId, source=LOCAL_FILE")
+                _localFileState.value = LocalFileState.Idle
+            } catch (e: Exception) {
+                Log.e(TAG, "로컬 파일 처리 오류: ${e.message}", e)
+                _localFileState.value = LocalFileState.Error("파일 처리 오류: ${e.message}")
+            }
+        }
+    }
+
+    /** 로컬 파일 에러 상태를 초기화한다 */
+    fun clearLocalFileError() {
+        _localFileState.value = LocalFileState.Idle
     }
 
     companion object {
