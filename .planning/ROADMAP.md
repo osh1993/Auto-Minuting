@@ -489,7 +489,11 @@ Plans:
   2. 버튼 탭 시 SAF 파일 피커가 열리고 M4A/MP3 파일만 선택 가능하다
   3. 파일 선택 후 기존 STT → 회의록 파이프라인이 자동으로 시작된다
   4. 파이프라인 진행 상태가 기존과 동일하게 표시된다
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 54-01-PLAN.md — DashboardViewModel.processLocalFile() 메서드 + LocalFileState 추가 (INPUT-02)
+- [ ] 54-02-PLAN.md — DashboardScreen '파일 불러오기' 버튼 + SAF 런처 + 제목 입력 AlertDialog (INPUT-01, INPUT-02)
 **UI hint**: yes
 
 ### Phase 55: Groq 대용량 파일 자동 분할 전사
@@ -502,7 +506,11 @@ Plans:
   3. 분할된 청크가 순서대로 Groq API에 전송되어 각각 전사된다
   4. 모든 청크 전사 결과가 순서대로 이어붙여져 하나의 완전한 전사 텍스트가 출력된다
   5. 전체 파이프라인이 단일 파일 전사와 동일하게 회의록 생성까지 진행된다
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 55-01-PLAN.md — AudioChunker 유틸 신설 (PCM → 600초/10초 오버랩 WAV 청크) + AudioConverter internal 가시성
+- [ ] 55-02-PLAN.md — GroqSttEngine 크기 분기 + transcribeChunked 순차 전사 + 청크 concat + 임시 파일 정리
 
 ## Milestone Details
 
