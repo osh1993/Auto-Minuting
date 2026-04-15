@@ -1,7 +1,8 @@
 ---
 phase: 51
 slug: gemini-api-ui
-status: draft
+status: approved
+reviewed_at: 2026-04-15
 shadcn_initialized: false
 preset: none
 created: 2026-04-15
