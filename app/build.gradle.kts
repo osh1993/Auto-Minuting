@@ -33,8 +33,8 @@ android {
         applicationId = "com.autominuting"
         minSdk = 31
         targetSdk = 36
-        versionCode = 8
-        versionName = "8.0"
+        versionCode = 9
+        versionName = "9.0"
 
         ndk {
             abiFilters += "arm64-v8a"
