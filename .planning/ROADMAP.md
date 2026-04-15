@@ -474,7 +474,11 @@ Plans:
   2. 합쳐진 MP3 파일이 기존 STT → 회의록 파이프라인을 정상 통과한다
   3. M4A와 MP3가 혼재된 공유 시 포맷별로 분리 처리되어 결과를 각각 내놓는다
   4. 단일 MP3 공유는 기존과 동일하게 처리된다 (합치기 로직 미적용)
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 53-01-PLAN.md — Mp3Merger 유틸 + 단위 테스트 (ID3 스트립 + 프레임 concat + 포맷 검증)
+- [ ] 53-02-PLAN.md — ShareReceiverActivity 포맷 분류 분기 + 그룹별 Merger/Meeting/Worker enqueue
 
 ### Phase 54: 홈 화면 파일 직접 입력
 **Goal**: 사용자가 홈 화면의 '파일 불러오기' 버튼으로 로컬 음성 파일을 선택하면 STT → 회의록 파이프라인이 실행된다
