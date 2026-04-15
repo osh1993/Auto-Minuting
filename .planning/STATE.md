@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 
 ## Current Position
 
-Phase: 50 (완료)
-Plan: 완료
-Status: v8.0 아카이브 완료 — 다음 마일스톤 대기
-Last activity: 2026-04-06
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-15 — Milestone v9.0 started
 
 ## Performance Metrics
 

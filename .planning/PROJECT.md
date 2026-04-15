@@ -106,9 +106,16 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 | AnnotatedString Markdown 렌더링 | 외부 라이브러리 없이 직접 구현 | ✓ v1.0 |
 | Room LIKE 검색 | v1 데이터 규모에 FTS 불필요 | ✓ v1.0 |
 
-## Current Milestone: 미정
+## Current Milestone: v9.0 다중 Gemini 계정 + 파일 입력 확장 + Groq 대용량 처리
 
-*v8.0 완료. 다음 마일스톤은 `/gsd:new-milestone`으로 정의 예정.*
+**Goal:** Gemini API 키 다중 등록/라운드로빈 전환, MP3 파일 합치기 지원, 홈 화면 파일 직접 입력, Groq 대용량 파일 자동 분할 전사
+
+**Target features:**
+
+- Gemini 다중 API 키 등록 및 라운드로빈 전환 (오류 시 알림 후 자동 다음 키)
+- MP3 파일 합치기 지원 (MP3끼리 별도 로직, M4A 혼재 처리)
+- 홈 화면 '파일 불러오기' 버튼 (SAF → STT → 회의록 파이프라인)
+- Groq Whisper 대용량 파일 자동 분할 전사 (25MB 초과 시 청크 분할 → 결과 이어붙이기)
 
 ## Evolution
 
