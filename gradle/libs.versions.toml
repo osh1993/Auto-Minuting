@@ -46,6 +46,7 @@ playServicesAuth = "21.5.1"
 
 # 테스트
 junit5 = "5.11.4"
+mockk = "1.13.17"
 
 # AndroidX 코어
 activityCompose = "1.10.1"
@@ -119,6 +120,7 @@ play-services-auth = { group = "com.google.android.gms", name = "play-services-a
 junit5-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit5" }
 junit5-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit5" }
 junit5-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version = "1.11.4" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

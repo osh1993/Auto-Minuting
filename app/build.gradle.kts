@@ -70,6 +70,11 @@ android {
         compose = true
         buildConfig = true
     }
+
+    testOptions {
+        // JUnit 단위 테스트에서 android.util.Log 호출 시 RuntimeException 대신 아무 동작도 하지 않도록 설정
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 // Release APK 파일명에 버전 번호 포함 (AutoMinuting-v6.0-release.apk)
@@ -139,6 +144,7 @@ dependencies {
     testImplementation(libs.junit5.api)
     testRuntimeOnly(libs.junit5.engine)
     testRuntimeOnly(libs.junit5.launcher)
+    testImplementation(libs.mockk)
 }
 
 tasks.withType<Test> {

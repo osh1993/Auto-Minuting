@@ -36,6 +36,9 @@ class SecureApiKeyRepository @Inject constructor(
         private const val KEY_GEMINI_KEY_COUNT = "gemini_api_key_count"
         private fun keyGeminiLabel(i: Int) = "gemini_api_key_${i}_label"
         private fun keyGeminiValue(i: Int) = "gemini_api_key_${i}_value"
+
+        /** 라운드로빈 인덱스 저장 키. EncryptedSharedPreferences String 타입으로 저장. */
+        private const val KEY_RR_INDEX = "gemini_roundrobin_index"
     }
 
     @Suppress("DEPRECATION")
@@ -303,4 +306,13 @@ class SecureApiKeyRepository @Inject constructor(
 
     /** EncryptedSharedPreferences가 정상 초기화되었는지 반환한다. */
     fun isAvailable(): Boolean = encryptedPrefs != null
+
+    /** 라운드로빈 현재 인덱스를 반환한다. EncryptedSharedPreferences 미사용 시 0. */
+    fun getRoundRobinIndex(): Int =
+        encryptedPrefs?.getString(KEY_RR_INDEX, "0")?.toIntOrNull() ?: 0
+
+    /** 라운드로빈 인덱스를 암호화 저장한다. */
+    fun saveRoundRobinIndex(index: Int) {
+        encryptedPrefs?.edit()?.putString(KEY_RR_INDEX, index.toString())?.apply()
+    }
 }
