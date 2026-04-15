@@ -43,14 +43,14 @@
 
 | REQ-ID | Phase | Plan | Status |
 |--------|-------|------|--------|
-| GEMINI-01 | — | — | Pending |
-| GEMINI-02 | — | — | Pending |
-| GEMINI-03 | — | — | Pending |
-| GEMINI-04 | — | — | Pending |
-| MERGE-04 | — | — | Pending |
-| MERGE-05 | — | — | Pending |
-| INPUT-01 | — | — | Pending |
-| INPUT-02 | — | — | Pending |
-| GROQ-01 | — | — | Pending |
-| GROQ-02 | — | — | Pending |
-| GROQ-03 | — | — | Pending |
+| GEMINI-01 | Phase 51 | — | Pending |
+| GEMINI-02 | Phase 52 | — | Pending |
+| GEMINI-03 | Phase 52 | — | Pending |
+| GEMINI-04 | Phase 51 | — | Pending |
+| MERGE-04 | Phase 53 | — | Pending |
+| MERGE-05 | Phase 53 | — | Pending |
+| INPUT-01 | Phase 54 | — | Pending |
+| INPUT-02 | Phase 54 | — | Pending |
+| GROQ-01 | Phase 55 | — | Pending |
+| GROQ-02 | Phase 55 | — | Pending |
+| GROQ-03 | Phase 55 | — | Pending |

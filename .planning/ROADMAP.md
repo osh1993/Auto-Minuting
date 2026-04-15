@@ -12,6 +12,7 @@
 - ✅ **v6.0 멀티 엔진 확장** — Phases 39-42 (shipped 2026-04-03)
 - ✅ **v7.0 Drive 연동 + UX 개선** — Phases 43-49 (shipped 2026-04-05)
 - ✅ **v8.0 다중 파일 합치기** — Phase 50 (shipped 2026-04-06) — [archive](.planning/milestones/v8.0-ROADMAP.md)
+- [ ] **v9.0 다중 Gemini 계정 + 파일 입력 확장 + Groq 대용량 처리** — Phases 51-55
 
 ## Phases
 
@@ -439,11 +440,72 @@ Plans:
 - [x] 49-02-PLAN.md — 재구성안 사용자 승인 체크포인트
 - [x] 49-03-PLAN.md — 승인된 재구성안 적용 및 시각 확인
 
+## Phase Details (v9.0)
+
+### Phase 51: Gemini 다중 API 키 설정 UI
+**Goal**: 사용자가 설정 화면에서 Gemini API 키를 여러 개 추가/삭제할 수 있고, 등록된 키가 암호화 저장된다
+**Depends on**: Nothing (기존 Gemini API 키 설정 UI 확장)
+**Requirements**: GEMINI-01, GEMINI-04
+**Success Criteria** (what must be TRUE):
+  1. 설정 화면 Gemini API 섹션에 키 목록이 표시되고 새 키를 추가하는 입력 필드가 있다
+  2. 키를 추가하면 목록에 표시되고 앱 재시작 후 유지된다
+  3. 목록에서 특정 키 옆 삭제 버튼으로 키를 제거할 수 있다
+  4. 등록된 모든 키는 EncryptedSharedPreferences에 암호화 저장된다
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 52: Gemini 라운드로빈 + 오류 자동 전환
+**Goal**: Gemini 호출 시 등록된 키를 라운드로빈으로 순환하고, 오류 발생 시 알림 후 다음 키로 자동 전환된다
+**Depends on**: Phase 51 (다중 키 저장 구조 필요)
+**Requirements**: GEMINI-02, GEMINI-03
+**Success Criteria** (what must be TRUE):
+  1. Gemini STT 또는 회의록 생성 호출 시 등록된 키가 순서대로 순환 사용된다
+  2. 특정 키가 할당량 초과 또는 권한 오류를 반환하면 사용자에게 토스트/알림이 표시된다
+  3. 오류 발생 즉시 다음 키로 자동 전환되어 파이프라인이 중단 없이 계속된다
+  4. 등록된 키가 모두 오류이면 파이프라인 실패 메시지가 표시된다
+**Plans**: TBD
+
+### Phase 53: MP3 파일 합치기 지원
+**Goal**: Share Intent로 여러 MP3 파일 또는 M4A+MP3 혼재 파일을 공유했을 때 앱이 자동으로 합쳐 처리한다
+**Depends on**: Nothing (기존 WavMerger/M4A 합치기 로직과 병렬 구현)
+**Requirements**: MERGE-04, MERGE-05
+**Success Criteria** (what must be TRUE):
+  1. Share Intent로 여러 MP3 파일 공유 시 재인코딩 없이 하나의 MP3로 합쳐진다
+  2. 합쳐진 MP3 파일이 기존 STT → 회의록 파이프라인을 정상 통과한다
+  3. M4A와 MP3가 혼재된 공유 시 포맷별로 분리 처리되어 결과를 각각 내놓는다
+  4. 단일 MP3 공유는 기존과 동일하게 처리된다 (합치기 로직 미적용)
+**Plans**: TBD
+
+### Phase 54: 홈 화면 파일 직접 입력
+**Goal**: 사용자가 홈 화면의 '파일 불러오기' 버튼으로 로컬 음성 파일을 선택하면 STT → 회의록 파이프라인이 실행된다
+**Depends on**: Nothing (Share Intent 파이프라인 재사용)
+**Requirements**: INPUT-01, INPUT-02
+**Success Criteria** (what must be TRUE):
+  1. 홈 화면에 '파일 불러오기' 버튼이 표시된다
+  2. 버튼 탭 시 SAF 파일 피커가 열리고 M4A/MP3 파일만 선택 가능하다
+  3. 파일 선택 후 기존 STT → 회의록 파이프라인이 자동으로 시작된다
+  4. 파이프라인 진행 상태가 기존과 동일하게 표시된다
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 55: Groq 대용량 파일 자동 분할 전사
+**Goal**: Groq Whisper STT 선택 시 25MB 초과 파일이 자동으로 청크 분할되어 순서대로 전사된 뒤 하나의 텍스트로 이어붙여진다
+**Depends on**: Nothing (기존 GroqSttEngine 확장)
+**Requirements**: GROQ-01, GROQ-02, GROQ-03
+**Success Criteria** (what must be TRUE):
+  1. Groq STT 엔진 선택 시 25MB 이하 파일은 기존과 동일하게 단일 요청으로 처리된다
+  2. 25MB 초과 파일은 앱이 자동으로 청크로 분할한다 (사용자 개입 불필요)
+  3. 분할된 청크가 순서대로 Groq API에 전송되어 각각 전사된다
+  4. 모든 청크 전사 결과가 순서대로 이어붙여져 하나의 완전한 전사 텍스트가 출력된다
+  5. 전체 파이프라인이 단일 파일 전사와 동일하게 회의록 생성까지 진행된다
+**Plans**: TBD
+
 ## Milestone Details
 
 - v1.0 (Phases 1-7): `.planning/milestones/v1.0-ROADMAP.md`
 - v2.0 (Phases 8-13): `.planning/milestones/v2.0-ROADMAP.md`
 - v8.0 (Phase 50): `.planning/milestones/v8.0-ROADMAP.md`
+- v9.0 (Phases 51-55): TBD
 
 ## Progress
 
@@ -480,3 +542,8 @@ Plans:
 | 48. API 사용량 대시보드 | v7.0 | 1/1 | Complete   | 2026-04-03 |
 | 49. 설정 UI 정비 | v7.0 | 3/3 | Complete | 2026-04-05 |
 | 50. 다중 파일 합치기 | v8.0 | 1/1 | Complete    | 2026-04-05 |
+| 51. Gemini 다중 API 키 설정 UI | v9.0 | 0/? | Not started | — |
+| 52. Gemini 라운드로빈 + 오류 자동 전환 | v9.0 | 0/? | Not started | — |
+| 53. MP3 파일 합치기 지원 | v9.0 | 0/? | Not started | — |
+| 54. 홈 화면 파일 직접 입력 | v9.0 | 0/? | Not started | — |
+| 55. Groq 대용량 파일 자동 분할 전사 | v9.0 | 0/? | Not started | — |

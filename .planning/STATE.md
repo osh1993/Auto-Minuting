@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
-milestone: v8.0
-milestone_name: 다중 파일 합치기
-status: v8.0 완료 — 아카이브됨
-stopped_at: v8.0 complete-milestone 완료
-last_updated: "2026-04-06T00:00:00.000Z"
-last_activity: 2026-04-06
+milestone: v9.0
+milestone_name: 다중 Gemini 계정 + 파일 입력 확장 + Groq 대용량 처리
+status: Phase 51 대기 중
+stopped_at: roadmap 생성 완료 — plan-phase 대기
+last_updated: "2026-04-15T00:00:00.000Z"
+last_activity: 2026-04-15
 progress:
-  total_phases: 50
+  total_phases: 55
   completed_phases: 50
   total_plans: 80
   completed_plans: 80
@@ -17,17 +17,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-05)
+See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** 녹음에서 회의록까지의 전 과정을 자동화하여, 사용자가 수동 작업 없이 완성된 회의록을 받을 수 있어야 한다.
-**Current focus:** Phase 50 — 다중 파일 합치기
+**Current focus:** v9.0 — 다중 Gemini 계정 + 파일 입력 확장 + Groq 대용량 처리 (Phase 51 시작 전)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 51 (Not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-04-15 — Milestone v9.0 started
+Status: Roadmap created — 첫 phase 계획 대기
+Last activity: 2026-04-15 — v9.0 roadmap 생성 (Phase 51-55)
 
 ## Performance Metrics
 
@@ -38,12 +38,8 @@ Last activity: 2026-04-15 — Milestone v9.0 started
 
 **Recent Trend:**
 
-- Phase 47 완료 (회의록 편집, EDIT-01)
-- Phase 48 완료 (API 사용량 대시보드, DASH-01)
-- Phase 46 추가 기능 완료 (Drive 수동 업로드 + 자동 업로드 토글)
-- Phase 49 Plan 01 완료 (설정 화면 구조 분석 + 수정안 제시)
-- Phase 49 Plan 02 완료 (사용자 Option A 승인)
-- Phase 49 Plan 03 완료 (설정 화면 5개 섹션 재구성 + 시각 확인 승인)
+- Phase 50 완료 (다중 파일 합치기 MERGE-01, 02, 03) — v8.0 shipped
+- v9.0 Roadmap 확정: Phase 51-55 (11 requirements)
 
 ## Accumulated Context
 
@@ -68,17 +64,18 @@ Last activity: 2026-04-15 — Milestone v9.0 started
 - [Phase 48-api-dashboard]: MinutesRepositoryImpl에서 minutesEngine.engineName() 대신 UserPreferencesRepository.getMinutesEngineTypeOnce() + MinutesEngineType when 분기 사용
 - [Phase 50-01]: WavMerger를 별도 object로 분리 — 독립적 단위 테스트 가능, ShareReceiverActivity와 관심사 분리
 - [Phase 50-01]: handleMultipleAudioShare에서 processSharedAudio를 직접 호출하지 않고 별도 구현 — Content URI 수명 보장 + 이미 로컬 파일이므로 URI 재변환 불필요
+- [v9.0 roadmap]: Phase 51(GEMINI-01, 04) → Phase 52(GEMINI-02, 03) 순서 — 다중 키 저장 구조가 라운드로빈 로직보다 선행 필요
+- [v9.0 roadmap]: Phase 53(MERGE-04, 05)는 Phase 51/52와 병렬 가능 — MP3 합치기 로직은 Gemini 키 관리와 독립
+- [v9.0 roadmap]: Phase 54(INPUT-01, 02)는 독립 — Share Intent 파이프라인 재사용
+- [v9.0 roadmap]: Phase 55(GROQ-01, 02, 03)는 독립 — 기존 GroqSttEngine 확장
 
 ### Roadmap
 
-- Phase 43: UX 개선 (카드 터치 + 이름 변경 메뉴) — 완료
-- Phase 44: Groq Whisper STT 버그 수정 (BUG-01) — 완료 (해결 완료 확인 2026-04-05)
-- Phase 45: Google Drive 인증 (DRIVE-01) — 완료
-- Phase 46: Google Drive 업로드 파이프라인 (DRIVE-02, 03, 04) — 완료 + 추가 기능(수동 업로드, 자동 업로드 토글)
-- Phase 47: 회의록 편집 기능 (EDIT-01) — 완료
-- Phase 48: API 사용량 대시보드 (DASH-01) — 완료
-- Phase 49: 설정 UI 정비 (SETTINGS-01) — 완료 (3/3 plans, Option A 적극적 재구성 적용)
-- Phase 50: 다중 파일 합치기 (MERGE-01, 02, 03) — 완료 (1/1 plan)
+- Phase 51: Gemini 다중 API 키 설정 UI (GEMINI-01, GEMINI-04) — Not started
+- Phase 52: Gemini 라운드로빈 + 오류 자동 전환 (GEMINI-02, GEMINI-03) — Not started
+- Phase 53: MP3 파일 합치기 지원 (MERGE-04, MERGE-05) — Not started
+- Phase 54: 홈 화면 파일 직접 입력 (INPUT-01, INPUT-02) — Not started
+- Phase 55: Groq 대용량 파일 자동 분할 전사 (GROQ-01, GROQ-02, GROQ-03) — Not started
 
 ### Pending Todos
 
@@ -90,6 +87,6 @@ Last activity: 2026-04-15 — Milestone v9.0 started
 
 ## Session Continuity
 
-Last session: 2026-04-05T15:16:00.000Z
-Stopped at: Phase 50-01 완료 — 다중 파일 합치기 구현 완료
+Last session: 2026-04-15T00:00:00.000Z
+Stopped at: v9.0 Roadmap 생성 완료 — Phase 51 plan-phase 대기
 Resume file: None
