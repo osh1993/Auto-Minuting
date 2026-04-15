@@ -95,8 +95,9 @@ class AudioConverter @Inject constructor() {
 
     /**
      * MediaCodec/MediaExtractor로 오디오를 디코딩하여 16kHz mono PCM 데이터를 추출한다.
+     * AudioChunker에서 재사용할 수 있도록 internal 가시성으로 공개한다.
      */
-    private fun decodeAudioToPcm(inputPath: String): ByteArray {
+    internal fun decodeAudioToPcm(inputPath: String): ByteArray {
         val extractor = MediaExtractor()
         extractor.setDataSource(inputPath)
 
@@ -236,8 +237,9 @@ class AudioConverter @Inject constructor() {
 
     /**
      * PCM 데이터를 WAV 파일로 작성한다.
+     * AudioChunker에서 재사용할 수 있도록 internal 가시성으로 공개한다.
      */
-    private fun writeWavFile(outputFile: File, pcmData: ByteArray) {
+    internal fun writeWavFile(outputFile: File, pcmData: ByteArray) {
         val byteRate = TARGET_SAMPLE_RATE * TARGET_CHANNELS * BITS_PER_SAMPLE / 8
         val blockAlign = TARGET_CHANNELS * BITS_PER_SAMPLE / 8
         val dataSize = pcmData.size
