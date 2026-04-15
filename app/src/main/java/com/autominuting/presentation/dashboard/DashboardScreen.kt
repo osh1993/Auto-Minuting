@@ -2,6 +2,7 @@ package com.autominuting.presentation.dashboard
 
 import android.annotation.SuppressLint
 import android.net.Uri
+import android.provider.OpenableColumns
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -94,8 +95,12 @@ fun DashboardScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) {
-            // 파일명에서 확장자 제외한 기본 제목 추출 (D-05)
-            val displayName = uri.lastPathSegment?.substringAfterLast("/") ?: ""
+            // ContentResolver로 실제 파일명 조회 후 확장자 제외한 기본 제목 추출 (D-05)
+            val displayName = context.contentResolver.query(
+                uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) cursor.getString(0) else null
+            } ?: uri.lastPathSegment ?: ""
             val defaultTitle = displayName.substringBeforeLast(".", displayName)
                 .ifBlank { "로컬 파일 회의" }
             pendingFileUri = uri
