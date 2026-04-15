@@ -19,6 +19,7 @@ import androidx.work.workDataOf
 import com.autominuting.R
 import com.autominuting.data.local.dao.MeetingDao
 import com.autominuting.data.repository.TranscriptionRepositoryImpl
+import com.autominuting.data.security.GeminiAllKeysFailedException
 import com.autominuting.domain.model.AutomationMode
 import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.domain.model.PipelineStatus
@@ -233,6 +234,14 @@ class TranscriptionTriggerWorker @AssistedInject constructor(
             val error = transcribeResult.exceptionOrNull()
             val errorMessage = error?.message ?: "알 수 없는 전사 오류"
             Log.e(TAG, "전사 실패: $errorMessage", error)
+
+            // GEMINI-03: 모든 Gemini 키 소진 시 알림 표시 후 파이프라인 중단
+            if (error is GeminiAllKeysFailedException) {
+                PipelineNotificationHelper.notifyAllKeysExhausted(
+                    applicationContext,
+                    error.triedKeyCount
+                )
+            }
 
             // 파일 크기 초과 에러 감지 — STT 엔진 변경 안내 알림
             val fileSizeMatch = Regex("파일 크기\\((\\d+)MB\\)가 .+ 제한\\((\\d+)MB\\)을 초과").find(errorMessage)

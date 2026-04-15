@@ -182,6 +182,72 @@ object PipelineNotificationHelper {
         notificationManager.notify(PIPELINE_NOTIFICATION_ID, notification)
     }
 
+    /**
+     * Gemini API 키 오류 발생 + 자동 전환 알림을 표시한다 (GEMINI-03).
+     * 동일 PIPELINE_NOTIFICATION_ID를 재사용하여 알림이 쌓이지 않는다.
+     *
+     * @param context 컨텍스트
+     * @param keyLabel 오류 발생 키의 레이블
+     * @param reason 오류 원인 요약 ("할당량 초과", "권한 오류" 등)
+     * @param nextKeyLabel 다음 전환 키 레이블. null이면 마지막 키였음을 의미
+     */
+    fun notifyApiKeyError(
+        context: Context,
+        keyLabel: String,
+        reason: String,
+        nextKeyLabel: String?
+    ) {
+        val bodyText = if (nextKeyLabel != null) {
+            "'$keyLabel' 키 $reason — '$nextKeyLabel' 키로 자동 전환합니다"
+        } else {
+            "'$keyLabel' 키 $reason — 마지막 키입니다. 전환 후 파이프라인을 계속합니다"
+        }
+        val notification = NotificationCompat.Builder(context, PIPELINE_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Gemini API 키 오류")
+            .setContentText(bodyText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(bodyText))
+            .setAutoCancel(true)
+            .setOngoing(false)
+            .setSilent(false)
+            .build()
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(PIPELINE_NOTIFICATION_ID, notification)
+    }
+
+    /**
+     * 모든 Gemini API 키가 오류를 반환하여 파이프라인이 중단되었음을 알린다 (GEMINI-03).
+     *
+     * @param context 컨텍스트
+     * @param keyCount 시도한 키 총 개수
+     */
+    fun notifyAllKeysExhausted(context: Context, keyCount: Int) {
+        val bodyText = "등록된 Gemini API 키 ${keyCount}개 모두 오류 — 파이프라인이 중단되었습니다.\n설정에서 유효한 API 키를 확인해주세요."
+        val launchIntent = context.packageManager
+            .getLaunchIntentForPackage(context.packageName)
+            ?.apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP }
+        val pendingIntent = launchIntent?.let {
+            PendingIntent.getActivity(
+                context, 0, it,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+        val notification = NotificationCompat.Builder(context, PIPELINE_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Gemini API 오류")
+            .setContentText("모든 API 키 오류 — 파이프라인 중단")
+            .setStyle(NotificationCompat.BigTextStyle().bigText(bodyText))
+            .setAutoCancel(true)
+            .setOngoing(false)
+            .setSilent(false)
+            .apply { pendingIntent?.let { setContentIntent(it) } }
+            .build()
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(PIPELINE_NOTIFICATION_ID, notification)
+    }
+
     fun notifyTranscriptionComplete(
         context: Context,
         meetingId: Long,

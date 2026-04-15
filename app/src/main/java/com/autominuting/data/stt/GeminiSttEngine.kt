@@ -5,9 +5,10 @@ import android.util.Log
 import com.autominuting.data.quota.ApiUsageTracker
 import com.autominuting.data.quota.GeminiQuotaTracker
 import com.autominuting.data.quota.QuotaCategory
+import com.autominuting.data.security.GeminiAllKeysFailedException
+import com.autominuting.data.security.GeminiKeyRotator
 import com.autominuting.data.security.SecureApiKeyRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -27,12 +28,14 @@ import javax.inject.Singleton
  * Gemini 2.5 Flash 멀티모달 API에 오디오 파일을 전송하여 전사한다.
  *
  * 폴백 경로: Whisper(1차, 네이티브) → Gemini STT(2차, 클라우드)
+ * Phase 52: 다중 키 라운드로빈 순환 + 429/403 오류 자동 전환 (GEMINI-02, GEMINI-03)
  */
 @Singleton
 class GeminiSttEngine @Inject constructor(
     private val secureApiKeyRepository: SecureApiKeyRepository,
     private val quotaTracker: GeminiQuotaTracker,
-    private val apiUsageTracker: ApiUsageTracker
+    private val apiUsageTracker: ApiUsageTracker,
+    private val keyRotator: GeminiKeyRotator
 ) : SttEngine {
 
     companion object {
@@ -52,10 +55,6 @@ class GeminiSttEngine @Inject constructor(
         """.trimMargin()
 
         /** 지원하는 오디오 MIME 타입 */
-        /** 할당량 초과 시 최대 재시도 횟수 */
-        private const val MAX_RETRIES = 3
-        /** 재시도 간격 (밀리초) */
-        private const val RETRY_DELAY_MS = 20_000L
         /** Gemini 인라인 blob 최대 크기 (20MB) */
         private const val MAX_INLINE_BYTES = 20 * 1024 * 1024L
 
@@ -73,9 +72,8 @@ class GeminiSttEngine @Inject constructor(
     override fun engineName(): String = "Gemini STT (Cloud)"
 
     override suspend fun isAvailable(): Boolean {
-        val apiKey = getApiKey()
-        val available = apiKey.isNotBlank()
-        Log.d(TAG, "Gemini STT 사용 가능 여부: $available (API 키 ${if (available) "있음" else "없음"})")
+        val available = secureApiKeyRepository.getAllGeminiApiKeyValues().isNotEmpty()
+        Log.d(TAG, "Gemini STT 사용 가능 여부: $available")
         return available
     }
 
@@ -85,10 +83,10 @@ class GeminiSttEngine @Inject constructor(
     ): Result<String> =
         withContext(Dispatchers.IO) {
             try {
-                val apiKey = getApiKey()
-                if (apiKey.isBlank()) {
+                val keys = secureApiKeyRepository.getAllGeminiApiKeyValues()
+                if (keys.isEmpty()) {
                     return@withContext Result.failure(
-                        GeminiSttException("Gemini API 키가 설정되지 않았습니다")
+                        GeminiSttException("등록된 Gemini API 키가 없습니다")
                     )
                 }
 
@@ -98,24 +96,18 @@ class GeminiSttEngine @Inject constructor(
                         IllegalArgumentException("오디오 파일이 존재하지 않습니다: $audioFilePath")
                     )
                 }
-
                 val extension = audioFile.extension.lowercase()
                 val mimeType = MIME_MAP[extension]
-                    ?: return@withContext Result.failure(
-                        GeminiSttException("지원하지 않는 오디오 형식: $extension")
-                    )
+                    ?: return@withContext Result.failure(GeminiSttException("지원하지 않는 오디오 형식: $extension"))
 
                 val fileSize = audioFile.length()
                 Log.d(TAG, "Gemini STT 전사 시작: $audioFilePath ($fileSize bytes, $mimeType)")
-
                 if (fileSize > MAX_INLINE_BYTES) {
                     Log.w(TAG, "파일 크기 ${fileSize / 1024 / 1024}MB — 인라인 blob 제한(20MB) 초과 가능성")
                 }
-
                 val audioBytes = audioFile.readBytes()
                 val audioBase64 = Base64.encodeToString(audioBytes, Base64.NO_WRAP)
 
-                // Gemini REST API 직접 호출 (OkHttp — 타임아웃 완전 제어)
                 val client = OkHttpClient.Builder()
                     .connectTimeout(60, TimeUnit.SECONDS)
                     .writeTimeout(5, TimeUnit.MINUTES)
@@ -131,46 +123,46 @@ class GeminiSttEngine @Inject constructor(
                                     put("data", audioBase64)
                                 })
                             })
-                            put(JSONObject().apply {
-                                put("text", TRANSCRIPTION_PROMPT)
-                            })
+                            put(JSONObject().apply { put("text", TRANSCRIPTION_PROMPT) })
                         })
                     }))
                 }
 
-                val apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/$MODEL_NAME:generateContent?key=$apiKey"
+                // 라운드로빈 키 루프 (모든 키 최대 1회 시도)
+                var currentIndex = keyRotator.getCurrentIndex()
+                var triedCount = 0
 
-                // 할당량 초과 시 자동 재시도
-                var lastException: Exception? = null
-                for (attempt in 1..MAX_RETRIES) {
+                while (triedCount < keys.size) {
+                    val apiKey = keys[currentIndex]
+                    val apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/$MODEL_NAME:generateContent?key=$apiKey"
                     try {
                         val httpRequest = Request.Builder()
                             .url(apiUrl)
                             .post(requestJson.toString().toRequestBody("application/json".toMediaType()))
                             .build()
-
-                        Log.d(TAG, "Gemini REST API 호출 (시도 $attempt/$MAX_RETRIES)")
+                        Log.d(TAG, "Gemini REST API 호출 (키 index=$currentIndex)")
                         val response = client.newCall(httpRequest).execute()
                         val responseBody = response.body?.string()
 
-                        if (response.code == 429) {
-                            // 할당량 초과
-                            lastException = GeminiSttException("할당량 초과 (HTTP 429)")
-                            if (attempt < MAX_RETRIES) {
-                                Log.w(TAG, "할당량 초과, ${RETRY_DELAY_MS / 1000}초 후 재시도 ($attempt/$MAX_RETRIES)")
-                                delay(RETRY_DELAY_MS)
+                        when {
+                            response.code == 429 || response.code == 403 -> {
+                                val reason = if (response.code == 429) "할당량 초과" else "권한 오류"
+                                val label = secureApiKeyRepository.getGeminiApiKeys()
+                                    .getOrNull(currentIndex)?.label ?: "키 #$currentIndex"
+                                Log.w(TAG, "$reason (키 index=$currentIndex, label=$label)")
+                                val nextKey = keyRotator.rotateOnError(currentIndex)
+                                currentIndex = keyRotator.getCurrentIndex()
+                                triedCount++
+                                if (nextKey == null) break  // 단일 키 — 루프 탈출
                                 continue
                             }
-                            break
+                            !response.isSuccessful || responseBody == null -> {
+                                return@withContext Result.failure(
+                                    GeminiSttException("Gemini API 오류: HTTP ${response.code} — ${responseBody?.take(200)}")
+                                )
+                            }
                         }
 
-                        if (!response.isSuccessful || responseBody == null) {
-                            return@withContext Result.failure(
-                                GeminiSttException("Gemini API 오류: HTTP ${response.code} — ${responseBody?.take(200)}")
-                            )
-                        }
-
-                        // 응답에서 텍스트 추출
                         val json = JSONObject(responseBody)
                         val text = json.optJSONArray("candidates")
                             ?.optJSONObject(0)
@@ -181,37 +173,34 @@ class GeminiSttEngine @Inject constructor(
                             ?.trim()
 
                         if (text.isNullOrBlank()) {
-                            return@withContext Result.failure(
-                                GeminiSttException("Gemini 전사 결과가 비어있습니다")
-                            )
+                            return@withContext Result.failure(GeminiSttException("Gemini 전사 결과가 비어있습니다"))
                         }
 
-                        Log.d(TAG, "Gemini STT 전사 완료: ${text.length}자 (시도 $attempt)")
-                        // 쿼터 사용량 기록 (성공한 호출만 카운트)
+                        Log.d(TAG, "Gemini STT 전사 완료 (키 index=$currentIndex): ${text.length}자")
                         quotaTracker.recordUsage(QuotaCategory.STT)
                         apiUsageTracker.record(ApiUsageTracker.KEY_GEMINI_STT)
+                        keyRotator.advance()
                         return@withContext Result.success(text)
+
                     } catch (e: java.net.SocketTimeoutException) {
-                        lastException = e
-                        if (attempt < MAX_RETRIES) {
-                            Log.w(TAG, "타임아웃, ${RETRY_DELAY_MS / 1000}초 후 재시도 ($attempt/$MAX_RETRIES)")
-                            delay(RETRY_DELAY_MS)
-                        }
+                        Log.e(TAG, "타임아웃 (키 index=$currentIndex): ${e.message}", e)
+                        return@withContext Result.failure(GeminiSttException("Gemini STT 타임아웃", e))
                     }
                 }
 
-                Result.failure(GeminiSttException(
-                    "Gemini API 요청 실패 (${MAX_RETRIES}회 재시도)", lastException
-                ))
+                // 모든 키 실패
+                Log.e(TAG, "등록된 모든 Gemini API 키(${keys.size}개)가 오류를 반환했습니다")
+                Result.failure(
+                    GeminiAllKeysFailedException(
+                        "등록된 모든 Gemini API 키(${keys.size}개)가 오류를 반환했습니다",
+                        triedKeyCount = keys.size
+                    )
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Gemini STT 전사 중 오류: ${e.message}", e)
                 Result.failure(GeminiSttException("Gemini STT 전사 실패: ${e.message}", e))
             }
         }
-
-    private fun getApiKey(): String {
-        return secureApiKeyRepository.getGeminiApiKey() ?: ""
-    }
 }
 
 /** Gemini STT 전사 과정에서 발생하는 예외 */

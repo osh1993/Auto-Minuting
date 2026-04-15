@@ -1,10 +1,11 @@
 package com.autominuting.data.minutes
 
 import android.util.Log
+import com.autominuting.data.security.GeminiAllKeysFailedException
+import com.autominuting.data.security.GeminiKeyRotator
 import com.autominuting.data.security.SecureApiKeyRepository
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.QuotaExceededException
-import kotlinx.coroutines.delay
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -14,30 +15,17 @@ import javax.inject.Singleton
  * Google AI Client SDK(generativeai)를 사용하며, Firebase 없이 API 키만으로 동작한다.
  * 모델: gemini-2.5-flash (POC-04에서 검증된 모델)
  * MinutesEngine 인터페이스를 구현하여 API 키 모드 엔진으로 동작한다.
+ * Phase 52: 다중 키 라운드로빈 순환 + 오류 자동 전환 (GEMINI-02, GEMINI-03)
  */
 @Singleton
 class GeminiEngine @Inject constructor(
-    private val secureApiKeyRepository: SecureApiKeyRepository
+    private val secureApiKeyRepository: SecureApiKeyRepository,
+    private val keyRotator: GeminiKeyRotator
 ) : MinutesEngine {
 
     companion object {
         private const val TAG = "GeminiEngine"
         private const val MODEL_NAME = "gemini-2.5-flash"
-
-        /** 쿼터 초과 시 최대 재시도 횟수 */
-        private const val MAX_QUOTA_RETRIES = 3
-
-        /** retry-after 파싱 실패 시 기본 대기 시간 (ms) */
-        private const val DEFAULT_RETRY_DELAY_MS = 60_000L
-
-        /** 쿼터 초과 예외 메시지에서 retry-after 초를 파싱한다. */
-        private fun parseRetryAfterMs(message: String?): Long {
-            if (message == null) return DEFAULT_RETRY_DELAY_MS
-            val match = Regex("""retry in ([0-9]+(?:\.[0-9]+)?)s""").find(message)
-            val seconds = match?.groupValues?.get(1)?.toDoubleOrNull() ?: return DEFAULT_RETRY_DELAY_MS
-            // 여유 5초 추가
-            return ((seconds + 5.0) * 1000).toLong()
-        }
 
         /** 구조화된 회의록 프롬프트 (POC gemini-test.py에서 변환) — customPrompt null 시 기본 폴백 */
         private val STRUCTURED_PROMPT = """
@@ -77,6 +65,9 @@ class GeminiEngine @Inject constructor(
     /**
      * 전사 텍스트를 Gemini API에 전달하여 구조화된 회의록을 생성한다.
      *
+     * 등록된 키를 라운드로빈 순서로 순환하여 할당량 제한을 분산한다.
+     * 429/403 오류 시 다음 키로 자동 전환하고, 모든 키 실패 시 GeminiAllKeysFailedException 반환.
+     *
      * @param transcriptText 전사된 회의 텍스트
      * @param customPrompt 사용자 정의 프롬프트 (null이면 STRUCTURED_PROMPT 기본 사용)
      * @return 성공 시 Markdown 형식의 회의록, 실패 시 예외를 포함한 Result
@@ -85,60 +76,74 @@ class GeminiEngine @Inject constructor(
         transcriptText: String,
         customPrompt: String?
     ): Result<String> {
-        val apiKey = secureApiKeyRepository.getGeminiApiKey() ?: ""
-        if (apiKey.isBlank()) {
-            Log.e(TAG, "Gemini API 키가 설정되지 않았습니다")
-            return Result.failure(
-                IllegalStateException("Gemini API 키가 설정되지 않았습니다")
-            )
+        val keys = secureApiKeyRepository.getAllGeminiApiKeyValues()
+        if (keys.isEmpty()) {
+            Log.e(TAG, "등록된 Gemini API 키가 없습니다")
+            return Result.failure(IllegalStateException("등록된 Gemini API 키가 없습니다"))
         }
 
-        val model = GenerativeModel(modelName = MODEL_NAME, apiKey = apiKey)
         val prompt = if (customPrompt != null) {
             customPrompt + "\n\n---\n\n## 회의 전사 텍스트\n\n" + transcriptText
         } else {
             STRUCTURED_PROMPT + transcriptText
         }
 
-        var lastException: Exception? = null
-        repeat(MAX_QUOTA_RETRIES) { attempt ->
+        var currentIndex = keyRotator.getCurrentIndex()
+        var triedCount = 0
+
+        while (triedCount < keys.size) {
+            val apiKey = keys[currentIndex]
+            val model = GenerativeModel(modelName = MODEL_NAME, apiKey = apiKey)
             try {
-                Log.d(TAG, "Gemini API 호출 시작 (시도 ${attempt + 1}/$MAX_QUOTA_RETRIES): 전사 텍스트 ${transcriptText.length}자")
+                Log.d(TAG, "Gemini API 호출 (키 index=$currentIndex): 전사 텍스트 ${transcriptText.length}자")
                 val response = model.generateContent(prompt)
                 val minutesText = response.text
-
                 if (minutesText.isNullOrBlank()) {
-                    Log.e(TAG, "Gemini API가 빈 응답을 반환했습니다")
+                    Log.e(TAG, "Gemini API 빈 응답 (키 index=$currentIndex)")
                     return Result.failure(IllegalStateException("Gemini API가 빈 응답을 반환했습니다"))
                 }
-
-                Log.d(TAG, "회의록 생성 성공: ${minutesText.length}자")
+                Log.d(TAG, "회의록 생성 성공 (키 index=$currentIndex): ${minutesText.length}자")
+                keyRotator.advance()
                 return Result.success(minutesText)
             } catch (e: QuotaExceededException) {
-                lastException = e
-                val delayMs = parseRetryAfterMs(e.message)
-                val retryingSuffix = if (attempt < MAX_QUOTA_RETRIES - 1) ", ${delayMs / 1000}초 후 재시도" else ""
-                Log.w(TAG, "Gemini API 쿼터 초과 (시도 ${attempt + 1}/$MAX_QUOTA_RETRIES)$retryingSuffix: ${e.message}")
-                if (attempt < MAX_QUOTA_RETRIES - 1) {
-                    delay(delayMs)
-                }
+                val label = secureApiKeyRepository.getGeminiApiKeys()
+                    .getOrNull(currentIndex)?.label ?: "키 #$currentIndex"
+                Log.w(TAG, "할당량 초과 (키 index=$currentIndex, label=$label): ${e.message}")
+                val nextKey = keyRotator.rotateOnError(currentIndex)
+                currentIndex = keyRotator.getCurrentIndex()
+                triedCount++
+                if (nextKey == null) break  // 단일 키 — 루프 탈출
             } catch (e: Exception) {
-                Log.e(TAG, "Gemini API 호출 실패: ${e.message}", e)
-                return Result.failure(e)
+                val message = e.message ?: ""
+                // HTTP 403 권한 오류 감지 (SDK가 메시지에 403 포함)
+                if (message.contains("403") || message.contains("permission", ignoreCase = true)
+                    || message.contains("forbidden", ignoreCase = true)) {
+                    val label = secureApiKeyRepository.getGeminiApiKeys()
+                        .getOrNull(currentIndex)?.label ?: "키 #$currentIndex"
+                    Log.w(TAG, "권한 오류 (키 index=$currentIndex, label=$label): $message")
+                    keyRotator.rotateOnError(currentIndex)
+                    currentIndex = keyRotator.getCurrentIndex()
+                    triedCount++
+                } else {
+                    Log.e(TAG, "Gemini API 호출 실패 (키 index=$currentIndex): $message", e)
+                    return Result.failure(e)
+                }
             }
         }
 
-        // 모든 재시도 소진
-        Log.e(TAG, "Gemini API 쿼터 초과로 ${MAX_QUOTA_RETRIES}회 재시도 후 실패")
-        return Result.failure(lastException ?: IllegalStateException("쿼터 초과 후 재시도 실패"))
+        Log.e(TAG, "등록된 모든 Gemini API 키(${keys.size}개)가 오류를 반환했습니다")
+        return Result.failure(
+            GeminiAllKeysFailedException(
+                "등록된 모든 Gemini API 키(${keys.size}개)가 오류를 반환했습니다",
+                triedKeyCount = keys.size
+            )
+        )
     }
 
     /** 엔진 이름을 반환한다 (로깅용). */
     override fun engineName(): String = "Gemini 2.5 Flash"
 
-    /** API 키가 설정되어 있으면 사용 가능하다. */
-    override fun isAvailable(): Boolean {
-        val apiKey = secureApiKeyRepository.getGeminiApiKey() ?: ""
-        return apiKey.isNotBlank()
-    }
+    /** 등록된 API 키가 1개 이상이면 사용 가능하다. */
+    override fun isAvailable(): Boolean =
+        secureApiKeyRepository.getAllGeminiApiKeyValues().isNotEmpty()
 }

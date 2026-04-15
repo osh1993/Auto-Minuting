@@ -22,6 +22,7 @@ import com.autominuting.data.local.dao.MinutesDao
 import com.autominuting.data.local.entity.MinutesEntity
 import com.autominuting.data.preferences.UserPreferencesRepository
 import com.autominuting.data.repository.MinutesRepositoryImpl
+import com.autominuting.data.security.GeminiAllKeysFailedException
 import com.autominuting.domain.model.PipelineStatus
 import com.autominuting.domain.repository.MinutesRepository
 import com.autominuting.domain.repository.PromptTemplateRepository
@@ -250,6 +251,21 @@ class MinutesGenerationWorker @AssistedInject constructor(
             val error = generateResult.exceptionOrNull()
             val errorMessage = error?.message ?: "알 수 없는 회의록 생성 오류"
             Log.e(TAG, "회의록 생성 실패: $errorMessage", error)
+
+            // GEMINI-03: 모든 Gemini 키 소진 시 알림 표시 후 파이프라인 중단
+            if (error is GeminiAllKeysFailedException) {
+                PipelineNotificationHelper.notifyAllKeysExhausted(
+                    applicationContext,
+                    error.triedKeyCount
+                )
+                meetingDao.updatePipelineStatus(
+                    id = meetingId,
+                    status = PipelineStatus.FAILED.name,
+                    errorMessage = errorMessage,
+                    updatedAt = System.currentTimeMillis()
+                )
+                return Result.failure()
+            }
 
             // 쿼터 초과인 경우: 알림 후 WorkManager retry
             val isQuotaExceeded = error is QuotaExceededException
