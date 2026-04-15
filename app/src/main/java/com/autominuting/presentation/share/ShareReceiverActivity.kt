@@ -418,10 +418,19 @@ class ShareReceiverActivity : ComponentActivity() {
      */
     private fun classifyAudioFormat(uri: android.net.Uri): SharedAudioFormat {
         val mime = try { contentResolver.getType(uri) } catch (e: Exception) { null } ?: ""
-        val name = getDisplayName(uri) ?: ""
+        // getDisplayName()은 확장자를 제거한 채 반환하므로 .mp3 체크에 사용 불가 — 원본 파일명 직접 쿼리
+        val rawName = try {
+            contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+                ?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val idx = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        if (idx >= 0) cursor.getString(idx) else null
+                    } else null
+                }
+        } catch (e: Exception) { null } ?: ""
         return when {
             "mpeg" in mime || "mp3" in mime -> SharedAudioFormat.MP3
-            name.endsWith(".mp3", ignoreCase = true) -> SharedAudioFormat.MP3
+            rawName.endsWith(".mp3", ignoreCase = true) -> SharedAudioFormat.MP3
             else -> SharedAudioFormat.M4A_COMPATIBLE
         }
     }
