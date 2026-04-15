@@ -11,10 +11,10 @@ Plaud 녹음기에서 BLE로 수신한 음성 파일을 로컬에 저장하고, 
 ## Current State
 
 **Shipped: v8.0 다중 파일 합치기** (2026-04-06)
-**50 phases 완료** | **80 plans**
+**Phase 54 완료** — 홈 화면 로컬 파일 직접 입력 (INPUT-01, INPUT-02)
 
 - Tech stack: Kotlin 2.3.20, Jetpack Compose (BOM 2026.03), Hilt 2.56, Room 2.8.4, WorkManager, whisper.cpp (NDK/JNI)
-- 파이프라인: Plaud SDK BLE / Share Intent(단일+다중) → STT 5종 선택 (Whisper 온디바이스 / Gemini / Groq / Deepgram / Naver CLOVA) → 회의록 엔진 3종 선택 (Gemini / Deepgram Intelligence / Naver CLOVA Summary) → Markdown 회의록
+- 파이프라인: Plaud SDK BLE / Share Intent(단일+다중) / **홈 화면 SAF 파일 직접 선택** → STT 5종 선택 (Whisper 온디바이스 / Gemini / Groq / Deepgram / Naver CLOVA) → 회의록 엔진 3종 선택 (Gemini / Deepgram Intelligence / Naver CLOVA Summary) → Markdown 회의록
 - 다중 파일: Share Intent로 여러 M4A 공유 시 MediaMuxer로 자동 합치기 (재인코딩 없음)
 - Drive 연동: Google OAuth + Google Drive 자동/수동 업로드 + 폴더 독립 지정
 - UI: Material 3 Dynamic Color, Bottom Navigation 4탭, Markdown 뷰어, 아카이브 검색, API 사용량 대시보드
