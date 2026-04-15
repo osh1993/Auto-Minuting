@@ -39,12 +39,19 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import android.provider.OpenableColumns
 import com.autominuting.util.AudioMerger
+import com.autominuting.util.Mp3Merger
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+
+/**
+ * 공유된 오디오 파일의 포맷 분류.
+ * MP3는 Mp3Merger, M4A/MP4/WAV 등 컨테이너 기반 포맷은 AudioMerger로 합친다.
+ */
+private enum class SharedAudioFormat { MP3, M4A_COMPATIBLE }
 
 /**
  * 외부 앱(삼성 녹음앱 등)에서 ACTION_SEND intent로 공유된 콘텐츠를 수신하는 Activity.
@@ -406,9 +413,27 @@ class ShareReceiverActivity : ComponentActivity() {
     }
 
     /**
-     * 다중 오디오 파일을 하나의 M4A로 합쳐 STT 전사 파이프라인에 진입시킨다.
+     * URI의 MIME 타입과 파일명 확장자를 기반으로 오디오 포맷을 분류한다.
+     * MIME 조회 실패 시 확장자 기반으로 폴백한다.
+     */
+    private fun classifyAudioFormat(uri: android.net.Uri): SharedAudioFormat {
+        val mime = try { contentResolver.getType(uri) } catch (e: Exception) { null } ?: ""
+        val name = getDisplayName(uri) ?: ""
+        return when {
+            "mpeg" in mime || "mp3" in mime -> SharedAudioFormat.MP3
+            name.endsWith(".mp3", ignoreCase = true) -> SharedAudioFormat.MP3
+            else -> SharedAudioFormat.M4A_COMPATIBLE
+        }
+    }
+
+    /**
+     * 다중 오디오 파일을 포맷별로 분류하여 각 그룹을 독립적으로 합치고 Meeting을 생성한다.
+     * - MP3 그룹: Mp3Merger로 재인코딩 없이 바이트 단위 concat → .mp3 파일
+     * - M4A_COMPATIBLE 그룹: AudioMerger(MediaExtractor+MediaMuxer)로 컨테이너 합치기 → .m4a 파일
+     * - 단일 파일 그룹(size==1)은 Merger를 거치지 않고 임시 파일을 audioDir로 복사만 수행.
+     * - 혼재 케이스(그룹 2개 이상)에서 Meeting 제목 뒤에 "(MP3)" / "(M4A)" 접미사를 붙여 구분.
+     *
      * Content URI는 Activity finish() 전에 모두 읽어야 한다 (Content URI 수명 보장).
-     * MediaExtractor + MediaMuxer를 사용하여 재인코딩 없이 M4A/WAV 등 모든 오디오 포맷을 지원한다.
      *
      * @param uris 합칠 오디오 파일들의 content:// URI 리스트
      */
@@ -416,66 +441,119 @@ class ShareReceiverActivity : ComponentActivity() {
         lifecycleScope.launch {
             val tempFiles = mutableListOf<File>()
             try {
-                // 첫 번째 URI에서 파일명 추출 (MERGE-02)
-                val firstName = getDisplayName(uris.first()) ?: "합쳐진 회의"
-
-                // Content URI → 임시 파일로 복사 (MediaExtractor는 절대 경로 필요)
+                // 1. Content URI → 임시 파일 복사 + 포맷 분류 (원래 순서 유지)
                 val tempDir = File(cacheDir, "merge_temp")
                 tempDir.mkdirs()
+
+                // 포맷별로 (임시 파일, 원본 URI, 포맷) 리스트 보관
+                data class ClassifiedTemp(
+                    val tempFile: File,
+                    val sourceUri: android.net.Uri,
+                    val format: SharedAudioFormat
+                )
+                val classified = mutableListOf<ClassifiedTemp>()
+
                 withContext(Dispatchers.IO) {
                     for ((index, uri) in uris.withIndex()) {
-                        val ext = getDisplayName(uri)?.substringAfterLast('.') ?: "m4a"
+                        val format = classifyAudioFormat(uri)
+                        val ext = when (format) {
+                            SharedAudioFormat.MP3 -> "mp3"
+                            SharedAudioFormat.M4A_COMPATIBLE ->
+                                getDisplayName(uri)?.substringAfterLast('.') ?: "m4a"
+                        }
                         val tempFile = File(tempDir, "input_${index}_${System.currentTimeMillis()}.$ext")
                         contentResolver.openInputStream(uri)?.use { input ->
                             tempFile.outputStream().use { output -> input.copyTo(output) }
                         } ?: throw IOException("URI를 열 수 없습니다: $uri")
                         tempFiles.add(tempFile)
+                        classified.add(ClassifiedTemp(tempFile, uri, format))
                     }
                 }
 
-                // AudioMerger로 M4A 합치기
+                // 2. 포맷별 그룹핑 (LinkedHashMap으로 순서 유지)
+                val grouped: Map<SharedAudioFormat, List<ClassifiedTemp>> =
+                    classified.groupBy { it.format }
+
+                Log.d(TAG, "다중 오디오 포맷 분류: ${grouped.mapValues { it.value.size }}")
+
+                // 3. 각 그룹을 별도 Merger + 별도 Meeting으로 처리
                 val audioDir = File(filesDir, "audio")
                 audioDir.mkdirs()
-                val mergedFile = File(audioDir, "share_${System.currentTimeMillis()}.m4a")
 
-                withContext(Dispatchers.IO) {
-                    AudioMerger.merge(tempFiles.map { it.absolutePath }, mergedFile)
+                var createdMeetingCount = 0
+                for ((format, group) in grouped) {
+                    if (group.isEmpty()) continue
+
+                    val firstName = getDisplayName(group.first().sourceUri) ?: "합쳐진 회의"
+                    // 포맷 혼재 시 제목에 포맷 접미사 추가하여 사용자가 구분 가능 (Research Open Question 1)
+                    val title = if (grouped.size > 1) {
+                        when (format) {
+                            SharedAudioFormat.MP3 -> "$firstName (MP3)"
+                            SharedAudioFormat.M4A_COMPATIBLE -> "$firstName (M4A)"
+                        }
+                    } else {
+                        firstName
+                    }
+
+                    val now = System.currentTimeMillis()
+                    val mergedFile = when (format) {
+                        SharedAudioFormat.MP3 -> File(audioDir, "share_${now}_mp3.mp3")
+                        SharedAudioFormat.M4A_COMPATIBLE -> File(audioDir, "share_${now}_m4a.m4a")
+                    }
+
+                    // 단일 파일 그룹 최적화: Merger 호출 없이 임시 파일을 audioDir로 복사
+                    // (MERGE-04 의도는 "여러 MP3를 하나로 합침" — 그룹 크기 1이면 합치기 불필요)
+                    if (group.size == 1) {
+                        withContext(Dispatchers.IO) {
+                            group.first().tempFile.copyTo(mergedFile, overwrite = true)
+                        }
+                    } else {
+                        withContext(Dispatchers.IO) {
+                            val paths = group.map { it.tempFile.absolutePath }
+                            when (format) {
+                                SharedAudioFormat.MP3 -> Mp3Merger.merge(paths, mergedFile)
+                                SharedAudioFormat.M4A_COMPATIBLE -> AudioMerger.merge(paths, mergedFile)
+                            }
+                        }
+                    }
+
+                    Log.d(TAG, "[$format] 합치기 완료: ${mergedFile.absolutePath} (${mergedFile.length()} bytes, ${group.size}개)")
+
+                    // Meeting insert + TranscriptionTriggerWorker enqueue (기존 패턴 그대로)
+                    val meeting = Meeting(
+                        title = title,
+                        recordedAt = Instant.ofEpochMilli(now),
+                        audioFilePath = mergedFile.absolutePath,
+                        pipelineStatus = PipelineStatus.AUDIO_RECEIVED,
+                        source = "SAMSUNG_SHARE",
+                        createdAt = Instant.ofEpochMilli(now),
+                        updatedAt = Instant.ofEpochMilli(now)
+                    )
+                    val meetingId = meetingRepository.insertMeeting(meeting)
+                    Log.d(TAG, "[$format] MeetingEntity 생성: meetingId=$meetingId, title=$title")
+
+                    val automationMode = userPreferencesRepository.getAutomationModeOnce()
+                    val workRequest = OneTimeWorkRequestBuilder<TranscriptionTriggerWorker>()
+                        .setInputData(
+                            workDataOf(
+                                TranscriptionTriggerWorker.KEY_AUDIO_FILE_PATH to mergedFile.absolutePath,
+                                TranscriptionTriggerWorker.KEY_MEETING_ID to meetingId,
+                                TranscriptionTriggerWorker.KEY_AUTOMATION_MODE to automationMode.name
+                            )
+                        )
+                        .build()
+                    WorkManager.getInstance(this@ShareReceiverActivity).enqueue(workRequest)
+                    createdMeetingCount++
                 }
 
-                Log.d(TAG, "다중 오디오 합치기 완료: ${mergedFile.absolutePath} (${mergedFile.length()} bytes, ${uris.size}개 파일)")
-
-                // Meeting 엔티티 생성 + 파이프라인 진입 (MERGE-03)
-                val now = System.currentTimeMillis()
-                val meeting = Meeting(
-                    title = firstName,
-                    recordedAt = Instant.ofEpochMilli(now),
-                    audioFilePath = mergedFile.absolutePath,
-                    pipelineStatus = PipelineStatus.AUDIO_RECEIVED,
-                    source = "SAMSUNG_SHARE",
-                    createdAt = Instant.ofEpochMilli(now),
-                    updatedAt = Instant.ofEpochMilli(now)
-                )
-                val meetingId = meetingRepository.insertMeeting(meeting)
-
-                Log.d(TAG, "다중 합치기 MeetingEntity 생성: meetingId=$meetingId, title=$firstName")
-
-                // TranscriptionTriggerWorker enqueue (processSharedAudio와 동일 패턴)
-                val automationMode = userPreferencesRepository.getAutomationModeOnce()
-                val workRequest = OneTimeWorkRequestBuilder<TranscriptionTriggerWorker>()
-                    .setInputData(
-                        workDataOf(
-                            TranscriptionTriggerWorker.KEY_AUDIO_FILE_PATH to mergedFile.absolutePath,
-                            TranscriptionTriggerWorker.KEY_MEETING_ID to meetingId,
-                            TranscriptionTriggerWorker.KEY_AUTOMATION_MODE to automationMode.name
-                        )
-                    )
-                    .build()
-                WorkManager.getInstance(this@ShareReceiverActivity).enqueue(workRequest)
-
-                Log.d(TAG, "다중 합치기 전사 파이프라인 진입: meetingId=$meetingId, automationMode=$automationMode")
-
+                // 4. 사용자 피드백
                 PipelineNotificationHelper.updateProgress(this@ShareReceiverActivity, "음성 파일 전사 중...")
-                Toast.makeText(this@ShareReceiverActivity, "음성 파일 합치기 완료, 전사 중...", Toast.LENGTH_SHORT).show()
+                val message = if (createdMeetingCount > 1) {
+                    "포맷별로 ${createdMeetingCount}개 파일 생성, 전사 중..."
+                } else {
+                    "음성 파일 합치기 완료, 전사 중..."
+                }
+                Toast.makeText(this@ShareReceiverActivity, message, Toast.LENGTH_SHORT).show()
 
             } catch (e: Exception) {
                 Log.e(TAG, "다중 오디오 합치기 실패: ${e.message}", e)
