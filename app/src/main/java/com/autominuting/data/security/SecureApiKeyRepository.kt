@@ -31,6 +31,11 @@ class SecureApiKeyRepository @Inject constructor(
 
         /** Drive access token — 메모리 캐시 소실 대비 단기 저장 (Worker 실행 시 사용) */
         private const val KEY_DRIVE_ACCESS_TOKEN = "drive_access_token"
+
+        // 다중 Gemini API 키 (GEMINI-01, GEMINI-04)
+        private const val KEY_GEMINI_KEY_COUNT = "gemini_api_key_count"
+        private fun keyGeminiLabel(i: Int) = "gemini_api_key_${i}_label"
+        private fun keyGeminiValue(i: Int) = "gemini_api_key_${i}_value"
     }
 
     @Suppress("DEPRECATION")
@@ -183,6 +188,117 @@ class SecureApiKeyRepository @Inject constructor(
     /** Drive access token을 삭제한다. */
     fun clearDriveAccessToken() {
         encryptedPrefs?.edit()?.remove(KEY_DRIVE_ACCESS_TOKEN)?.apply()
+    }
+
+    /**
+     * 기존 단일 gemini_api_key 값을 다중 키 구조의 index 0으로 마이그레이션한다.
+     * 이미 마이그레이션되었거나 레거시 키가 없으면 아무것도 하지 않는다.
+     * SettingsViewModel.init에서 호출한다.
+     */
+    fun migrateGeminiApiKeyIfNeeded() {
+        val prefs = encryptedPrefs ?: return
+        val legacyKey = prefs.getString(KEY_GEMINI_API, null) ?: return
+        // 이미 다중 키 구조가 존재하면 마이그레이션 건너뜀
+        val count = prefs.getString(KEY_GEMINI_KEY_COUNT, "0")?.toIntOrNull() ?: 0
+        if (count > 0) {
+            prefs.edit().remove(KEY_GEMINI_API).apply()
+            return
+        }
+        // index 0으로 이동
+        prefs.edit()
+            .putString(keyGeminiLabel(0), "기본 키")
+            .putString(keyGeminiValue(0), legacyKey)
+            .putString(KEY_GEMINI_KEY_COUNT, "1")
+            .remove(KEY_GEMINI_API)
+            .apply()
+        Log.i(TAG, "레거시 gemini_api_key → 다중 키 index 0으로 마이그레이션 완료")
+    }
+
+    /**
+     * 등록된 Gemini API 키 목록을 반환한다. 키 값은 마스킹 처리된다.
+     * 마스킹 형식: AIza****WXYZ (앞 4자 + **** + 뒤 4자; 총 길이 < 8이면 전체 마스킹)
+     */
+    fun getGeminiApiKeys(): List<GeminiApiKeyEntry> {
+        val prefs = encryptedPrefs ?: return emptyList()
+        val count = prefs.getString(KEY_GEMINI_KEY_COUNT, "0")?.toIntOrNull() ?: 0
+        return (0 until count).mapNotNull { i ->
+            val label = prefs.getString(keyGeminiLabel(i), null) ?: return@mapNotNull null
+            val value = prefs.getString(keyGeminiValue(i), null) ?: return@mapNotNull null
+            val masked = maskApiKey(value)
+            GeminiApiKeyEntry(label = label, maskedKey = masked, index = i)
+        }
+    }
+
+    /**
+     * 새 Gemini API 키를 목록 끝에 추가한다.
+     * 중복 키 값 검사: 이미 동일한 키 값이 존재하면 IllegalArgumentException 발생.
+     */
+    fun addGeminiApiKey(label: String, key: String) {
+        val prefs = encryptedPrefs ?: run {
+            Log.w(TAG, "addGeminiApiKey 실패: EncryptedSharedPreferences 사용 불가")
+            return
+        }
+        val count = prefs.getString(KEY_GEMINI_KEY_COUNT, "0")?.toIntOrNull() ?: 0
+        // 중복 검사
+        for (i in 0 until count) {
+            if (prefs.getString(keyGeminiValue(i), null) == key) {
+                throw IllegalArgumentException("이미 등록된 API 키입니다.")
+            }
+        }
+        prefs.edit()
+            .putString(keyGeminiLabel(count), label)
+            .putString(keyGeminiValue(count), key)
+            .putString(KEY_GEMINI_KEY_COUNT, (count + 1).toString())
+            .apply()
+        Log.i(TAG, "Gemini API 키 추가: index=$count, label=$label")
+    }
+
+    /**
+     * 지정 인덱스의 Gemini API 키를 삭제하고 인덱스를 재정렬한다.
+     * @param index 삭제할 키의 인덱스 (0-based)
+     */
+    fun removeGeminiApiKey(index: Int) {
+        val prefs = encryptedPrefs ?: run {
+            Log.w(TAG, "removeGeminiApiKey 실패: EncryptedSharedPreferences 사용 불가")
+            return
+        }
+        val count = prefs.getString(KEY_GEMINI_KEY_COUNT, "0")?.toIntOrNull() ?: 0
+        if (index < 0 || index >= count) return
+        // 삭제 후 이후 항목을 앞으로 당김 (인덱스 재정렬)
+        val editor = prefs.edit()
+        for (i in index until count - 1) {
+            val nextLabel = prefs.getString(keyGeminiLabel(i + 1), "")!!
+            val nextValue = prefs.getString(keyGeminiValue(i + 1), "")!!
+            editor.putString(keyGeminiLabel(i), nextLabel)
+            editor.putString(keyGeminiValue(i), nextValue)
+        }
+        // 마지막 항목 삭제
+        editor.remove(keyGeminiLabel(count - 1))
+        editor.remove(keyGeminiValue(count - 1))
+        editor.putString(KEY_GEMINI_KEY_COUNT, (count - 1).toString())
+        editor.apply()
+        Log.i(TAG, "Gemini API 키 삭제: index=$index, 재정렬 후 count=${count - 1}")
+    }
+
+    /**
+     * 등록된 모든 Gemini API 키의 복호화된 실제 값 목록을 반환한다.
+     * Phase 52 라운드로빈 로직에서 사용한다.
+     */
+    fun getAllGeminiApiKeyValues(): List<String> {
+        val prefs = encryptedPrefs ?: return emptyList()
+        val count = prefs.getString(KEY_GEMINI_KEY_COUNT, "0")?.toIntOrNull() ?: 0
+        return (0 until count).mapNotNull { i ->
+            prefs.getString(keyGeminiValue(i), null)
+        }
+    }
+
+    /** API 키를 마스킹한다. 형식: AIza****WXYZ (앞 4자 + **** + 뒤 4자). */
+    private fun maskApiKey(key: String): String {
+        return if (key.length >= 8) {
+            "${key.take(4)}****${key.takeLast(4)}"
+        } else {
+            "****"
+        }
     }
 
     /** EncryptedSharedPreferences가 정상 초기화되었는지 반환한다. */

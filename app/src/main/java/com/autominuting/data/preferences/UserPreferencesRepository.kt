@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.autominuting.data.auth.AuthMode
@@ -66,6 +67,9 @@ class UserPreferencesRepository @Inject constructor(
 
         /** Drive 자동 업로드 활성화 여부 설정 키. 기본값: true */
         val DRIVE_AUTO_UPLOAD_ENABLED_KEY = booleanPreferencesKey("drive_auto_upload_enabled")
+
+        /** GEMINI-02: 라운드로빈 현재 인덱스 설정 키. 실제 사용은 Phase 52. */
+        val GEMINI_ROUNDROBIN_INDEX_KEY = intPreferencesKey("gemini_roundrobin_index")
     }
 
     /** 현재 자동화 모드 설정을 관찰한다. 기본값: FULL_AUTO */
