@@ -12,6 +12,7 @@ import com.autominuting.data.auth.GoogleAuthRepository
 import com.autominuting.data.drive.DriveFolder
 import com.autominuting.data.drive.DriveUploadRepository
 import com.autominuting.data.preferences.UserPreferencesRepository
+import com.autominuting.data.security.GeminiApiKeyEntry
 import com.autominuting.data.security.SecureApiKeyRepository
 import com.autominuting.data.stt.WhisperModelManager
 import com.autominuting.domain.model.AutomationMode
@@ -43,7 +44,7 @@ import javax.inject.Inject
 sealed interface ApiKeyValidationState {
     data object Idle : ApiKeyValidationState
     data object Validating : ApiKeyValidationState
-    data object Success : ApiKeyValidationState
+    data class Success(val addedLabel: String = "") : ApiKeyValidationState
     data class Error(val message: String) : ApiKeyValidationState
 }
 
@@ -177,9 +178,9 @@ class SettingsViewModel @Inject constructor(
     private val _apiKeyValidationState = MutableStateFlow<ApiKeyValidationState>(ApiKeyValidationState.Idle)
     val apiKeyValidationState: StateFlow<ApiKeyValidationState> = _apiKeyValidationState.asStateFlow()
 
-    /** 저장된 API 키 존재 여부 */
-    private val _hasApiKey = MutableStateFlow(false)
-    val hasApiKey: StateFlow<Boolean> = _hasApiKey.asStateFlow()
+    /** 등록된 Gemini API 키 목록 */
+    private val _geminiApiKeys = MutableStateFlow<List<GeminiApiKeyEntry>>(emptyList())
+    val geminiApiKeys: StateFlow<List<GeminiApiKeyEntry>> = _geminiApiKeys.asStateFlow()
 
     /** 저장된 OAuth Client ID 존재 여부 */
     private val _hasOAuthClientId = MutableStateFlow(false)
@@ -214,8 +215,10 @@ class SettingsViewModel @Inject constructor(
     val hasClovaSummaryClientSecret: StateFlow<Boolean> = _hasClovaSummaryClientSecret.asStateFlow()
 
     init {
-        // 초기 로드: 저장된 API 키 존재 여부 확인
-        _hasApiKey.value = secureApiKeyRepository.getGeminiApiKey() != null
+        // 레거시 단일 키 → 다중 키 구조 마이그레이션 (GEMINI-04)
+        secureApiKeyRepository.migrateGeminiApiKeyIfNeeded()
+        // 초기 로드
+        _geminiApiKeys.value = secureApiKeyRepository.getGeminiApiKeys()
         _hasOAuthClientId.value = !secureApiKeyRepository.getGoogleOAuthClientId().isNullOrBlank()
         _hasGroqApiKey.value = !secureApiKeyRepository.getGroqApiKey().isNullOrBlank()
         _hasDeepgramApiKey.value = !secureApiKeyRepository.getDeepgramApiKey().isNullOrBlank()
@@ -525,8 +528,15 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    /** API 키를 Gemini API 테스트 호출로 검증 후 암호화 저장한다. */
-    fun validateAndSaveApiKey(apiKey: String) {
+    /**
+     * 새 Gemini API 키를 검증한 후 다중 키 목록에 추가한다 (GEMINI-01, GEMINI-04).
+     * 검증: generateContent("Hello") 호출 성공 여부로 판단.
+     * 중복 키는 addGeminiApiKey에서 IllegalArgumentException으로 거부된다.
+     *
+     * @param label 사용자 입력 별명
+     * @param apiKey 추가할 API 키 값
+     */
+    fun validateAndAddApiKey(label: String, apiKey: String) {
         viewModelScope.launch {
             _apiKeyValidationState.value = ApiKeyValidationState.Validating
             try {
@@ -534,34 +544,49 @@ class SettingsViewModel @Inject constructor(
                     modelName = "gemini-2.5-flash",
                     apiKey = apiKey
                 )
-                // 최소 비용 테스트 호출
                 val response = withTimeout(10_000) {
                     model.generateContent("Hello")
                 }
                 if (response.text != null) {
-                    secureApiKeyRepository.saveGeminiApiKey(apiKey)
-                    _hasApiKey.value = true
-                    _apiKeyValidationState.value = ApiKeyValidationState.Success
+                    secureApiKeyRepository.addGeminiApiKey(label, apiKey)
+                    _geminiApiKeys.value = secureApiKeyRepository.getGeminiApiKeys()
+                    _apiKeyValidationState.value = ApiKeyValidationState.Success(addedLabel = label)
                 } else {
-                    _apiKeyValidationState.value = ApiKeyValidationState.Error("빈 응답이 반환되었습니다")
+                    _apiKeyValidationState.value = ApiKeyValidationState.Error(
+                        "빈 응답이 반환되었습니다. 키 값을 다시 확인해주세요."
+                    )
                 }
-            } catch (e: Exception) {
+            } catch (e: IllegalArgumentException) {
+                // 중복 키
                 _apiKeyValidationState.value = ApiKeyValidationState.Error(
-                    e.message ?: "API 키 검증에 실패했습니다"
+                    e.message ?: "이미 등록된 API 키입니다."
+                )
+            } catch (e: Exception) {
+                val msg = e.message ?: ""
+                _apiKeyValidationState.value = ApiKeyValidationState.Error(
+                    when {
+                        msg.contains("Unable to resolve host", ignoreCase = true) ||
+                        msg.contains("timeout", ignoreCase = true) ->
+                            "네트워크 오류로 검증하지 못했습니다. 연결 상태를 확인 후 다시 시도하세요."
+                        else -> "API 키 검증에 실패했습니다. 키 값을 다시 확인해주세요."
+                    }
                 )
             }
         }
     }
 
+    /**
+     * 지정 인덱스의 Gemini API 키를 삭제하고 목록을 갱신한다.
+     * @param index 삭제할 키의 인덱스 (0-based, GeminiApiKeyEntry.index 값)
+     */
+    fun removeGeminiApiKey(index: Int) {
+        secureApiKeyRepository.removeGeminiApiKey(index)
+        _geminiApiKeys.value = secureApiKeyRepository.getGeminiApiKeys()
+    }
+
     /** API 키 검증 상태를 초기화한다. */
     fun resetApiKeyValidationState() {
         _apiKeyValidationState.value = ApiKeyValidationState.Idle
-    }
-
-    /** 저장된 API 키를 삭제한다. */
-    fun clearApiKey() {
-        secureApiKeyRepository.clearGeminiApiKey()
-        _hasApiKey.value = false
     }
 
     /** Google OAuth Web Client ID를 저장한다. */
